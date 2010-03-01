@@ -1,0 +1,32 @@
+diff -ruN ../nginx-0.7.65/src/core/ngx_log.c src/core/ngx_log.c
+--- ../nginx-0.7.65/src/core/ngx_log.c	2009-04-30 21:53:42.000000000 +0800
++++ src/core/ngx_log.c	2010-03-01 16:54:29.000000000 +0800
+@@ -66,7 +66,7 @@
+ 
+ static const char *debug_levels[] = {
+     "debug_core", "debug_alloc", "debug_mutex", "debug_event",
+-    "debug_http", "debug_mail", "debug_mysql"
++    "debug_http", "debug_mail", "debug_mysql", "debug_tcp"
+ };
+ 
+ 
+diff -ruN ../nginx-0.7.65/src/core/ngx_log.h src/core/ngx_log.h
+--- ../nginx-0.7.65/src/core/ngx_log.h	2009-04-30 21:53:42.000000000 +0800
++++ src/core/ngx_log.h	2010-03-01 16:57:30.000000000 +0800
+@@ -29,6 +29,7 @@
+ #define NGX_LOG_DEBUG_HTTP        0x100
+ #define NGX_LOG_DEBUG_MAIL        0x200
+ #define NGX_LOG_DEBUG_MYSQL       0x400
++#define NGX_LOG_DEBUG_TCP         0x800
+ 
+ /*
+  * do not forget to update debug_levels[] in src/core/ngx_log.c
+@@ -36,7 +37,7 @@
+  */
+ 
+ #define NGX_LOG_DEBUG_FIRST       NGX_LOG_DEBUG_CORE
+-#define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_MYSQL
++#define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_TCP
+ #define NGX_LOG_DEBUG_CONNECTION  0x80000000
+ #define NGX_LOG_DEBUG_ALL         0x7ffffff0
+ 

@@ -1,0 +1,109 @@
+Name
+    nginx_tcp_proxy_module
+
+Status
+    This module is at its very early phase of development and
+    considered highly experimental. But you're encouraged to
+    test it out on your side and report any quirks that you
+    experience.
+
+    We need your help! If you find this module useful and/or
+    interesting, please consider joining the development!
+    Commit bit can be freely delivered at your request ;)
+
+Synopsis
+
+    tcp {
+        ...
+
+        upstream cluster {
+            # simple round-robin
+            server 127.0.0.1:3306;
+            server 127.0.0.1:1234;
+        }
+
+        server {
+            proxy_pass cluster;
+        }
+    }
+
+Description
+
+Installation
+    Grab the nginx source code from nginx.net (<http://nginx.net/>), for
+    example, the version 0.8.30 (see nginx compatibility), and then build
+    the source with this module:
+
+        $ wget 'http://sysoev.ru/nginx/nginx-0.8.30.tar.gz'
+        $ tar -xzvf nginx-0.8.30.tar.gz
+        $ cd nginx-0.8.30/
+
+        $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
+
+        $ make
+        $ make install
+
+    Download the latest version of the release tarball of this module from
+
+Compatibility
+    The following versions of Nginx should work with this module:
+
+    *   0.8.x (last tested version is 0.8.32)
+
+    *   0.7.x >= 0.7.44 (last tested version is 0.7.64)
+
+    Earlier versions of Nginx like 0.6.x and 0.5.x will *not* work.
+
+    If you find that any particular version of Nginx above 0.7.44 does not
+    work with this module, please consider reporting a bug.
+
+TODO
+    *  test
+
+Known Issues
+    *  test
+
+See Also
+    *  test 
+
+Authors
+    Weibin Yao(姚伟斌) <yaoweibin at gmail dot com>,
+
+Copyright & License
+
+    I borrowed a lot of code from upstream and mail module in the nginx 0.7.* 
+    core. This part of code is copyrighted by Igor Sysoev is .
+
+    This module is licenced under the BSD license.
+
+    Copyright (C) 2010 by Weibin Yao <yaoweibin@gmail.com>.
+
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+        * Redistributions of source code must retain the above copyright
+        notice, this list of conditions and the following disclaimer.
+
+        * Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+        * Neither the name of the Taobao Inc. nor the names of its
+        contributors may be used to endorse or promote products derived from
+        this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+    TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+    LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
