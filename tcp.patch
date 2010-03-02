@@ -1,7 +1,8 @@
-diff -ruN ../nginx-0.7.65/src/core/ngx_log.c src/core/ngx_log.c
---- ../nginx-0.7.65/src/core/ngx_log.c	2009-04-30 21:53:42.000000000 +0800
-+++ src/core/ngx_log.c	2010-03-01 16:54:29.000000000 +0800
-@@ -66,7 +66,7 @@
+diff --git a/src/core/ngx_log.c b/src/core/ngx_log.c
+index 770a590..26dd221 100644
+--- a/src/core/ngx_log.c
++++ b/src/core/ngx_log.c
+@@ -66,7 +66,7 @@ static ngx_str_t err_levels[] = {
  
  static const char *debug_levels[] = {
      "debug_core", "debug_alloc", "debug_mutex", "debug_event",
@@ -10,9 +11,10 @@ diff -ruN ../nginx-0.7.65/src/core/ngx_log.c src/core/ngx_log.c
  };
  
  
-diff -ruN ../nginx-0.7.65/src/core/ngx_log.h src/core/ngx_log.h
---- ../nginx-0.7.65/src/core/ngx_log.h	2009-04-30 21:53:42.000000000 +0800
-+++ src/core/ngx_log.h	2010-03-01 16:57:30.000000000 +0800
+diff --git a/src/core/ngx_log.h b/src/core/ngx_log.h
+index b736aa2..0b1507b 100644
+--- a/src/core/ngx_log.h
++++ b/src/core/ngx_log.h
 @@ -29,6 +29,7 @@
  #define NGX_LOG_DEBUG_HTTP        0x100
  #define NGX_LOG_DEBUG_MAIL        0x200
