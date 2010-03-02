@@ -13,6 +13,7 @@ typedef struct ngx_tcp_proxy_conf_s {
     size_t      buffer_size;
     ngx_msec_t  timeout;
 
+    /*support for the variable in the proxy_pass*/
     ngx_array_t *proxy_lengths;
     ngx_array_t *proxy_values;
 } ngx_tcp_proxy_conf_t;
@@ -23,8 +24,6 @@ static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_dummy_write_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_handler(ngx_event_t *ev);
-/*static void ngx_tcp_proxy_upstream_error(ngx_tcp_session_t *s);*/
-/*static void ngx_tcp_proxy_internal_server_error(ngx_tcp_session_t *s);*/
 static void *ngx_tcp_proxy_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent,
         void *child);
@@ -103,6 +102,7 @@ ngx_module_t  ngx_tcp_proxy_module = {
     NGX_MODULE_V1_PADDING
 };
 
+/*dirty hack*/
 void 
 ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
@@ -190,6 +190,7 @@ ngx_tcp_proxy_generic_handler(ngx_event_t *rev) {
 void 
 ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) {
 
+    /*Make the complier happy, maybe use it later.*/
     c->read->handler = ngx_tcp_proxy_dummy_write_handler;
     c->read->handler = ngx_tcp_proxy_dummy_read_handler;
 
@@ -536,43 +537,6 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
         }
     }
 }
-
-
-/*static void*/
-/*ngx_tcp_proxy_upstream_error(ngx_tcp_session_t *s)*/
-/*{*/
-/*if (s->proxy->upstream->connection) {*/
-/*ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,*/
-/*"close tcp proxy connection: %d",*/
-/*s->proxy->upstream->connection->fd);*/
-
-/*ngx_close_connection(s->proxy->upstream->connection);*/
-/*}*/
-
-/*if (s->out.len == 0) {*/
-/*ngx_tcp_finalize_session(s);*/
-/*return;*/
-/*}*/
-
-/*s->quit = 1;*/
-/*ngx_tcp_send(s->connection->write);*/
-/*}*/
-
-
-/*static void*/
-/*ngx_tcp_proxy_internal_server_error(ngx_tcp_session_t *s)*/
-/*{*/
-/*if (s->proxy->upstream->connection) {*/
-/*ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,*/
-/*"close tcp proxy connection: %d",*/
-/*s->proxy->upstream->connection->fd);*/
-
-/*ngx_close_connection(s->proxy->upstream->connection);*/
-/*}*/
-
-/*ngx_tcp_finalize_session(s);*/
-/*}*/
-
 
 static char *
 ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {

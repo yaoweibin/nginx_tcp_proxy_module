@@ -174,13 +174,6 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->server_name = cf->cycle->hostname;
     }
 
-    /*if (conf->protocol == NULL) {*/
-    /*ngx_log_error(NGX_LOG_EMERG, cf->log, 0,*/
-    /*"unknown tcp protocol for server in %s:%ui",*/
-    /*conf->file_name, conf->line);*/
-    /*return NGX_CONF_ERROR;*/
-    /*}*/
-
     ngx_conf_merge_ptr_value(conf->resolver, prev->resolver, NULL);
 
     return NGX_CONF_OK;

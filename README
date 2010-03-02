@@ -20,45 +20,42 @@ Synopsis
             # simple round-robin
             server 127.0.0.1:3306;
             server 127.0.0.1:1234;
+
+            # ip_hash 
+            #ip_hash;
         }
 
         server {
+            proxy_connect_timeout 2s;
             proxy_pass cluster;
         }
     }
 
 Description
+    * TODO
 
 Installation
-    Grab the nginx source code from nginx.net (<http://nginx.net/>), for
-    example, the version 0.8.30 (see nginx compatibility), and then build
+    Download the latest version of the release tarball of this module from
+    http://github.com/yaoweibin/nginx_tcp_proxy_module. 
+
+    Grab the nginx source code from nginx.net (<http://nginx.org/>), for
+    example, the version 0.7.65 (see nginx compatibility), and then build
     the source with this module:
 
-        $ wget 'http://sysoev.ru/nginx/nginx-0.8.30.tar.gz'
-        $ tar -xzvf nginx-0.8.30.tar.gz
-        $ cd nginx-0.8.30/
+        $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
+        $ tar -xzvf nginx-0.7.65.tar.gz
+        $ cd nginx-0.7.65/
+        $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
 
         $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
 
         $ make
         $ make install
 
-    Download the latest version of the release tarball of this module from
-
-Compatibility
-    The following versions of Nginx should work with this module:
-
-    *   0.8.x (last tested version is 0.8.32)
-
-    *   0.7.x >= 0.7.44 (last tested version is 0.7.64)
-
-    Earlier versions of Nginx like 0.6.x and 0.5.x will *not* work.
-
-    If you find that any particular version of Nginx above 0.7.44 does not
-    work with this module, please consider reporting a bug.
-
 TODO
-    *  test
+    *  test script 
+    *  health check 
+    *  failover 
 
 Known Issues
     *  test
@@ -67,12 +64,13 @@ See Also
     *  test 
 
 Authors
-    Weibin Yao(姚伟斌) <yaoweibin at gmail dot com>,
+    Weibin Yao(姚伟斌) <yaoweibin at gmail dot com>
 
 Copyright & License
+    This README template copy from agentzh(http://github.com/agentzh).
 
-    I borrowed a lot of code from upstream and mail module in the nginx 0.7.* 
-    core. This part of code is copyrighted by Igor Sysoev is .
+    I borrowed a lot of code from upstream and mail module from the nginx 0.7.* 
+    core. This part of code is copyrighted by Igor Sysoev.
 
     This module is licenced under the BSD license.
 

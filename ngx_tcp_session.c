@@ -166,12 +166,6 @@ ngx_tcp_init_session(ngx_connection_t *c)
     }
 
     if (s->buffer == NULL) {
-        /*if (ngx_array_init(&s->args, s->pool, 2, sizeof(ngx_str_t))*/
-        /*== NGX_ERROR)*/
-        /*{*/
-        /*ngx_tcp_finalize_session(s);*/
-        /*return;*/
-        /*}*/
 
         s->buffer = ngx_create_temp_buf(s->pool, 4096);
         if (s->buffer == NULL) {
@@ -227,10 +221,6 @@ ngx_tcp_send(ngx_event_t *wev)
             ngx_tcp_close_connection(c);
             return;
         }
-
-        /*if (s->blocked) {*/
-        /*c->read->handler(c->read);*/
-        /*}*/
 
         return;
     }
