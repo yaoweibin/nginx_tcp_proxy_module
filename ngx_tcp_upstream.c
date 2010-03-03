@@ -7,7 +7,6 @@ static void ngx_tcp_upstream_cleanup(void *data);
 
 static void ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u);
 static void ngx_tcp_upstream_resolve_handler(ngx_resolver_ctx_t *ctx);
-/*static void ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s, ngx_event_t *ev);*/
 static void ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
         ngx_int_t rc);
 
@@ -299,154 +298,44 @@ ngx_tcp_upstream_handler(ngx_event_t *ev) {
     }
 }
 
+ngx_int_t 
+ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s) {
 
-/*static void*/
-/*ngx_tcp_upstream_rd_check_broken_connection(ngx_tcp_session_t *s)*/
-/*{*/
-/*ngx_tcp_upstream_check_broken_connection(s, s->connection->read);*/
-/*}*/
+    int                  n;
+    char                 buf[1];
+    ngx_err_t            err;
+    ngx_connection_t     *c;
+    ngx_tcp_upstream_t  *u;
 
+    u = s->upstream;
+    c = u->peer.connection;
 
-/*static void*/
-/*ngx_tcp_upstream_wr_check_broken_connection(ngx_tcp_session_t *s)*/
-/*{*/
-/*ngx_tcp_upstream_check_broken_connection(s, s->connection->write);*/
-/*}*/
+    if (u->peer.connection == NULL) {
+        return NGX_ERROR;
+    }
 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp upstream check upstream, fd:%d", c->fd);
 
-/*static void*/
-/*ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s,*/
-/*ngx_event_t *ev)*/
-/*{*/
-/*int                  n;*/
-/*char                 buf[1];*/
-/*ngx_err_t            err;*/
-/*ngx_int_t            event;*/
-/*ngx_connection_t     *c;*/
-/*ngx_tcp_upstream_t  *u;*/
+    n = recv(c->fd, buf, 1, MSG_PEEK);
 
-/*ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0,*/
-/*"tcp upstream check client, write event:%d", ev->write);*/
+    err = ngx_socket_errno;
 
-/*c = s->connection;*/
-/*u = s->upstream;*/
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, c->log, err, "tcp check upstream recv(): %d", n);
 
-/*if (c->error) {*/
-/*if ((ngx_event_flags & NGX_USE_LEVEL_EVENT) && ev->active) {*/
+    if (n >= 0 || err == NGX_EAGAIN) {
+        return NGX_OK;
+    }
 
-/*event = ev->write ? NGX_WRITE_EVENT : NGX_READ_EVENT;*/
+    if (n == -1) {
+        if (err == NGX_EAGAIN) {
+            return NGX_OK;
+        }
+    }
 
-/*if (ngx_del_event(ev, event, 0) != NGX_OK) {*/
-/*ngx_tcp_upstream_finalize_request(s, u, 0);*/
-/*return;*/
-/*}*/
-/*}*/
+    c->error = 1;
 
-/*if (!u->cacheable) {*/
-/*ngx_tcp_upstream_finalize_request(s, u, 0);*/
-/*}*/
-
-/*return;*/
-/*}*/
-
-/*if (u->peer.connection == NULL) {*/
-/*return;*/
-/*}*/
-
-/*#if (NGX_HAVE_KQUEUE)*/
-
-/*if (ngx_event_flags & NGX_USE_KQUEUE_EVENT) {*/
-
-/*if (!ev->pending_eof) {*/
-/*return;*/
-/*}*/
-
-/*ev->eof = 1;*/
-/*c->error = 1;*/
-
-/*if (ev->kq_errno) {*/
-/*ev->error = 1;*/
-/*}*/
-
-/*if (!u->cacheable && u->peer.connection) {*/
-/*ngx_log_error(NGX_LOG_INFO, ev->log, ev->kq_errno,*/
-/*"kevent() reported that client closed prematurely "*/
-/*"connection, so upstream connection is closed too");*/
-/*ngx_tcp_upstream_finalize_request(r, u,*/
-/*NGX_TCP_CLIENT_CLOSED_REQUEST);*/
-/*return;*/
-/*}*/
-
-/*ngx_log_error(NGX_LOG_INFO, ev->log, ev->kq_errno,*/
-/*"kevent() reported that client closed "*/
-/*"prematurely connection");*/
-
-/*if (u->peer.connection == NULL) {*/
-/*ngx_tcp_upstream_finalize_request(s, u,*/
-/*NGX_TCP_CLIENT_CLOSED_REQUEST);*/
-/*return;*/
-/*}*/
-
-/*return;*/
-/*}*/
-
-/*#endif*/
-
-/*n = recv(c->fd, buf, 1, MSG_PEEK);*/
-
-/*err = ngx_socket_errno;*/
-
-/*ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, err,*/
-/*"tcp upstream recv(): %d", n);*/
-
-/*if (ev->write && (n >= 0 || err == NGX_EAGAIN)) {*/
-/*return;*/
-/*}*/
-
-/*if ((ngx_event_flags & NGX_USE_LEVEL_EVENT) && ev->active) {*/
-
-/*event = ev->write ? NGX_WRITE_EVENT : NGX_READ_EVENT;*/
-
-/*if (ngx_del_event(ev, event, 0) != NGX_OK) {*/
-/*ngx_tcp_upstream_finalize_request(s, u, 0);*/
-/*return;*/
-/*}*/
-/*}*/
-
-/*if (n > 0) {*/
-/*return;*/
-/*}*/
-
-/*if (n == -1) {*/
-/*if (err == NGX_EAGAIN) {*/
-/*return;*/
-/*}*/
-
-/*ev->error = 1;*/
-
-/*} else { *//* n == 0 */
-/*err = 0;*/
-/*}*/
-
-/*ev->eof = 1;*/
-/*c->error = 1;*/
-
-/*if (!u->cacheable && u->peer.connection) {*/
-/*ngx_log_error(NGX_LOG_INFO, ev->log, err,*/
-/*"client closed prematurely connection, "*/
-/*"so upstream connection is closed too");*/
-/*ngx_tcp_upstream_finalize_request(s, u, 0);*/
-/*return;*/
-/*}*/
-
-/*ngx_log_error(NGX_LOG_INFO, ev->log, err,*/
-/*"client closed prematurely connection");*/
-
-/*if (u->peer.connection == NULL) {*/
-/*ngx_tcp_upstream_finalize_request(s, u, 0);*/
-/*return;*/
-/*}*/
-/*}*/
+    return NGX_ERROR;
+}
 
 
 static void
@@ -462,12 +351,26 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
     rc = ngx_event_connect_peer(&u->peer);
 
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp proxy connect peer: %d", rc);
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp upstream connect: %d", rc);
 
-    if (rc == NGX_ERROR || rc == NGX_BUSY || rc == NGX_DECLINED) {
+    if (rc == NGX_ERROR) {
         ngx_tcp_upstream_finalize_session(s, u, 0);
         return;
     }
+
+    /*u->state->peer = u->peer.name;*/
+
+    if (rc == NGX_BUSY) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, "no live upstreams");
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_NOLIVE);
+        return;
+    }
+
+    if (rc == NGX_DECLINED) {
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);
+        return;
+    }
+
 
     /* rc == NGX_OK || rc == NGX_AGAIN */
 
@@ -493,6 +396,60 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
     }
 }
 
+void
+ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
+    ngx_uint_t ft_type)
+{
+    ngx_uint_t  state;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
+                   "tcp next upstream, fail_type: %xi", ft_type);
+
+    state = NGX_PEER_FAILED;
+
+    if (ft_type != NGX_TCP_UPSTREAM_FT_NOLIVE) {
+        u->peer.free(&u->peer, u->peer.data, state);
+    }
+
+    if (ft_type == NGX_TCP_UPSTREAM_FT_TIMEOUT) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, NGX_ETIMEDOUT,
+                      "upstream timed out");
+    }
+
+    if (s->connection->error) {
+        ngx_tcp_upstream_finalize_session(s, u, 0);
+        return;
+    }
+
+    if (u->peer.cached && ft_type == NGX_TCP_UPSTREAM_FT_ERROR) {
+
+    }
+    else {
+        if (u->peer.tries == 0) {
+            ngx_tcp_upstream_finalize_session(s, u, 0);
+            return;
+        }
+    }
+
+    if (u->peer.connection) {
+        ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
+                       "close tcp upstream connection: %d",
+                       u->peer.connection->fd);
+#if (NGX_TCP_SSL)
+
+        if (u->peer.connection->ssl) {
+            u->peer.connection->ssl->no_wait_shutdown = 1;
+            u->peer.connection->ssl->no_send_shutdown = 1;
+
+            (void) ngx_ssl_shutdown(u->peer.connection);
+        }
+#endif
+
+        ngx_close_connection(u->peer.connection);
+    }
+
+    ngx_tcp_upstream_connect(s, u);
+}
 
     static void
 ngx_tcp_upstream_cleanup(void *data)
@@ -502,7 +459,7 @@ ngx_tcp_upstream_cleanup(void *data)
     ngx_tcp_upstream_t  *u;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
-            "cleanup tcp upstream request: fd: %d", s->connection->fd);
+            "cleanup tcp upstream session: fd: %d", s->connection->fd);
 
     u = s->upstream;
 
@@ -521,7 +478,7 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
     ngx_time_t  *tp;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
-            "finalize tcp upstream request: %i", rc);
+            "finalize tcp upstream session: %i", rc);
 
     if (u->cleanup) {
         *u->cleanup = NULL;
@@ -538,7 +495,7 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
         }
     }
 
-    /*u->finalize_request(r, rc);*/
+    /*u->finalize_session(r, rc);*/
 
     if (u->peer.free) {
         u->peer.free(&u->peer, u->peer.data, 0);

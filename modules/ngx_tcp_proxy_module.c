@@ -111,6 +111,7 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
     ngx_connection_t *c;
 
     c = s->connection;
+    c->log->action = "ngx_tcp_proxy_handler";
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp proxy upstream init proxy");
 
@@ -123,17 +124,28 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
         return;
     }
 
+    pctx->upstream = &s->upstream->peer;
+
+    c = pctx->upstream->connection;
+    if (c->read->timedout || c->write->timedout) {
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_TIMEOUT);
+        return;
+    }
+
+    if (ngx_tcp_upstream_check_broken_connection(s) != NGX_OK){
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);
+        return;
+    }
+
     s->connection->read->handler = ngx_tcp_proxy_handler;
     s->connection->write->handler = ngx_tcp_proxy_handler;
 
-    pctx->upstream->connection->read->handler = ngx_tcp_proxy_handler;
-    pctx->upstream->connection->write->handler = ngx_tcp_proxy_handler;
+    c->read->handler = ngx_tcp_proxy_handler;
+    c->write->handler = ngx_tcp_proxy_handler;
 
     ngx_add_timer(s->connection->read, pcf->timeout);
-    ngx_add_timer(pctx->upstream->connection->read, pcf->upstream.read_timeout);
-    ngx_add_timer(pctx->upstream->connection->write, pcf->upstream.send_timeout);
-
-    c->log->action = "ngx_tcp_proxy_handler";
+    ngx_add_timer(c->read, pcf->upstream.read_timeout);
+    ngx_add_timer(c->write, pcf->upstream.send_timeout);
 
     ngx_tcp_proxy_handler(s->connection->read);
 
@@ -167,6 +179,13 @@ ngx_tcp_proxy_generic_handler(ngx_event_t *rev) {
 
     if (pcf == NULL || pctx == NULL) {
         ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    pctx->upstream = &s->upstream->peer;
+
+    if (ngx_tcp_upstream_check_broken_connection(s) != NGX_OK){
+        ngx_tcp_upstream_next(s, s->upstream, NGX_TCP_UPSTREAM_FT_ERROR);
         return;
     }
 
@@ -370,15 +389,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
     if (ev->timedout) {
         c->log->action = "proxying";
 
-        if (c == s->connection) {
-            ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT,
-                    "client timed out");
-            c->timedout = 1;
-
-        } else {
-            ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT,
-                    "upstream timed out");
-        }
+        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "proxy timed out");
+        c->timedout = 1;
 
         ngx_tcp_finalize_session(s);
         return;
@@ -443,7 +455,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
                 ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler send:%d", n);
 
                 if (n == NGX_ERROR) {
-                    ngx_log_error(NGX_LOG_INFO, c->log, 0, "send error: proxied session done");
+                    ngx_log_error(NGX_LOG_INFO, c->log, 0, "proxy send error");
                     ngx_tcp_finalize_session(s);
                     return;
                 }
@@ -536,6 +548,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
             ngx_add_timer(c->write, pcf->upstream.send_timeout);
         }
     }
+
+    return;
 }
 
 static char *
