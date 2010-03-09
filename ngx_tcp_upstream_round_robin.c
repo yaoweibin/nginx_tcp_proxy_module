@@ -56,6 +56,19 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
                 peers->peer[n].down = server[i].down;
                 peers->peer[n].weight = server[i].down ? 0 : server[i].weight;
                 peers->peer[n].current_weight = peers->peer[n].weight;
+
+                if (!server[i].down && us->check_interval) {
+                    peers->peer[n].check_index = 
+                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j]);
+
+                    if (peers->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
+                        return NGX_ERROR;
+                    }
+                }
+                else {
+                    peers->peer[n].check_index = (ngx_uint_t) NGX_ERROR;
+                }
+
                 n++;
             }
         }
@@ -109,6 +122,18 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
                 backup->peer[n].max_fails = server[i].max_fails;
                 backup->peer[n].fail_timeout = server[i].fail_timeout;
                 backup->peer[n].down = server[i].down;
+                if (!server[i].down && us->check_interval) {
+                    backup->peer[n].check_index = 
+                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j]);
+
+                    if (backup->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
+                        return NGX_ERROR;
+                    }
+                }
+                else {
+                    backup->peer[n].check_index = (ngx_uint_t) NGX_ERROR;
+                }
+
                 n++;
             }
         }
@@ -403,10 +428,11 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
             for ( ;; ) {
                 rrp->current = ngx_tcp_upstream_get_peer(rrp->peers);
 
-                ngx_log_debug2(NGX_LOG_DEBUG_TCP, pc->log, 0,
-                               "get rr peer, current: %ui %i",
+                ngx_log_debug3(NGX_LOG_DEBUG_TCP, pc->log, 0,
+                               "get rr peer, current: %ui %i, tries: %ui",
                                rrp->current,
-                               rrp->peers->peer[rrp->current].current_weight);
+                               rrp->peers->peer[rrp->current].current_weight,
+                               pc->tries);
 
                 n = rrp->current / (8 * sizeof(uintptr_t));
                 m = (uintptr_t) 1 << rrp->current % (8 * sizeof(uintptr_t));
@@ -416,15 +442,17 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 
                     if (!peer->down) {
 
-                        if (peer->max_fails == 0
-                            || peer->fails < peer->max_fails)
-                        {
-                            break;
-                        }
+                        if (!ngx_tcp_check_peer_down(peer->check_index)) {
+                            if (peer->max_fails == 0
+                                    || peer->fails < peer->max_fails)
+                            {
+                                break;
+                            }
 
-                        if (now - peer->accessed > peer->fail_timeout) {
-                            peer->fails = 0;
-                            break;
+                            if (now - peer->accessed > peer->fail_timeout) {
+                                peer->fails = 0;
+                                break;
+                            }
                         }
 
                         peer->current_weight = 0;
@@ -464,15 +492,18 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 
                     if (!peer->down) {
 
-                        if (peer->max_fails == 0
-                            || peer->fails < peer->max_fails)
-                        {
-                            break;
-                        }
+                        if (ngx_tcp_check_peer_down(peer->check_index)) {
+                            
+                            if (peer->max_fails == 0
+                                    || peer->fails < peer->max_fails)
+                            {
+                                break;
+                            }
 
-                        if (now - peer->accessed > peer->fail_timeout) {
-                            peer->fails = 0;
-                            break;
+                            if (now - peer->accessed > peer->fail_timeout) {
+                                peer->fails = 0;
+                                break;
+                            }
                         }
 
                         peer->current_weight = 0;
@@ -529,6 +560,8 @@ failed:
 
     peers = rrp->peers;
 
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, pc->log, 0, "backup servers1");
+
     if (peers->next) {
 
         /* ngx_unlock_mutex(peers->mutex); */
@@ -558,6 +591,7 @@ failed:
         peers->peer[i].fails = 0;
     }
 
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, pc->log, 0, "backup servers2");
     /* ngx_unlock_mutex(peers->mutex); */
 
     pc->name = peers->name;

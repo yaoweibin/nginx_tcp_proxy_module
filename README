@@ -23,6 +23,7 @@ Synopsis
 
             # ip_hash 
             #ip_hash;
+            check interval=3000 rise=2 fall=5 timeout=500;
         }
 
         server {
@@ -53,9 +54,7 @@ Installation
         $ make install
 
 TODO
-    *  test script 
-    *  health check 
-    *  failover 
+    *  health check, more method 
 
 Known Issues
     *  test

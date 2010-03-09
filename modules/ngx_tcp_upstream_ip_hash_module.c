@@ -172,14 +172,16 @@ ngx_tcp_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
             /* ngx_lock_mutex(iphp->rrp.peers->mutex); */
 
             if (!peer->down) {
+                if (!ngx_tcp_check_peer_down(peer->check_index)) {
 
-                if (peer->max_fails == 0 || peer->fails < peer->max_fails) {
-                    break;
-                }
+                    if (peer->max_fails == 0 || peer->fails < peer->max_fails) {
+                        break;
+                    }
 
-                if (now - peer->accessed > peer->fail_timeout) {
-                    peer->fails = 0;
-                    break;
+                    if (now - peer->accessed > peer->fail_timeout) {
+                        peer->fails = 0;
+                        break;
+                    }
                 }
             }
 

@@ -22,6 +22,8 @@ typedef struct {
     ngx_uint_t                      max_fails;
     time_t                          fail_timeout;
 
+    ngx_uint_t                      check_index;
+
     ngx_uint_t                      down;          /* unsigned  down:1; */
 
 #if (NGX_TCP_SSL)
