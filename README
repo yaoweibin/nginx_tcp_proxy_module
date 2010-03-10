@@ -13,6 +13,15 @@ Status
 
 Synopsis
 
+    http {
+
+        listen 80;
+
+        location /status {
+            check_status;
+        }
+    }
+
     tcp {
         ...
 

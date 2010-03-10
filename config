@@ -14,6 +14,7 @@ if [ $ngx_found = yes ]; then
     TCP_CORE_MODULES="ngx_tcp_module ngx_tcp_core_module ngx_tcp_upstream_module"
     TCP_MODULES="ngx_tcp_proxy_module ngx_tcp_upstream_ip_hash_module"
     EVENT_MODULES="$EVENT_MODULES $TCP_CORE_MODULES $TCP_MODULES"
+    HTTP_MODULES="$HTTP_MODULES ngx_tcp_upstream_check_status_module"
     NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_feature_deps"
     NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_src"
 else 

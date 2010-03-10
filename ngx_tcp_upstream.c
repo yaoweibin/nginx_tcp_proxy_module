@@ -2,7 +2,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_tcp.h>
-
+#include <ngx_http.h>
 
 /* ngx_spinlock is defined without a matching unlock primitive */
 #define ngx_spinlock_unlock(lock)       (void) ngx_atomic_cmp_set(lock, ngx_pid, 0)
@@ -24,6 +24,9 @@ static char *ngx_tcp_upstream_init_main_conf(ngx_conf_t *cf, void *conf);
 static ngx_int_t ngx_tcp_check_get_shm_name(ngx_str_t *shm_name, ngx_pool_t *pool);
 static ngx_int_t ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data);
 static ngx_int_t ngx_tcp_check_init_process(ngx_cycle_t *cycle);
+
+static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
+        ngx_command_t *cmd, void *conf);
 
 static ngx_command_t  ngx_tcp_upstream_commands[] = {
 
@@ -69,7 +72,6 @@ static ngx_tcp_module_t  ngx_tcp_upstream_module_ctx = {
     NULL,                                  /* merge server configuration */
 };
 
-
 ngx_module_t  ngx_tcp_upstream_module = {
     NGX_MODULE_V1,
     &ngx_tcp_upstream_module_ctx,         /* module context */
@@ -84,6 +86,49 @@ ngx_module_t  ngx_tcp_upstream_module = {
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
+
+
+static ngx_command_t  ngx_tcp_upstream_check_status_commands[] = {
+
+    { ngx_string("check_status"),
+      NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_NOARGS,
+      ngx_tcp_upstream_check_status_set_status,
+      0,
+      0,
+      NULL },
+
+      ngx_null_command
+};
+
+static ngx_http_module_t  ngx_tcp_upstream_check_status_module_ctx = {
+    NULL,                                  /* preconfiguration */
+    NULL,                                  /* postconfiguration */
+
+    NULL,                                  /* create main configuration */
+    NULL,                                  /* init main configuration */
+
+    NULL,                                  /* create server configuration */
+    NULL,                                  /* merge server configuration */
+
+    NULL,                                  /* create location configuration */
+    NULL                                   /* merge location configuration */
+};
+
+ngx_module_t  ngx_tcp_upstream_check_status_module = {
+    NGX_MODULE_V1,
+    &ngx_tcp_upstream_check_status_module_ctx, /* module context */
+    ngx_tcp_upstream_check_status_commands,    /* module directives */
+    NGX_HTTP_MODULE,                           /* module type */
+    NULL,                                      /* init master */
+    NULL,                                      /* init module */
+    NULL,                                      /* init process */
+    NULL,                                      /* init thread */
+    NULL,                                      /* exit thread */
+    NULL,                                      /* exit process */
+    NULL,                                      /* exit master */
+    NGX_MODULE_V1_PADDING
+};
+
 
 static ngx_uint_t ngx_tcp_check_shm_generation = 0;
 static ngx_tcp_check_peers_conf_t *check_peers_ctx = NULL;
@@ -433,6 +478,8 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
 
     if (ft_type != NGX_TCP_UPSTREAM_FT_NOLIVE) {
         u->peer.free(&u->peer, u->peer.data, state);
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, NGX_ETIMEDOUT,
+                      "upstream no alive");
     }
 
     if (ft_type == NGX_TCP_UPSTREAM_FT_TIMEOUT) {
@@ -685,7 +732,8 @@ ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy) {
     u.host = value[1];
     u.no_resolve = 1;
 
-    uscf = ngx_tcp_upstream_add(cf, &u, NGX_TCP_UPSTREAM_CREATE
+    uscf = ngx_tcp_upstream_add(cf, &u, 
+            NGX_TCP_UPSTREAM_CREATE
             |NGX_TCP_UPSTREAM_WEIGHT
             |NGX_TCP_UPSTREAM_MAX_FAILS
             |NGX_TCP_UPSTREAM_FAIL_TIMEOUT
@@ -919,7 +967,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
     ngx_tcp_upstream_srv_conf_t  *uscf = conf;
     ngx_str_t *value, s;
-    ngx_uint_t i, rise, fall;
+    ngx_uint_t i, rise, fall, type;
     ngx_msec_t interval, timeout;
 
     /*set default*/
@@ -927,6 +975,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     fall = 5;
     interval = 0;
     timeout = 500;
+    type = NGX_TCP_CHECK_TCP;
 
     value = cf->args->elts;
 
@@ -938,7 +987,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
             if (ngx_strncmp(s.data, "tcp", s.len) == 0) {
 
-                uscf->check_type = NGX_TCP_CHECK_TCP;
+                type = NGX_TCP_CHECK_TCP;
 
                 continue;
             }
@@ -998,6 +1047,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
         goto invalid_check_parameter;
     }
 
+    uscf->check_type = type;
     uscf->check_interval = interval;
     uscf->check_timeout = timeout;
     uscf->fall_count = fall;
@@ -1066,7 +1116,9 @@ ngx_tcp_upstream_init_main_conf(ngx_conf_t *cf, void *conf) {
             return NGX_CONF_ERROR;
         }
 
+        /*the default check shmare memory size*/
         shm_size = (umcf->upstreams.nelts + 1 )* ngx_pagesize;
+
         shm_size = shm_size < umcf->check_shm_size ? umcf->check_shm_size : shm_size;
 
         shm_zone = ngx_shared_memory_add(cf, shm_name, shm_size, &ngx_tcp_upstream_module);
@@ -1120,9 +1172,9 @@ ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
     peers_conf = &umcf->peers_conf;
 
     peer_conf = ngx_array_push(&peers_conf->peers);
+    peer_conf->index = peers_conf->peers.nelts - 1;
     peer_conf->conf = uscf;
     peer_conf->peer = peer;
-    peer_conf->index = peers_conf->peers.nelts - 1;
 
     return peer_conf->index;
 }
@@ -1250,8 +1302,9 @@ ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf) {
 
     ngx_close_connection(c);
 
-    if (peer_conf->check_timeout_ev.timer_set) 
+    if (peer_conf->check_timeout_ev.timer_set) {
         ngx_del_timer(&peer_conf->check_timeout_ev);
+    }
 
     ngx_spinlock(&peer_conf->shm->lock, ngx_pid, 1024);
 
@@ -1404,12 +1457,7 @@ ngx_tcp_check_peek_handler(ngx_event_t *event) {
     if (n >= 0 || err == NGX_EAGAIN) {
         ngx_tcp_check_status_update(peer_conf, 1);
     }
-
-    if (n == -1) {
-        if (err == NGX_EAGAIN) {
-            ngx_tcp_check_status_update(peer_conf, 1);
-        }
-
+    else {
         c->error = 1;
         ngx_tcp_check_status_update(peer_conf, 0);
     }
@@ -1459,11 +1507,13 @@ ngx_tcp_check_connect_handler(ngx_event_t *event) {
     c = peer_conf->pc.connection;
     c->data = peer_conf;
     c->log = peer_conf->pc.log;
-    c->write->handler = ngx_tcp_check_peek_handler;
-    c->read->handler = ngx_tcp_check_dummy_handler;
     c->sendfile = 0;
     c->read->log = c->log;
     c->write->log = c->log;
+
+    /*different check_type, differe handler */
+    c->write->handler = ngx_tcp_check_peek_handler;
+    c->read->handler = ngx_tcp_check_dummy_handler;
 
     ngx_add_timer(&peer_conf->check_timeout_ev, uscf->check_timeout);
 }
@@ -1481,8 +1531,10 @@ ngx_tcp_check_begin_handler(ngx_event_t *event) {
     peer_conf = event->data;
     uscf = peer_conf->conf;
 
+    /*Add 100ms to fine adjust the timer*/
     ngx_add_timer(event, uscf->check_interval + 100);
 
+    /*This process are processing the event now.*/
     if (peer_conf->shm->owner == ngx_pid) {
         return;
     }
@@ -1556,7 +1608,9 @@ ngx_tcp_check_init_process(ngx_cycle_t *cycle) {
         peer_conf[i].check_timeout_ev.timer_set = 0;
 
         uscf = peer_conf[i].conf;
-        /* default delay interval is 1 second. */
+
+        /* Default delay interval is 1 second. 
+           I don't want to trigger the check event too close. */
         delay = uscf->check_interval > 1000 ? uscf->check_interval : 1000;
         t = ngx_random() % delay;
 
@@ -1564,4 +1618,111 @@ ngx_tcp_check_init_process(ngx_cycle_t *cycle) {
     }
 
     return NGX_OK;
+}
+
+static ngx_int_t 
+ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) {
+
+    ngx_int_t          rc;
+    ngx_uint_t         i;
+    ngx_buf_t         *b;
+    ngx_str_t          shm_name;
+    ngx_chain_t        out;
+    ngx_shm_zone_t    *shm_zone;
+    ngx_tcp_check_peers_conf_t    *peers_conf;
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+    ngx_tcp_check_peers_shm_t     *peers_shm;
+    ngx_tcp_check_peer_shm_t      *peer_shm;
+
+
+    if (r->method != NGX_HTTP_GET && r->method != NGX_HTTP_HEAD) {
+        return NGX_HTTP_NOT_ALLOWED;
+    }
+
+    rc = ngx_http_discard_request_body(r);
+
+    if (rc != NGX_OK) {
+        return rc;
+    }
+
+    r->headers_out.content_type.len = sizeof("text/plain") - 1;
+    r->headers_out.content_type.data = (u_char *) "text/plain";
+
+    if (r->method == NGX_HTTP_HEAD) {
+        r->headers_out.status = NGX_HTTP_OK;
+
+        rc = ngx_http_send_header(r);
+
+        if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+            return rc;
+        }
+    }
+
+    if (ngx_tcp_check_get_shm_name(&shm_name, r->pool) == NGX_ERROR) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    shm_zone = ngx_shared_memory_find((ngx_cycle_t *)ngx_cycle, &shm_name, 
+            &ngx_tcp_upstream_module);
+
+    if (shm_zone == NULL || shm_zone->data == NULL) {
+
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "[tcp upstream check] can not find the shared memory zone \"%V\" ", &shm_name);
+
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    peers_conf = shm_zone->data;
+    peers_shm = peers_conf->peers_shm;
+
+    peer_conf = peers_conf->peers.elts;
+    peer_shm = peers_shm->peers;
+
+    b = ngx_create_temp_buf(r->pool, ngx_pagesize);
+    if (b == NULL) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    out.buf = b;
+    out.next = NULL;
+
+    b->last = ngx_sprintf(b->last, 
+            "check upstream server number: %ui\n\n",
+            peers_conf->peers.nelts);
+
+    for (i = 0; i < peers_conf->peers.nelts; i++) {
+
+        b->last = ngx_sprintf(b->last, 
+                "server %ui: name=%V, down=%ui, rise=%ui, fall=%ui\n",
+                i, &peer_conf[i].peer->name, peer_shm[i].down, 
+                peer_shm[i].rise_count, peer_shm[i].fall_count);
+    }
+
+    r->headers_out.status = NGX_HTTP_OK;
+    r->headers_out.content_length_n = b->last - b->pos;
+
+    b->last_buf = 1;
+
+    rc = ngx_http_send_header(r);
+
+    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+        return rc;
+    }
+
+    return ngx_http_output_filter(r, &out);
+}
+
+static char *
+ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
+        ngx_command_t *cmd, void *conf) {
+
+    ngx_http_core_loc_conf_t                *clcf;
+    ngx_str_t                               *value;
+
+    value = cf->args->elts;
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+    clcf->handler = ngx_tcp_upstream_check_status_handler;
+
+    return NGX_CONF_OK;
 }
