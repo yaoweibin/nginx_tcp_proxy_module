@@ -13,7 +13,7 @@ typedef struct ngx_tcp_proxy_conf_s {
     size_t      buffer_size;
     ngx_msec_t  timeout;
 
-    /*support for the variable in the proxy_pass*/
+    /*TODO: support for the variable in the proxy_pass*/
     ngx_array_t *proxy_lengths;
     ngx_array_t *proxy_values;
 } ngx_tcp_proxy_conf_t;
@@ -151,60 +151,6 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
     return;
 }
 
-/*static void */
-/*ngx_tcp_proxy_generic_handler(ngx_event_t *rev) {*/
-
-/*ngx_connection_t       *c;*/
-/*ngx_tcp_session_t      *s;*/
-/*ngx_tcp_proxy_conf_t  *pcf;*/
-/*ngx_tcp_proxy_ctx_t   *pctx;*/
-
-/*c = rev->data;*/
-/*s = c->data;*/
-
-/*if (rev->timedout) {*/
-/*c->timedout = 1;*/
-/*ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT,*/
-/*"upstream timed out");*/
-/*ngx_tcp_finalize_session(s);*/
-/*return;*/
-/*}*/
-
-/*ngx_log_debug0(NGX_LOG_DEBUG_TCP, rev->log, 0, "tcp proxy init proxy");*/
-
-/*pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);*/
-
-/*pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_proxy_module);*/
-
-/*if (pcf == NULL || pctx == NULL) {*/
-/*ngx_tcp_finalize_session(s);*/
-/*return;*/
-/*}*/
-
-/*pctx->upstream = &s->upstream->peer;*/
-
-/*if (ngx_tcp_upstream_check_broken_connection(s) != NGX_OK){*/
-/*ngx_tcp_upstream_next(s, s->upstream, NGX_TCP_UPSTREAM_FT_ERROR);*/
-/*return;*/
-/*}*/
-
-/*s->connection->read->handler = ngx_tcp_proxy_handler;*/
-/*s->connection->write->handler = ngx_tcp_proxy_handler;*/
-
-/*pctx->upstream->connection->read->handler = ngx_tcp_proxy_handler;*/
-/*pctx->upstream->connection->write->handler = ngx_tcp_proxy_handler;*/
-
-/*ngx_add_timer(s->connection->read, pcf->timeout);*/
-/*ngx_add_timer(pctx->upstream->connection->read, pcf->upstream.read_timeout);*/
-/*ngx_add_timer(pctx->upstream->connection->write, pcf->upstream.send_timeout);*/
-
-/*c->log->action = "ngx_tcp_proxy_handler";*/
-
-/*ngx_tcp_proxy_handler(s->connection->read);*/
-
-/*return;*/
-/*}*/
-
 void 
 ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) {
 
@@ -267,8 +213,6 @@ ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) {
 
     p->upstream = &u->peer;
 
-    /*s->connection->read->handler = ngx_tcp_proxy_generic_handler;*/
-
     p->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
     if (p->buffer == NULL) {
         ngx_tcp_finalize_session(s);
@@ -277,19 +221,8 @@ ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) {
 
     s->out.len = 0;
 
-    /*if (ngx_handle_read_event(s->connection->read, 0) != NGX_OK) {*/
-    /*ngx_tcp_finalize_session(s);*/
-    /*return;*/
-    /*}*/
-
     ngx_tcp_upstream_init(s);
 
-    /**//*upstream init fail*/
-    /*if (u-> u->peer.connection->fd <= 0) {*/
-    /*return;*/
-    /*}*/
-
-    /*upstream init ok*/
     return;
 }
 

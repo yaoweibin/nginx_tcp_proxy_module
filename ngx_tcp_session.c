@@ -176,6 +176,7 @@ ngx_tcp_init_session(ngx_connection_t *c)
 
     c->write->handler = ngx_tcp_send;
 
+    /*Maybe I'll add more handler module in the future*/
     ngx_tcp_proxy_init_session(c, s);
 
 	/*cscf->protocol->init_session(s, c);*/

@@ -429,18 +429,6 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
     /*u->state->peer = u->peer.name;*/
 
-    /*if (rc == NGX_BUSY) {*/
-    /*ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, "no live upstreams");*/
-    /*ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_NOLIVE);*/
-    /*return;*/
-    /*}*/
-
-    /*if (rc == NGX_DECLINED) {*/
-    /*ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);*/
-    /*return;*/
-    /*}*/
-
-
     /* rc == NGX_OK || rc == NGX_AGAIN */
 
     c = u->peer.connection;
@@ -493,7 +481,7 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
     }
 
     if (u->peer.cached && ft_type == NGX_TCP_UPSTREAM_FT_ERROR) {
-
+        /*TODO: cached*/
     }
     else {
         if (u->peer.tries == 0) {
@@ -588,12 +576,6 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
                 "tcp upstream temp fd: %d",
                 u->pipe->temp_file->file.fd);
     }
-
-    /*if (u->header_sent*/
-    /*&& (rc == NGX_ERROR))*/
-    /*{*/
-    /*rc = 0;*/
-    /*}*/
 
     if (rc == NGX_DECLINED || rc == NGX_DONE) {
         return;
@@ -781,7 +763,6 @@ ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy) {
         }
 
     }
-
 
     /* parse inside upstream{} */
 
@@ -973,7 +954,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     /*set default*/
     rise = 2;
     fall = 5;
-    interval = 0;
+    interval = 30000;
     timeout = 500;
     type = NGX_TCP_CHECK_TCP;
 

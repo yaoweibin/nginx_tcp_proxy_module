@@ -41,6 +41,7 @@
 
 typedef struct ngx_tcp_upstream_srv_conf_s  ngx_tcp_upstream_srv_conf_t;
 
+
 typedef struct {
     ngx_msec_t                       bl_time;
     ngx_uint_t                       bl_state;
@@ -99,7 +100,6 @@ typedef struct {
 } ngx_tcp_check_peers_conf_t;
 
 typedef struct {
-    /*ngx_hash_t                       headers_in_hash;*/
     ngx_uint_t                       check_shm_size;
     ngx_tcp_check_peers_conf_t       peers_conf;
     ngx_array_t                      upstreams; /* ngx_tcp_upstream_srv_conf_t */
@@ -114,7 +114,7 @@ typedef ngx_int_t (*ngx_tcp_upstream_init_peer_pt)(ngx_tcp_session_t *s,
 typedef struct {
     ngx_tcp_upstream_init_pt        init_upstream;
     ngx_tcp_upstream_init_peer_pt   init;
-    void                            *data;
+    void                           *data;
 } ngx_tcp_upstream_peer_t;
 
 typedef struct {
@@ -141,7 +141,7 @@ typedef struct {
 #define NGX_TCP_UPSTREAM_MAX_BUSY      0x0080
 
 
-
+/*TODO: add more check method*/
 #define NGX_TCP_CHECK_TCP              0x0001
 #define NGX_TCP_CHECK_HTTP             0x0002
 #define NGX_TCP_CHECK_SSL              0x0004
@@ -160,11 +160,11 @@ struct ngx_tcp_upstream_srv_conf_s {
     in_port_t                        default_port;
 
 
-    ngx_uint_t                      fall_count;
-    ngx_uint_t                      rise_count;
-    ngx_msec_t                      check_interval;
-    ngx_msec_t                      check_timeout;
-    ngx_uint_t                      check_type;
+    ngx_uint_t                       fall_count;
+    ngx_uint_t                       rise_count;
+    ngx_msec_t                       check_interval;
+    ngx_msec_t                       check_timeout;
+    ngx_uint_t                       check_type;
 };
 
 
@@ -176,23 +176,23 @@ typedef struct {
     ngx_msec_t                       read_timeout;
     ngx_msec_t                       timeout;
 
-    size_t                           send_lowat;
-    size_t                           buffer_size;
+    /*size_t                           send_lowat;*/
+    /*size_t                           buffer_size;*/
 
-    size_t                           busy_buffers_size;
-    size_t                           max_temp_file_size;
-    size_t                           temp_file_write_size;
+    /*size_t                           busy_buffers_size;*/
+    /*size_t                           max_temp_file_size;*/
+    /*size_t                           temp_file_write_size;*/
 
-    size_t                           busy_buffers_size_conf;
-    size_t                           max_temp_file_size_conf;
-    size_t                           temp_file_write_size_conf;
+    /*size_t                           busy_buffers_size_conf;*/
+    /*size_t                           max_temp_file_size_conf;*/
+    /*size_t                           temp_file_write_size_conf;*/
 
-    ngx_bufs_t                       bufs;
+    /*ngx_bufs_t                       bufs;*/
 
     /*ngx_uint_t                       ignore_headers;*/
-    ngx_uint_t                       next_upstream;
-    ngx_uint_t                       store_access;
-    ngx_flag_t                       buffering;
+    /*ngx_uint_t                       next_upstream;*/
+    /*ngx_uint_t                       store_access;*/
+    /*ngx_flag_t                       buffering;*/
     /*ngx_flag_t                       pass_request_headers;*/
     /*ngx_flag_t                       pass_request_body;*/
 
@@ -200,7 +200,7 @@ typedef struct {
     /*ngx_flag_t                       intercept_errors;*/
     /*ngx_flag_t                       cyclic_temp_file;*/
 
-    ngx_path_t                      *temp_path;
+    /*ngx_path_t                      *temp_path;*/
 
     /*ngx_hash_t                       hide_headers_hash;*/
     /*ngx_array_t                     *hide_headers;*/
@@ -219,14 +219,14 @@ typedef struct {
     ngx_array_t                     *store_lengths;
     ngx_array_t                     *store_values;
 
-    signed                           store:2;
-    unsigned                         intercept_404:1;
-    unsigned                         change_buffering:1;
+    /*signed                           store:2;*/
+    /*unsigned                         intercept_404:1;*/
+    /*unsigned                         change_buffering:1;*/
 
-#if (NGX_TCP_SSL)
-    ngx_ssl_t                       *ssl;
-    ngx_flag_t                       ssl_session_reuse;
-#endif
+    /*#if (NGX_TCP_SSL)*/
+    /*ngx_ssl_t                       *ssl;*/
+    /*ngx_flag_t                       ssl_session_reuse;*/
+    /*#endif*/
 
 } ngx_tcp_upstream_conf_t;
 
@@ -302,10 +302,10 @@ struct ngx_tcp_upstream_s {
 
     ngx_event_pipe_t                *pipe;
 
-    ngx_chain_t                     *request_bufs;
+    /*ngx_chain_t                     *request_bufs;*/
 
-    ngx_output_chain_ctx_t           output;
-    ngx_chain_writer_ctx_t           writer;
+    /*ngx_output_chain_ctx_t           output;*/
+    /*ngx_chain_writer_ctx_t           writer;*/
 
     ngx_tcp_upstream_conf_t        *conf;
 
@@ -313,12 +313,12 @@ struct ngx_tcp_upstream_s {
 
     ngx_tcp_upstream_resolved_t    *resolved;
 
-    ngx_buf_t                        buffer;
-    size_t                           length;
+    /*ngx_buf_t                        buffer;*/
+    /*size_t                           length;*/
 
-    ngx_chain_t                     *out_bufs;
-    ngx_chain_t                     *busy_bufs;
-    ngx_chain_t                     *free_bufs;
+    /*ngx_chain_t                     *out_bufs;*/
+    /*ngx_chain_t                     *busy_bufs;*/
+    /*ngx_chain_t                     *free_bufs;*/
 
     ngx_int_t                      (*input_filter_init)(void *data);
     ngx_int_t                      (*input_filter)(void *data, ssize_t bytes);
@@ -331,12 +331,10 @@ struct ngx_tcp_upstream_s {
     ngx_int_t                      (*reinit_request)(ngx_tcp_session_t *r);
     ngx_int_t                      (*process_header)(ngx_tcp_session_t *r);
     void                           (*abort_request)(ngx_tcp_session_t *r);
-    void                           (*finalize_request)(ngx_tcp_session_t *r,
-            ngx_int_t rc);
-    ngx_int_t                      (*rewrite_redirect)(ngx_tcp_session_t *r,
-            ngx_table_elt_t *h, size_t prefix);
+    void                           (*finalize_request)(ngx_tcp_session_t *r, ngx_int_t rc);
+    ngx_int_t                      (*rewrite_redirect)(ngx_tcp_session_t *r, ngx_table_elt_t *h, size_t prefix);
 
-    ngx_msec_t                       timeout;
+    /*ngx_msec_t                       timeout;*/
 
     ngx_tcp_upstream_state_t       *state;
 
@@ -346,10 +344,10 @@ struct ngx_tcp_upstream_s {
 
     ngx_tcp_cleanup_pt             *cleanup;
 
-    unsigned                         store:1;
-    unsigned                         cacheable:1;
-    unsigned                         accel:1;
-    unsigned                         ssl:1;
+    /*unsigned                         store:1;*/
+    /*unsigned                         cacheable:1;*/
+    /*unsigned                         accel:1;*/
+    /*unsigned                         ssl:1;*/
     /*#if (NGX_TCP_CACHE)*/
     /*unsigned                         cache_status:3;*/
     /*#endif*/
