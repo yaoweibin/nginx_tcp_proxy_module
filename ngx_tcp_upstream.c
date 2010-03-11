@@ -166,12 +166,12 @@ ngx_tcp_upstream_init(ngx_tcp_session_t *s) {
     ngx_str_t                      *host;
     ngx_uint_t                      i;
     ngx_connection_t               *c;
-    ngx_tcp_cleanup_t             *cln;
-    ngx_tcp_upstream_t            *u;
-    ngx_tcp_core_srv_conf_t       *cscf;
+    ngx_tcp_cleanup_t              *cln;
     ngx_resolver_ctx_t             *ctx, temp;
-    ngx_tcp_upstream_srv_conf_t   *uscf, **uscfp;
-    ngx_tcp_upstream_main_conf_t  *umcf;
+    ngx_tcp_upstream_t             *u;
+    ngx_tcp_core_srv_conf_t        *cscf;
+    ngx_tcp_upstream_srv_conf_t    *uscf, **uscfp;
+    ngx_tcp_upstream_main_conf_t   *umcf;
 
     c = s->connection;
 
@@ -395,12 +395,6 @@ ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s) {
         return NGX_OK;
     }
 
-    if (n == -1) {
-        if (err == NGX_EAGAIN) {
-            return NGX_OK;
-        }
-    }
-
     c->error = 1;
 
     return NGX_ERROR;
@@ -423,6 +417,8 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp upstream connect: %d", rc);
 
     if (rc != NGX_OK && rc != NGX_AGAIN) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, 
+                "upstream servers error or busy!", rc);
         ngx_tcp_upstream_finalize_session(s, u, 0);
         return;
     }
@@ -464,12 +460,6 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
 
     state = NGX_PEER_FAILED;
 
-    if (ft_type != NGX_TCP_UPSTREAM_FT_NOLIVE) {
-        u->peer.free(&u->peer, u->peer.data, state);
-        ngx_log_error(NGX_LOG_ERR, s->connection->log, NGX_ETIMEDOUT,
-                      "upstream no alive");
-    }
-
     if (ft_type == NGX_TCP_UPSTREAM_FT_TIMEOUT) {
         ngx_log_error(NGX_LOG_ERR, s->connection->log, NGX_ETIMEDOUT,
                       "upstream timed out");
@@ -480,14 +470,9 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
         return;
     }
 
-    if (u->peer.cached && ft_type == NGX_TCP_UPSTREAM_FT_ERROR) {
-        /*TODO: cached*/
-    }
-    else {
-        if (u->peer.tries == 0) {
-            ngx_tcp_upstream_finalize_session(s, u, 0);
-            return;
-        }
+    if (u->peer.tries == 0) {
+        ngx_tcp_upstream_finalize_session(s, u, 0);
+        return;
     }
 
     if (u->peer.connection) {
@@ -1273,6 +1258,7 @@ ngx_shared_memory_find(ngx_cycle_t *cycle, ngx_str_t *name, void *tag)
 
 static void 
 ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf) {
+
     ngx_connection_t *c;
 
     c = peer_conf->pc.connection;
@@ -1669,8 +1655,8 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) {
     out.next = NULL;
 
     b->last = ngx_sprintf(b->last, 
-            "check upstream server number: %ui\n\n",
-            peers_conf->peers.nelts);
+            "check upstream server number: %ui, shm_name: %V\n\n",
+            peers_conf->peers.nelts, &shm_name);
 
     for (i = 0; i < peers_conf->peers.nelts; i++) {
 
@@ -1702,7 +1688,9 @@ ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf,
     ngx_str_t                               *value;
 
     value = cf->args->elts;
+
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+
     clcf->handler = ngx_tcp_upstream_check_status_handler;
 
     return NGX_CONF_OK;

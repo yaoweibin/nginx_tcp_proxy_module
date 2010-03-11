@@ -1,5 +1,5 @@
 Name
-    nginx_tcp_proxy_module
+    nginx_tcp_proxy_module - support TCP proxy with Nginx
 
 Status
     This module is at its very early phase of development and
@@ -38,6 +38,8 @@ Synopsis
         }
 
         server {
+            listen 8888;
+
             proxy_pass cluster;
         }
     }
@@ -46,7 +48,7 @@ Description
     This module actually include many modules: ngx_tcp_module,
     ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module,
     ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the
-    support of TCP proxy with Nginx. I alse add other features: ip_hash,
+    support of TCP proxy with Nginx. I also add other features: ip_hash,
     upstream server health check, status monitor.
 
     The motivation of writing these modules is Nginx's high performance and
@@ -63,13 +65,14 @@ Directives
     context: main
     description: All the tcp related directives are contained in the tcp block.
 
+
     =ngx_tcp_core_moodule=
 
     ==server==
     syntax: server {...}
     default: none
     context: tcp
-    description: All the sepcific server directives are contained in the server block.
+    description: All the specific server directives are contained in the server block.
 
     ==listen==
     syntax: listen address:port [ bind ]
@@ -101,7 +104,7 @@ Directives
     syntax: resolver address
     default: none
     context: tcp, server
-    description: TODO
+    description: DNS server
 
     ==resolver_timeout==
     syntax: resolver_timeout time
@@ -117,14 +120,14 @@ Directives
     default: none
     context: tcp
     description: All the upstream directives are contained in this  block. The
-    upstream server will be dispatch with round robin by default.
+    upstream server will be dispatched with round robin by default. 
 
     ==server==
     syntax: server name [parameters]
     default: none
     context: upstream
-    description: Most part are the same as
-    'http://wiki.nginx.org/NginxHttpUpstreamModule#server'.
+    description: Most of the parameters are the same as
+    'http://wiki.nginx.org/NginxHttpUpstreamModule#server'. Default port is 80.
 
     ==check==
     syntax: check interval=milliseconds [fall=count] [rise=count]
@@ -132,24 +135,31 @@ Directives
     default: none, if parameters omitted, default parameters are 'interval=30000
     fall=5 rise=2 timeout=500'
     context: upstream
-    description: Add the health check for the upstream servers.
-    interval: the check request's interval time
-    fall(fall_count): After fall_count check failures, the server is marked down.
-    rise(rise_count): After rise_count count check success, the server is marked up.
-    timeout: the check request's timeout.
+    description: Add the health check for the upstream servers. At present, the
+    check method is a simple tcp connect.
+    The parameters' meanings are:
+        interval: the check request's interval time.
+        fall(fall_count): After fall_count check failures, the server is marked
+                          down. 
+        rise(rise_count): After rise_count check success, the server is marked
+                          up. 
+        timeout: the check request's timeout.
 
     ==check_shm_size==
     syntax: check_shm_size size
-    default: (number_of_upstream + 1) * pagesize
+    default: (number_of_checked_upstream_blocks + 1) * pagesize
     context: tcp
-    description: If you set hundreds of serveres in a upstream. The shared memory
-    for health check may be not enough, you can enlarged it by this directive.
-
+    description: If you store hundreds of serveres in one upstream block. The
+    shared memory for health check may be not enough, you can enlarged it by
+    this directive.
+   
     ==check_status==
     syntax: check_status
     default: none
     context: location 
-    description: display the health checking servers' status by HTTP.
+    description: Display the health checking servers' status by HTTP. This
+    directive is set in the http block.
+
 
     =ngx_tcp_upstream_ip_hash_module=
 
@@ -157,7 +167,7 @@ Directives
     syntax: ip_hash
     default: none
     context: upstream 
-    description: the upstream server will be dispatch by ip_hash.
+    description: the upstream server will be dispatched by ip_hash.
 
 
     =ngx_tcp_proxy_module=
@@ -166,13 +176,13 @@ Directives
     syntax: proxy_pass host:port
     default: none
     context: server 
-    description: proxy the request to the backend server.
+    description: proxy the request to the backend server. Default port is 80.
 
     ==proxy_buffer==
     syntax: proxy_buffer size
     default: 4k
     context: tcp, server 
-    description: set the proxy buffer size.
+    description: set the size of proxy buffer.
 
     ==proxy_connect_timeout==
     syntax: proxy_connect_timeout miliseconds
@@ -227,9 +237,11 @@ Copyright & License
     This README template copy from agentzh(http://github.com/agentzh).
 
     I borrowed a lot of code from upstream and mail module from the nginx 0.7.* 
-    core. This part of code is copyrighted by Igor Sysoev.
+    core. This part of code is copyrighted by Igor Sysoev. And the health check
+    part is borrowed the design of Jack Lindamood's healthcheck module
+    (http://github.com/cep21/healthcheck_nginx_upstreams).
 
-    This module is licenced under the BSD license.
+    This module is licensed under the BSD license.
 
     Copyright (C) 2010 by Weibin Yao <yaoweibin@gmail.com>.
 
@@ -245,10 +257,6 @@ Copyright & License
         * Redistributions in binary form must reproduce the above copyright
         notice, this list of conditions and the following disclaimer in the
         documentation and/or other materials provided with the distribution.
-
-        * Neither the name of the Taobao Inc. nor the names of its
-        contributors may be used to endorse or promote products derived from
-        this software without specific prior written permission.
 
     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
     "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
