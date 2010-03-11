@@ -417,8 +417,10 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp upstream connect: %d", rc);
 
     if (rc != NGX_OK && rc != NGX_AGAIN) {
+
         ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, 
-                "upstream servers error or busy!", rc);
+                "upstream servers error or busy!");
+
         ngx_tcp_upstream_finalize_session(s, u, 0);
         return;
     }
