@@ -102,6 +102,7 @@ typedef struct {
     ngx_msec_t              resolver_timeout;
 
     ngx_flag_t              so_keepalive;
+    ngx_flag_t              tcp_nodelay;
 
     ngx_str_t               server_name;
 

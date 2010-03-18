@@ -186,17 +186,17 @@ ngx_tcp_upstream_init(ngx_tcp_session_t *s) {
 
     u = s->upstream;
 
-    if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {
+    /*if (ngx_event_flags & NGX_USE_CLEAR_EVENT) {*/
 
-        if (!c->write->active) {
-            if (ngx_add_event(c->write, NGX_WRITE_EVENT, NGX_CLEAR_EVENT)
-                    == NGX_ERROR)
-            {
-                ngx_tcp_finalize_session(s);
-                return;
-            }
-        }
-    }
+    /*if (!c->write->active) {*/
+    /*if (ngx_add_event(c->write, NGX_WRITE_EVENT, NGX_CLEAR_EVENT)*/
+    /*== NGX_ERROR)*/
+    /*{*/
+    /*ngx_tcp_finalize_session(s);*/
+    /*return;*/
+    /*}*/
+    /*}*/
+    /*}*/
 
     cln = ngx_tcp_cleanup_add(s, 0);
 
@@ -407,6 +407,7 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
     ngx_int_t                 rc;
     ngx_tcp_core_srv_conf_t  *cscf;
     ngx_connection_t         *c;
+    int                      tcp_nodelay;
 
     s->connection->log->action = "connecting to upstream";
 
@@ -440,6 +441,22 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
     c->write->handler = ngx_tcp_upstream_handler;
     c->read->handler = ngx_tcp_upstream_handler;
 
+    if (cscf->tcp_nodelay) {
+        tcp_nodelay = 1;
+
+        if (setsockopt(c->fd, IPPROTO_TCP, TCP_NODELAY,
+                    (const void *) &tcp_nodelay, sizeof(int)) == -1)
+        {
+            ngx_connection_error(c, ngx_socket_errno,
+                    "setsockopt(TCP_NODELAY) failed");
+            ngx_tcp_upstream_finalize_session(s, u, 0);
+            return;
+        }
+
+        c->tcp_nodelay = NGX_TCP_NODELAY_SET;
+    }
+
+
     if (rc == NGX_AGAIN) {
         /*connect busy*/
         ngx_add_timer(c->write, u->conf->connect_timeout);
@@ -449,6 +466,7 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
         ngx_add_timer(c->read, u->conf->read_timeout);
         ngx_add_timer(c->write, u->conf->send_timeout);
     }
+
 }
 
 void
