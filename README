@@ -87,6 +87,13 @@ Directives
     description: The same as
     'http://wiki.nginx.org/NginxMailCoreModule#so_keepalive'.
 
+    ==tcp_nodelay==
+    syntax: tcp_nodelay on|off
+    default: on 
+    context: main, server
+    description: The same as
+    'http://wiki.nginx.org/NginxHttpCoreModule#tcp_nodelay'.
+
     ==timeout==
     syntax: timeout milliseconds
     default: 60000
