@@ -138,10 +138,10 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
     }
 
     s->connection->read->handler = ngx_tcp_proxy_handler;
-    s->connection->write->handler = ngx_tcp_proxy_dummy_write_handler;
+    s->connection->write->handler = ngx_tcp_proxy_handler;
 
     c->read->handler = ngx_tcp_proxy_handler;
-    c->write->handler = ngx_tcp_proxy_dummy_write_handler;
+    c->write->handler = ngx_tcp_proxy_handler;
 
     ngx_add_timer(s->connection->read, pcf->timeout);
     ngx_add_timer(c->read, pcf->upstream.read_timeout);
@@ -342,11 +342,12 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
     size_t                  size;
     ssize_t                 n;
     ngx_buf_t              *b;
+    ngx_err_t               err;
     ngx_uint_t              do_write;
     ngx_connection_t       *c, *src, *dst;
-    ngx_tcp_session_t     *s;
-    ngx_tcp_proxy_conf_t  *pcf;
-    ngx_tcp_proxy_ctx_t   *pctx;
+    ngx_tcp_session_t      *s;
+    ngx_tcp_proxy_conf_t   *pcf;
+    ngx_tcp_proxy_ctx_t    *pctx;
 
     c = ev->data;
     s = c->data;
@@ -417,10 +418,13 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
                 c->log->action = send_action;
 
                 n = dst->send(dst, b->pos, size);
+                err = ngx_socket_errno;
+
                 ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler send:%d", n);
 
                 if (n == NGX_ERROR) {
-                    ngx_log_error(NGX_LOG_INFO, c->log, 0, "proxy send error");
+                    ngx_log_error(NGX_LOG_ERR, c->log, err, "proxy send error");
+
                     ngx_tcp_finalize_session(s);
                     return;
                 }
@@ -442,6 +446,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
             c->log->action = recv_action;
 
             n = src->recv(src, b->last, size);
+            err = ngx_socket_errno;
+
             ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler recv:%d", n);
 
             if (n == NGX_AGAIN || n == 0) {
@@ -456,6 +462,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
             }
 
             if (n == NGX_ERROR) {
+                ngx_log_error(NGX_LOG_ERR, c->log, err, "proxy recv error");
+
                 src->read->eof = 1;
             }
         }
@@ -480,25 +488,25 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
         return;
     }
 
-    /*if (ngx_handle_write_event(dst->write, 0) != NGX_OK) {*/
-    /*ngx_tcp_finalize_session(s);*/
-    /*return;*/
-    /*}*/
+    if (ngx_handle_write_event(dst->write, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
-    /*if (ngx_handle_read_event(dst->read, 0) != NGX_OK) {*/
-    /*ngx_tcp_finalize_session(s);*/
-    /*return;*/
-    /*}*/
+    if (ngx_handle_read_event(dst->read, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
-    /*if (ngx_handle_write_event(src->write, 0) != NGX_OK) {*/
-    /*ngx_tcp_finalize_session(s);*/
-    /*return;*/
-    /*}*/
+    if (ngx_handle_write_event(src->write, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
-    /*if (ngx_handle_read_event(src->read, 0) != NGX_OK) {*/
-    /*ngx_tcp_finalize_session(s);*/
-    /*return;*/
-    /*}*/
+    if (ngx_handle_read_event(src->read, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
