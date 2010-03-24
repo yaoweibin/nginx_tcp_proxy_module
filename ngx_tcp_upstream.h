@@ -54,10 +54,39 @@ typedef struct {
     ngx_str_t                       *peer;
 } ngx_tcp_upstream_state_t;
 
+typedef struct {
+    u_char major;
+    u_char minor;
+} ssl_protocol_version_t;
 
 typedef struct {
-    /*TODO: state*/
+    u_char                 msg_type;
+    ssl_protocol_version_t version;
+    uint16_t               length;
 
+    u_char                 handshake_type;
+    u_char                 handshake_length[3];
+    ssl_protocol_version_t hello_version;
+
+    time_t                 time;
+    u_char                 random[28];
+
+    u_char                 others[0];
+} __attribute__((packed)) server_ssl_hello_t;
+
+typedef struct {
+    ngx_buf_t send;
+    ngx_buf_t recv;
+} ngx_tcp_check_ssl_hello_ctx;
+
+
+/*state*/
+#define NGX_TCP_CHECK_CONNECT_DONE     0x0001
+#define NGX_TCP_CHECK_SEND_DONE        0x0002
+#define NGX_TCP_CHECK_RECV_DONE        0x0004
+#define NGX_TCP_CHECK_ALL_DONE         0x0008
+
+typedef struct {
     ngx_pid_t  owner;
 
     ngx_msec_t access_time;
@@ -83,12 +112,15 @@ typedef struct {
 } ngx_tcp_check_peers_shm_t;
 
 typedef struct {
+    ngx_flag_t                       state;
+    ngx_pool_t                      *pool;
     ngx_uint_t                       index;
     ngx_tcp_upstream_srv_conf_t     *conf;
     ngx_peer_addr_t                 *peer;
     ngx_event_t                      check_ev;
     ngx_event_t                      check_timeout_ev;
     ngx_peer_connection_t            pc;
+    void *                           check_data;
     ngx_tcp_check_peer_shm_t         *shm;
 } ngx_tcp_check_peer_conf_t;
 
@@ -144,7 +176,8 @@ typedef struct {
 /*TODO: add more check method*/
 #define NGX_TCP_CHECK_TCP              0x0001
 #define NGX_TCP_CHECK_HTTP             0x0002
-#define NGX_TCP_CHECK_SSL              0x0004
+#define NGX_TCP_CHECK_SSL_HELLO        0x0004
+#define NGX_TCP_CHECK_SMTP             0x0008
 
 struct ngx_tcp_upstream_srv_conf_s {
     ngx_tcp_upstream_peer_t          peer;

@@ -138,9 +138,9 @@ Directives
 
     ==check==
     syntax: check interval=milliseconds [fall=count] [rise=count]
-    [timeout=milliseconds] 
+    [timeout=milliseconds] [type=tcp|ssl_hello]
     default: none, if parameters omitted, default parameters are 'interval=30000
-    fall=5 rise=2 timeout=500'
+    fall=5 rise=2 timeout=1000'
     context: upstream
     description: Add the health check for the upstream servers. At present, the
     check method is a simple tcp connect.
@@ -151,6 +151,9 @@ Directives
         rise(rise_count): After rise_count check success, the server is marked
                           up. 
         timeout: the check request's timeout.
+        type: the check protocol type. 'tcp' is a simple tcp socket connect and 
+                          peek one byte. 'ssl_hello' sends a client ssl hello 
+                          packet and receives the server ssl hello packet.
 
     ==check_shm_size==
     syntax: check_shm_size size

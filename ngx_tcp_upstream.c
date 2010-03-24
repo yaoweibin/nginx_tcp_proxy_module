@@ -960,7 +960,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     rise = 2;
     fall = 5;
     interval = 30000;
-    timeout = 500;
+    timeout = 1000;
     type = NGX_TCP_CHECK_TCP;
 
     value = cf->args->elts;
@@ -968,13 +968,23 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     for (i = 1; i < cf->args->nelts; i++) {
 
         if (ngx_strncmp(value[i].data, "type=", 5) == 0) {
-            s.len = value[i].len - 4;
-            s.data = value[i].data + 4;
+            s.len = value[i].len - 5;
+            s.data = value[i].data + 5;
 
             if (ngx_strncmp(s.data, "tcp", s.len) == 0) {
-
                 type = NGX_TCP_CHECK_TCP;
-
+                continue;
+            }
+            else if (ngx_strncmp(s.data, "http", s.len) == 0 ) {
+                type = NGX_TCP_CHECK_HTTP;
+                continue;
+            }
+            else if (ngx_strncmp(s.data, "ssl_hello", s.len) == 0 ) {
+                type = NGX_TCP_CHECK_SSL_HELLO;
+                continue;
+            }
+            else if (ngx_strncmp(s.data, "smtp", s.len) == 0 ) {
+                type = NGX_TCP_CHECK_SMTP;
                 continue;
             }
             else {
@@ -1279,7 +1289,11 @@ ngx_shared_memory_find(ngx_cycle_t *cycle, ngx_str_t *name, void *tag)
 static void 
 ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf) {
 
-    ngx_connection_t *c;
+    ngx_connection_t            *c;
+    ngx_tcp_upstream_srv_conf_t *uscf;
+    ngx_tcp_check_ssl_hello_ctx *ctx;
+
+    uscf = peer_conf->conf;
 
     c = peer_conf->pc.connection;
 
@@ -1293,6 +1307,19 @@ ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf) {
         ngx_del_timer(&peer_conf->check_timeout_ev);
     }
 
+    peer_conf->state = NGX_TCP_CHECK_ALL_DONE;
+
+    if (peer_conf->check_data != NULL) {
+        if (uscf->check_type | NGX_TCP_CHECK_SSL_HELLO ) {
+            ctx = peer_conf->check_data;
+
+            ctx->send.pos = ctx->send.start;
+            ctx->send.last = ctx->send.end;
+
+            ctx->recv.pos = ctx->recv.last = ctx->recv.start;
+        }
+    }
+
     ngx_spinlock(&peer_conf->shm->lock, ngx_pid, 1024);
 
     peer_conf->shm->owner = NGX_INVALID_PID;
@@ -1304,6 +1331,7 @@ static ngx_flag_t has_cleared = 0;
 
 static void 
 ngx_tcp_check_clear_all_events() {
+
     ngx_uint_t                     i;
     ngx_tcp_check_peers_conf_t    *peers_conf;
     ngx_tcp_check_peer_conf_t     *peer_conf;
@@ -1328,6 +1356,9 @@ ngx_tcp_check_clear_all_events() {
         if (peer_shm[i].owner == ngx_pid) {
             ngx_tcp_check_clean_event(&peer_conf[i]);
         }
+        if (peer_conf[i].pool != NULL) {
+            ngx_destroy_pool(peer_conf[i].pool);
+        }
     }
 }
 
@@ -1340,12 +1371,6 @@ ngx_tcp_check_need_exit() {
     }
 
     return 0;
-}
-
-static void 
-ngx_tcp_check_dummy_handler(ngx_event_t *event) {
-
-    return;
 }
 
 static void 
@@ -1426,13 +1451,6 @@ ngx_tcp_check_peek_handler(ngx_event_t *event) {
     peer_conf = c->data;
     uscf = peer_conf->conf;
 
-    c = peer_conf->pc.connection;
-    if (c == NULL || c->fd <= 0) {
-        ngx_tcp_check_status_update(peer_conf, 0);
-        ngx_tcp_check_clean_event(peer_conf);
-        return;
-    }
-
     n = recv(c->fd, buf, 1, MSG_PEEK);
 
     err = ngx_socket_errno;
@@ -1453,6 +1471,250 @@ ngx_tcp_check_peek_handler(ngx_event_t *event) {
 
     /*dummy*/
     ngx_tcp_check_finish_handler(event);
+}
+
+#define RANDOM "NGX_TCP_CHECK_SSL_HELLO\n\n\n\n\n"
+
+/* This is the SSLv3 CLIENT HELLO packet used in conjunction with the
+ * check type of ssl_hello option to ensure that the remote server speaks SSL.
+ *
+ * Check RFC 2246 (TLSv1.0) sections A.3 and A.4 for details.
+ *
+ * Some code copy from HAProxy 1.4.1
+ */
+const char sslv3_client_hello_pkt[] = {
+	"\x16"                /* ContentType         : 0x16 = Hanshake           */
+	"\x03\x00"            /* ProtocolVersion     : 0x0300 = SSLv3            */
+	"\x00\x79"            /* ContentLength       : 0x79 bytes after this one */
+	"\x01"                /* HanshakeType        : 0x01 = CLIENT HELLO       */
+	"\x00\x00\x75"        /* HandshakeLength     : 0x75 bytes after this one */
+	"\x03\x00"            /* Hello Version       : 0x0300 = v3               */
+	"\x00\x00\x00\x00"    /* Unix GMT Time (s)   : filled with <now> (@0x0B) */
+	"HAPROXYSSLCHK\nHAPROXYSSLCHK\n" /* Random   : must be exactly 28 bytes  */
+	"\x00"                /* Session ID length   : empty (no session ID)     */
+	"\x00\x4E"            /* Cipher Suite Length : 78 bytes after this one   */
+	"\x00\x01" "\x00\x02" "\x00\x03" "\x00\x04" /* 39 most common ciphers :  */
+	"\x00\x05" "\x00\x06" "\x00\x07" "\x00\x08" /* 0x01...0x1B, 0x2F...0x3A  */
+	"\x00\x09" "\x00\x0A" "\x00\x0B" "\x00\x0C" /* This covers RSA/DH,       */
+	"\x00\x0D" "\x00\x0E" "\x00\x0F" "\x00\x10" /* various bit lengths,      */
+	"\x00\x11" "\x00\x12" "\x00\x13" "\x00\x14" /* SHA1/MD5, DES/3DES/AES... */
+	"\x00\x15" "\x00\x16" "\x00\x17" "\x00\x18"
+	"\x00\x19" "\x00\x1A" "\x00\x1B" "\x00\x2F"
+	"\x00\x30" "\x00\x31" "\x00\x32" "\x00\x33"
+	"\x00\x34" "\x00\x35" "\x00\x36" "\x00\x37"
+	"\x00\x38" "\x00\x39" "\x00\x3A"
+	"\x01"                /* Compression Length  : 0x01 = 1 byte for types   */
+	"\x00"                /* Compression Type    : 0x00 = NULL compression   */
+};
+
+
+/*a rough check of server ssl_hello responses*/
+static ngx_int_t 
+ngx_tcp_check_ssl_hello_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    size_t                        size;
+    server_ssl_hello_t            *resp;
+    ngx_tcp_check_ssl_hello_ctx   *ctx;
+
+    ctx = peer_conf->check_data;
+
+    size = ctx->recv.last - ctx->recv.pos;
+    if (size < sizeof(server_ssl_hello_t)) {
+        return NGX_AGAIN;
+    } 
+
+    resp = (server_ssl_hello_t *) ctx->recv.pos;
+
+    ngx_log_debug5(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "tcp check ssl_parse, type: %d, version: %d.%d, length: %d, handshanke_type: %d, "
+            "hello_version: %d.%d", 
+            resp->msg_type, resp->version.major, resp->version.minor, 
+            ntohs(resp->length), resp->handshake_type, 
+            resp->hello_version.major, resp->hello_version.minor);
+
+    if (resp->msg_type != 0x16) {
+        return NGX_ERROR;
+    }
+
+    if (resp->handshake_type != 0x02) {
+        return NGX_ERROR;
+    }
+
+    return NGX_OK;
+}
+   
+static void 
+ngx_tcp_check_ssl_hello_send_handler(ngx_event_t *event) {
+
+    ssize_t                        size;
+    ngx_err_t                      err;
+    ngx_connection_t              *c;
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+    ngx_tcp_upstream_srv_conf_t   *uscf;
+    ngx_tcp_check_ssl_hello_ctx   *ctx;
+
+    if (ngx_tcp_check_need_exit()) {
+        return;
+    }
+
+    c = event->data;
+    peer_conf = c->data;
+    uscf = peer_conf->conf;
+
+    if (c->pool == NULL) {
+        ngx_log_error(NGX_LOG_ERR, event->log, 0,
+                "check pool NULL with peer: %V ", &peer_conf->peer->name);
+
+        goto ssl_hello_send_fail;
+    }
+
+    if (peer_conf->state != NGX_TCP_CHECK_CONNECT_DONE) {
+        return;
+    }
+
+    if (peer_conf->check_data == NULL) {
+        peer_conf->check_data = ngx_pcalloc(c->pool, sizeof(ngx_tcp_check_ssl_hello_ctx));
+        if (peer_conf->check_data == NULL) {
+            goto ssl_hello_send_fail;
+        }
+
+        ctx = peer_conf->check_data;
+
+        ctx->send.start = ctx->send.pos = (u_char *)sslv3_client_hello_pkt;
+        ctx->send.end = ctx->send.last = ctx->send.start + sizeof(sslv3_client_hello_pkt);
+
+        ctx->recv.start = ctx->recv.pos = NULL;
+        ctx->recv.end = ctx->recv.last = NULL;
+    }
+
+    ctx = peer_conf->check_data;
+
+    while (ctx->send.pos < ctx->send.last) {
+        size = c->send(c, ctx->send.pos, ctx->send.last - ctx->send.pos);
+        err = ngx_socket_errno;
+
+        ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
+                "tcp check ssl_send size: %d, left: %d", size, ctx->send.last - ctx->send.pos);
+
+        if (size >= 0) {
+            ctx->send.pos += size;
+        }
+        else if (size == NGX_AGAIN) {
+            return;
+        }
+        else {
+            c->error = 1;
+            goto ssl_hello_send_fail;
+        }
+    }
+
+    if (ctx->send.pos == ctx->send.last) {
+        peer_conf->state = NGX_TCP_CHECK_SEND_DONE;
+    }
+
+    return;
+
+ssl_hello_send_fail:
+    ngx_tcp_check_status_update(peer_conf, 0);
+    ngx_tcp_check_clean_event(peer_conf);
+    return;
+}
+
+static void 
+ngx_tcp_check_ssl_hello_recv_handler(ngx_event_t *event) {
+
+    ssize_t                        size, n, rc;
+    ngx_err_t                      err;
+    u_char                        *new_buf;
+    ngx_connection_t              *c;
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+    ngx_tcp_check_ssl_hello_ctx   *ctx;
+
+    if (ngx_tcp_check_need_exit()) {
+        return;
+    }
+
+    c = event->data;
+    peer_conf = c->data;
+
+    if (peer_conf->state != NGX_TCP_CHECK_SEND_DONE) {
+        return;
+    }
+
+    ctx = peer_conf->check_data;
+
+    if (ctx->recv.start == NULL) {
+        /* 2048, is it enough? */
+        ctx->recv.start = ngx_palloc(c->pool, ngx_pagesize/2);
+        if (ctx->recv.start == NULL) {
+            goto ssl_hello_recv_fail;
+        }
+
+        ctx->recv.last = ctx->recv.pos = ctx->recv.start;
+        ctx->recv.end = ctx->recv.start + ngx_pagesize/2;
+    }
+
+    while (1) {
+        n = ctx->recv.end - ctx->recv.last;
+        /*Not enough buffer?*/
+        if (n == 0) {
+            size = ctx->recv.end - ctx->recv.start;
+            new_buf = ngx_palloc(c->pool, size * 2);
+            if (new_buf == NULL) {
+                goto ssl_hello_recv_fail;
+            }
+
+            ngx_memcpy(new_buf, ctx->recv.start, size);
+
+            ctx->recv.pos = ctx->recv.start = new_buf;
+            ctx->recv.last = new_buf + size;
+            ctx->recv.end = new_buf + size * 2;
+
+            n = ctx->recv.end - ctx->recv.last;
+        }
+
+        size = c->recv(c, ctx->recv.last, n);
+        err = ngx_socket_errno;
+
+        ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
+                "tcp check ssl_recv size: %d, fd: %d", size, c->fd);
+
+        if (size > 0) {
+            ctx->recv.last += size;
+            continue;
+        } else if (size == 0 || size == NGX_AGAIN) {
+            break;
+        }
+        else {
+            c->error = 1;
+            goto ssl_hello_recv_fail;
+        }
+    }
+
+    rc = ngx_tcp_check_ssl_hello_parse(peer_conf); 
+
+    ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, 0, 
+            "tcp check ssl_hello_parse rc: %d, fd: %d", rc, c->fd);
+
+    switch (rc) {
+        case NGX_AGAIN:
+            return;
+        case NGX_ERROR:
+            ngx_tcp_check_status_update(peer_conf, 0);
+            break;
+        case NGX_OK:
+        default:
+            ngx_tcp_check_status_update(peer_conf, 1);
+    }
+
+    peer_conf->state = NGX_TCP_CHECK_RECV_DONE;
+    ngx_tcp_check_clean_event(peer_conf);
+    return;
+
+ssl_hello_recv_fail:
+    ngx_tcp_check_status_update(peer_conf, 0);
+    ngx_tcp_check_clean_event(peer_conf);
+    return;
 }
 
 static void 
@@ -1497,11 +1759,31 @@ ngx_tcp_check_connect_handler(ngx_event_t *event) {
     c->sendfile = 0;
     c->read->log = c->log;
     c->write->log = c->log;
+    c->pool = peer_conf->pool;
 
-    /*different check_type, differe handler */
-    c->write->handler = ngx_tcp_check_peek_handler;
-    c->read->handler = ngx_tcp_check_dummy_handler;
+    switch (uscf->check_type) {
+        case NGX_TCP_CHECK_TCP:
+            c->write->handler = ngx_tcp_check_peek_handler;
+            c->read->handler = ngx_tcp_check_peek_handler;
+            break;
+        case NGX_TCP_CHECK_HTTP: 
+            c->write->handler = ngx_tcp_check_peek_handler;
+            c->read->handler = ngx_tcp_check_peek_handler;
+            break;
+        case NGX_TCP_CHECK_SSL_HELLO:
+            c->write->handler = ngx_tcp_check_ssl_hello_send_handler;
+            c->read->handler = ngx_tcp_check_ssl_hello_recv_handler;
+            break;
+        case NGX_TCP_CHECK_SMTP:
+            c->write->handler = ngx_tcp_check_peek_handler;
+            c->read->handler = ngx_tcp_check_peek_handler;
+            break;
+        default:
+            c->write->handler = ngx_tcp_check_peek_handler;
+            c->read->handler = ngx_tcp_check_peek_handler;
+    }
 
+    peer_conf->state = NGX_TCP_CHECK_CONNECT_DONE;
     ngx_add_timer(&peer_conf->check_timeout_ev, uscf->check_timeout);
 }
 
@@ -1518,8 +1800,7 @@ ngx_tcp_check_begin_handler(ngx_event_t *event) {
     peer_conf = event->data;
     uscf = peer_conf->conf;
 
-    /*Add 100ms to fine adjust the timer*/
-    ngx_add_timer(event, uscf->check_interval + 100);
+    ngx_add_timer(event, uscf->check_interval/2);
 
     /*This process are processing the event now.*/
     if (peer_conf->shm->owner == ngx_pid) {
@@ -1595,6 +1876,13 @@ ngx_tcp_check_init_process(ngx_cycle_t *cycle) {
         peer_conf[i].check_timeout_ev.timer_set = 0;
 
         uscf = peer_conf[i].conf;
+
+        if (uscf->check_type | NGX_TCP_CHECK_SSL_HELLO) {
+            peer_conf[i].pool = ngx_create_pool(ngx_pagesize, cycle->log);
+            if (peer_conf[i].pool == NULL) {
+                return NGX_ERROR;
+            }
+        }
 
         /* Default delay interval is 1 second. 
            I don't want to trigger the check event too close. */

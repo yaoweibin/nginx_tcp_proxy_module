@@ -371,15 +371,15 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
 
     if (c == s->connection) {
         if (ev->write) {
-            recv_action = "proxying and reading from upstream";
-            send_action = "proxying and sending to client";
+            recv_action = "client write: proxying and reading from upstream";
+            send_action = "client write: proxying and sending to client";
             src = pctx->upstream->connection;
             dst = c;
             b = pctx->buffer;
 
         } else {
-            recv_action = "proxying and reading from client";
-            send_action = "proxying and sending to upstream";
+            recv_action = "client read: proxying and reading from client";
+            send_action = "client read: proxying and sending to upstream";
             src = c;
             dst = pctx->upstream->connection;
             b = s->buffer;
@@ -387,15 +387,15 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
 
     } else {
         if (ev->write) {
-            recv_action = "proxying and reading from client";
-            send_action = "proxying and sending to upstream";
+            recv_action = "upstream write: proxying and reading from client";
+            send_action = "upstream write: proxying and sending to upstream";
             src = s->connection;
             dst = c;
             b = s->buffer;
 
         } else {
-            recv_action = "proxying and reading from upstream";
-            send_action = "proxying and sending to client";
+            recv_action = "upstream read: proxying and reading from upstream";
+            send_action = "upstream read: proxying and sending to client";
             src = c;
             dst = s->connection;
             b = pctx->buffer;
@@ -462,8 +462,6 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
             }
 
             if (n == NGX_ERROR) {
-                ngx_log_error(NGX_LOG_ERR, c->log, err, "proxy recv error");
-
                 src->read->eof = 1;
             }
         }
