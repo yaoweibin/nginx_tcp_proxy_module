@@ -13,9 +13,16 @@ typedef struct ngx_tcp_protocol_s  ngx_tcp_protocol_t;
 typedef struct ngx_tcp_upstream_s  ngx_tcp_upstream_t;
 typedef struct ngx_tcp_cleanup_s  ngx_tcp_cleanup_t;
 
+typedef struct ngx_tcp_upstream_srv_conf_s  ngx_tcp_upstream_srv_conf_t;
+typedef struct ngx_tcp_upstream_resolved_s  ngx_tcp_upstream_resolved_t;
+
+typedef struct ngx_tcp_check_peer_conf_s ngx_tcp_check_peer_conf_t;
+typedef struct ngx_tcp_check_peers_conf_s ngx_tcp_check_peers_conf_t;
+
 
 #include <ngx_tcp_session.h>
 #include <ngx_tcp_upstream.h>
+#include <ngx_tcp_upstream_check.h>
 #include <ngx_tcp_upstream_round_robin.h>
 
 

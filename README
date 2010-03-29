@@ -147,13 +147,35 @@ Directives
     The parameters' meanings are:
         interval: the check request's interval time.
         fall(fall_count): After fall_count check failures, the server is marked
-                          down. 
+            down. 
         rise(rise_count): After rise_count check success, the server is marked
-                          up. 
+            up. 
         timeout: the check request's timeout.
         type: the check protocol type. 'tcp' is a simple tcp socket connect and 
-                          peek one byte. 'ssl_hello' sends a client ssl hello 
-                          packet and receives the server ssl hello packet.
+            peek one byte. 'ssl_hello' sends a client ssl hello 
+            packet and receives the server ssl hello packet.
+
+    ==check_http_send=
+    syntax: check_http_send http_packet
+    default: "GET / HTTP/1.0\r\n\r\n"
+    context: upstream
+    description: If you set the check type is http, then the check function will
+    sends this http packet to check the upstream server.
+
+    ==check_http_expect_alive=
+    syntax: check_http_expect_alive [http_2xx | http_3xx | http_4xx | http_5xx]
+    default: check_http_expect_alive http_2xx http_3xx;
+    context: upstream
+    description: These status codes indicate the upstream server's http response
+    is ok, the backend is alive.
+
+    ==check_shm_size==
+    syntax: check_shm_size size
+    default: (number_of_checked_upstream_blocks + 1) * pagesize
+    context: tcp
+    description: If you store hundreds of serveres in one upstream block. The
+    shared memory for health check may be not enough, you can enlarged it by
+    this directive.
 
     ==check_shm_size==
     syntax: check_shm_size size
@@ -230,6 +252,12 @@ Installation
 
         $ make
         $ make install
+
+OTHERS
+    The tcp/http_response_parse.rl are Ragel
+    script(http://www.complang.org/ragel/), you can edit the script and compile
+    it like this:
+        $ ragel -G2 http_response_parse.rl
 
 TODO
     *  health check, more method 

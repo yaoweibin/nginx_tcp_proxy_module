@@ -39,9 +39,6 @@
 #define NGX_TCP_UPSTREAM_IGN_EXPIRES        0x00000008
 #define NGX_TCP_UPSTREAM_IGN_CACHE_CONTROL  0x00000010
 
-typedef struct ngx_tcp_upstream_srv_conf_s  ngx_tcp_upstream_srv_conf_t;
-
-
 typedef struct {
     ngx_msec_t                       bl_time;
     ngx_uint_t                       bl_state;
@@ -54,86 +51,10 @@ typedef struct {
     ngx_str_t                       *peer;
 } ngx_tcp_upstream_state_t;
 
-typedef struct {
-    u_char major;
-    u_char minor;
-} ssl_protocol_version_t;
-
-typedef struct {
-    u_char                 msg_type;
-    ssl_protocol_version_t version;
-    uint16_t               length;
-
-    u_char                 handshake_type;
-    u_char                 handshake_length[3];
-    ssl_protocol_version_t hello_version;
-
-    time_t                 time;
-    u_char                 random[28];
-
-    u_char                 others[0];
-} __attribute__((packed)) server_ssl_hello_t;
-
-typedef struct {
-    ngx_buf_t send;
-    ngx_buf_t recv;
-} ngx_tcp_check_ssl_hello_ctx;
-
-
-/*state*/
-#define NGX_TCP_CHECK_CONNECT_DONE     0x0001
-#define NGX_TCP_CHECK_SEND_DONE        0x0002
-#define NGX_TCP_CHECK_RECV_DONE        0x0004
-#define NGX_TCP_CHECK_ALL_DONE         0x0008
-
-typedef struct {
-    ngx_pid_t  owner;
-
-    ngx_msec_t access_time;
-
-    ngx_uint_t fall_count;
-    ngx_uint_t rise_count;
-
-    ngx_atomic_t lock;
-    ngx_atomic_t busy;
-    ngx_atomic_t down;
-
-    unsigned last_down:1;
-} ngx_tcp_check_peer_shm_t;
-
-typedef struct {
-    ngx_uint_t generation;
-
-    ngx_uint_t state;
-    ngx_atomic_t lock;
-
-    /*store the ngx_tcp_check_status_peer_t*/
-    ngx_tcp_check_peer_shm_t peers[0];
-} ngx_tcp_check_peers_shm_t;
-
-typedef struct {
-    ngx_flag_t                       state;
-    ngx_pool_t                      *pool;
-    ngx_uint_t                       index;
-    ngx_tcp_upstream_srv_conf_t     *conf;
-    ngx_peer_addr_t                 *peer;
-    ngx_event_t                      check_ev;
-    ngx_event_t                      check_timeout_ev;
-    ngx_peer_connection_t            pc;
-    void *                           check_data;
-    ngx_tcp_check_peer_shm_t         *shm;
-} ngx_tcp_check_peer_conf_t;
-
-typedef struct {
-    ngx_str_t                        check_shm_name;
-    ngx_array_t                      peers;
-
-    ngx_tcp_check_peers_shm_t       *peers_shm;
-} ngx_tcp_check_peers_conf_t;
 
 typedef struct {
     ngx_uint_t                       check_shm_size;
-    ngx_tcp_check_peers_conf_t       peers_conf;
+    ngx_tcp_check_peers_conf_t      *peers_conf;
     ngx_array_t                      upstreams; /* ngx_tcp_upstream_srv_conf_t */
 } ngx_tcp_upstream_main_conf_t;
 
@@ -173,11 +94,23 @@ typedef struct {
 #define NGX_TCP_UPSTREAM_MAX_BUSY      0x0080
 
 
-/*TODO: add more check method*/
 #define NGX_TCP_CHECK_TCP              0x0001
 #define NGX_TCP_CHECK_HTTP             0x0002
 #define NGX_TCP_CHECK_SSL_HELLO        0x0004
 #define NGX_TCP_CHECK_SMTP             0x0008
+
+
+#define NGX_CHECK_HTTP_2XX             0x0002
+#define NGX_CHECK_HTTP_3XX             0x0004
+#define NGX_CHECK_HTTP_4XX             0x0008
+#define NGX_CHECK_HTTP_5XX             0x0010
+#define NGX_CHECK_HTTP_6XX             0x0020
+#define NGX_CHECK_HTTP_ERR             0x8000
+
+typedef struct {
+    ngx_str_t send;
+    ngx_uint_t status_alive;
+} http_check_conf_t;
 
 struct ngx_tcp_upstream_srv_conf_s {
     ngx_tcp_upstream_peer_t          peer;
@@ -198,6 +131,8 @@ struct ngx_tcp_upstream_srv_conf_s {
     ngx_msec_t                       check_interval;
     ngx_msec_t                       check_timeout;
     ngx_uint_t                       check_type;
+
+    http_check_conf_t                check_http_conf;
 };
 
 
@@ -309,7 +244,7 @@ typedef struct {
 /*} ngx_tcp_upstream_headers_in_t;*/
 
 
-typedef struct {
+struct ngx_tcp_upstream_resolved_s {
     ngx_str_t                        host;
     in_port_t                        port;
     ngx_uint_t                       no_port; /* unsigned no_port:1 */
@@ -321,7 +256,7 @@ typedef struct {
     socklen_t                        socklen;
 
     ngx_resolver_ctx_t              *ctx;
-} ngx_tcp_upstream_resolved_t;
+};
 
 
 typedef void (*ngx_tcp_upstream_handler_pt)(ngx_tcp_session_t *s,
@@ -406,11 +341,6 @@ void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstre
 
 ngx_int_t ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s);
 void ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u, ngx_uint_t ft_type);
-
-ngx_uint_t ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
-        ngx_peer_addr_t *peer);
-
-ngx_uint_t ngx_tcp_check_peer_down(ngx_uint_t index);
 
 #define ngx_tcp_conf_upstream_srv_conf(uscf, module)                         \
     uscf->srv_conf[module.ctx_index]
