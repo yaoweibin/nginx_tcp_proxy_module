@@ -34,7 +34,13 @@ Synopsis
 
             # ip_hash 
             #ip_hash;
-            check interval=3000 rise=2 fall=5 timeout=500;
+            check interval=3000 rise=2 fall=5 timeout=1000;
+
+            #check interval=3000 rise=2 fall=5 timeout=1000 type=ssl_hello;
+
+            #check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+            #check_http_send "GET / HTTP/1.0\r\n\r\n";
+            #check_http_expect_alive http_2xx http_3xx;
         }
 
         server {
@@ -151,9 +157,12 @@ Directives
         rise(rise_count): After rise_count check success, the server is marked
             up. 
         timeout: the check request's timeout.
-        type: the check protocol type. 'tcp' is a simple tcp socket connect and 
-            peek one byte. 'ssl_hello' sends a client ssl hello 
-            packet and receives the server ssl hello packet.
+        type: the check protocol type. 
+            'tcp' is a simple tcp socket connect and peek one byte. 
+            'ssl_hello' sends a client ssl hello packet and receives the server
+            ssl hello packet.
+            'http' sends a http requst packet and recvives and parses the http
+            response to diagnose if the upstream server is alive.  
 
     ==check_http_send=
     syntax: check_http_send http_packet
@@ -252,6 +261,9 @@ Installation
 
         $ make
         $ make install
+        
+Compatibility
+    * My test bed is 0.7.65 and 0.8.34.
 
 OTHERS
     The tcp/http_response_parse.rl are Ragel
