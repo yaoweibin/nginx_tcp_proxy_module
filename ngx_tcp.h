@@ -3,6 +3,8 @@
 #define _NGX_TCP_H_INCLUDED_
 
 
+
+#include <nginx.h>
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_event.h>
@@ -21,7 +23,7 @@ typedef struct ngx_tcp_check_peers_conf_s ngx_tcp_check_peers_conf_t;
 
 /* make nginx-0.8.22+ happy */
 #if defined(nginx_version) && nginx_version >= 8022
-typedef ngx_peer_addr_t ngx_addr_t
+typedef ngx_addr_t ngx_peer_addr_t; 
 #endif
 
 #include <ngx_tcp_session.h>
