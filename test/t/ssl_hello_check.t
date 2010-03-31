@@ -1,7 +1,7 @@
 #
 #===============================================================================
 #
-#         FILE:  sample.t
+#         FILE:  ssl_hello_check.t
 #
 #  DESCRIPTION: test 
 #
@@ -29,19 +29,13 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: the "GET" command
+=== TEST 1: the ssl_hello_check test
 --- config
     upstream test{
-        server 172.19.0.129;
-        server 172.19.0.130;
-        server 172.19.0.131;
-        server 172.19.0.132;
-        server 172.19.0.235;
-        server 172.19.0.236;
-        server 172.19.0.237;
-        server 172.19.0.238;
-        server 172.19.0.239;
+        server www.battlenet.com.cn:443;
+
         #ip_hash;
+        check interval=3000 rise=2 fall=5 timeout=1000 type=ssl_hello;
     }
 
     server {

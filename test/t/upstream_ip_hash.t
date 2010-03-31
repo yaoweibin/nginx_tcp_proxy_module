@@ -29,7 +29,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: the "GET" command
+=== TEST 1: the upstream_ip_hash command
 --- config
     upstream test{
         server 172.19.0.129;
@@ -41,7 +41,7 @@ __DATA__
         server 172.19.0.237;
         server 172.19.0.238;
         server 172.19.0.239;
-        #ip_hash;
+        ip_hash;
     }
 
     server {

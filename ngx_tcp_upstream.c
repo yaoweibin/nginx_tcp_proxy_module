@@ -56,14 +56,21 @@ static ngx_command_t  ngx_tcp_upstream_commands[] = {
         NGX_TCP_UPS_CONF|NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_upstream_srv_conf_t, check_http_conf.send),
+        offsetof(ngx_tcp_upstream_srv_conf_t, send),
+        NULL },
+
+    { ngx_string("check_smtp_send"),
+        NGX_TCP_UPS_CONF|NGX_CONF_TAKE1,
+        ngx_conf_set_str_slot,
+        NGX_TCP_SRV_CONF_OFFSET,
+        offsetof(ngx_tcp_upstream_srv_conf_t, send),
         NULL },
 
     { ngx_string("check_http_expect_alive"),
         NGX_TCP_UPS_CONF|NGX_CONF_1MORE,
         ngx_conf_set_bitmask_slot,
         NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_upstream_srv_conf_t, check_http_conf.status_alive),
+        offsetof(ngx_tcp_upstream_srv_conf_t, status_alive),
         &ngx_check_http_expect_alive_masks },
 
     { ngx_string("check_shm_size"),
@@ -923,7 +930,7 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
     ngx_tcp_upstream_srv_conf_t  *uscf = conf;
     ngx_str_t *value, s;
-    ngx_uint_t i, rise, fall, type;
+    ngx_uint_t i, rise, fall;
     ngx_msec_t interval, timeout;
 
     /*set default*/
@@ -931,7 +938,6 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     fall = 5;
     interval = 30000;
     timeout = 1000;
-    type = NGX_TCP_CHECK_TCP;
 
     value = cf->args->elts;
 
@@ -941,25 +947,13 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
             s.len = value[i].len - 5;
             s.data = value[i].data + 5;
 
-            if (ngx_strncmp(s.data, "tcp", s.len) == 0) {
-                type = NGX_TCP_CHECK_TCP;
-                continue;
-            }
-            else if (ngx_strncmp(s.data, "http", s.len) == 0 ) {
-                type = NGX_TCP_CHECK_HTTP;
-                continue;
-            }
-            else if (ngx_strncmp(s.data, "ssl_hello", s.len) == 0 ) {
-                type = NGX_TCP_CHECK_SSL_HELLO;
-                continue;
-            }
-            else if (ngx_strncmp(s.data, "smtp", s.len) == 0 ) {
-                type = NGX_TCP_CHECK_SMTP;
-                continue;
-            }
-            else {
+            uscf->check_type_conf = ngx_tcp_get_check_type_conf(&s);
+
+            if ( uscf->check_type_conf == NULL) {
                 goto invalid_check_parameter;
             }
+
+            continue;
         }
 
         if (ngx_strncmp(value[i].data, "interval=", 9) == 0) {
@@ -1013,11 +1007,17 @@ ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
         goto invalid_check_parameter;
     }
 
-    uscf->check_type = type;
     uscf->check_interval = interval;
     uscf->check_timeout = timeout;
     uscf->fall_count = fall;
     uscf->rise_count = rise;
+
+    if (uscf->check_type_conf == NULL) {
+        s.len = sizeof("tcp") - 1;
+        s.data =(u_char *) "tcp";
+
+        uscf->check_type_conf = ngx_tcp_get_check_type_conf(&s);
+    }
 
     return NGX_CONF_OK;
 

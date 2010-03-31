@@ -72,6 +72,39 @@ typedef ngx_int_t (*ngx_tcp_check_packet_init_pt)(ngx_tcp_check_peer_conf_t *pee
 typedef ngx_int_t (*ngx_tcp_check_packet_parse_pt)(ngx_tcp_check_peer_conf_t *peer_conf); 
 typedef void (*ngx_tcp_check_packet_clean_pt)(ngx_tcp_check_peer_conf_t *peer_conf); 
 
+#define NGX_TCP_CHECK_TCP              0x0001
+#define NGX_TCP_CHECK_HTTP             0x0002
+#define NGX_TCP_CHECK_SSL_HELLO        0x0004
+#define NGX_TCP_CHECK_SMTP             0x0008
+
+
+#define NGX_CHECK_HTTP_2XX             0x0002
+#define NGX_CHECK_HTTP_3XX             0x0004
+#define NGX_CHECK_HTTP_4XX             0x0008
+#define NGX_CHECK_HTTP_5XX             0x0010
+#define NGX_CHECK_HTTP_6XX             0x0020
+#define NGX_CHECK_HTTP_ERR             0x8000
+
+struct check_conf_s {
+    ngx_uint_t type;
+
+    char *name;
+
+    ngx_str_t default_send;
+    
+    /*HTTP*/
+    ngx_uint_t default_status_alive;
+
+    ngx_event_handler_pt  send_handler;
+    ngx_event_handler_pt  recv_handler;
+
+    ngx_tcp_check_packet_init_pt     init;
+    ngx_tcp_check_packet_parse_pt    parse;
+    ngx_tcp_check_packet_clean_pt    reinit;
+
+    unsigned need_pool;
+};
+
 struct ngx_tcp_check_peer_conf_s {
 
     ngx_flag_t                       state;
@@ -84,6 +117,9 @@ struct ngx_tcp_check_peer_conf_s {
     ngx_peer_connection_t            pc;
 
     void *                           check_data;
+    ngx_event_handler_pt             send_handler;
+    ngx_event_handler_pt             recv_handler;
+
     ngx_tcp_check_packet_init_pt     init;
     ngx_tcp_check_packet_parse_pt    parse;
     ngx_tcp_check_packet_clean_pt    reinit;
@@ -99,6 +135,7 @@ struct ngx_tcp_check_peers_conf_s {
 };
 
 
+/*HTTP parser*/
 typedef void (*element_cb)(void *data, const char *at, size_t length);
 typedef void (*field_cb)(void *data, const char *field, size_t flen, const char *value, size_t vlen);
 
@@ -140,6 +177,7 @@ ngx_uint_t ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *u
 
 ngx_uint_t ngx_tcp_check_peer_down(ngx_uint_t index);
 
+check_conf_t *ngx_tcp_get_check_type_conf(ngx_str_t *str);
 
 #endif //_NGX_TCP_UPSTREAM_CHECK_H_INCLUDED_
 

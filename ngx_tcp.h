@@ -20,6 +20,7 @@ typedef struct ngx_tcp_upstream_resolved_s  ngx_tcp_upstream_resolved_t;
 
 typedef struct ngx_tcp_check_peer_conf_s ngx_tcp_check_peer_conf_t;
 typedef struct ngx_tcp_check_peers_conf_s ngx_tcp_check_peers_conf_t;
+typedef struct check_conf_s check_conf_t;
 
 /* make nginx-0.8.22+ happy */
 #if defined(nginx_version) && nginx_version >= 8022

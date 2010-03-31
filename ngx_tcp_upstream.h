@@ -93,26 +93,8 @@ typedef struct {
 #define NGX_TCP_UPSTREAM_SRUN_ID       0x0040
 #define NGX_TCP_UPSTREAM_MAX_BUSY      0x0080
 
-
-#define NGX_TCP_CHECK_TCP              0x0001
-#define NGX_TCP_CHECK_HTTP             0x0002
-#define NGX_TCP_CHECK_SSL_HELLO        0x0004
-#define NGX_TCP_CHECK_SMTP             0x0008
-
-
-#define NGX_CHECK_HTTP_2XX             0x0002
-#define NGX_CHECK_HTTP_3XX             0x0004
-#define NGX_CHECK_HTTP_4XX             0x0008
-#define NGX_CHECK_HTTP_5XX             0x0010
-#define NGX_CHECK_HTTP_6XX             0x0020
-#define NGX_CHECK_HTTP_ERR             0x8000
-
-typedef struct {
-    ngx_str_t send;
-    ngx_uint_t status_alive;
-} http_check_conf_t;
-
 struct ngx_tcp_upstream_srv_conf_s {
+
     ngx_tcp_upstream_peer_t          peer;
     void                           **srv_conf;
 
@@ -130,9 +112,14 @@ struct ngx_tcp_upstream_srv_conf_s {
     ngx_uint_t                       rise_count;
     ngx_msec_t                       check_interval;
     ngx_msec_t                       check_timeout;
-    ngx_uint_t                       check_type;
 
-    http_check_conf_t                check_http_conf;
+    check_conf_t                    *check_type_conf;
+    ngx_str_t                        send;
+
+    union {
+        ngx_uint_t                       return_code;
+        ngx_uint_t                       status_alive;
+    };
 };
 
 

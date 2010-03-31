@@ -412,7 +412,7 @@ start_nginx:
                 }
             }
 
-            sleep 0.1;
+            sleep 6;
         }
     }
 

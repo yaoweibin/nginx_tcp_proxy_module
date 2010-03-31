@@ -1,7 +1,7 @@
 #
 #===============================================================================
 #
-#         FILE:  sample.t
+#         FILE:  http_check.t
 #
 #  DESCRIPTION: test 
 #
@@ -29,7 +29,7 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: the "GET" command
+=== TEST 1: the http_check test
 --- config
     upstream test{
         server 172.19.0.129;
@@ -42,6 +42,9 @@ __DATA__
         server 172.19.0.238;
         server 172.19.0.239;
         #ip_hash;
+        check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+        check_http_send "GET /test HTTP/1.0\r\n\r\n";
+        check_http_expect_alive http_2xx http_3xx http_4xx;
     }
 
     server {

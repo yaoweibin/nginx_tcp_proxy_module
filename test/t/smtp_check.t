@@ -1,7 +1,7 @@
 #
 #===============================================================================
 #
-#         FILE:  sample.t
+#         FILE:  smtp_check.t
 #
 #  DESCRIPTION: test 
 #
@@ -29,19 +29,14 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: the "GET" command
+=== TEST 1: the smtp_check
 --- config
     upstream test{
-        server 172.19.0.129;
-        server 172.19.0.130;
-        server 172.19.0.131;
-        server 172.19.0.132;
-        server 172.19.0.235;
-        server 172.19.0.236;
-        server 172.19.0.237;
-        server 172.19.0.238;
-        server 172.19.0.239;
+        server 127.0.0.1:25;
+
         #ip_hash;
+        check interval=3000 rise=2 fall=5 timeout=1000 type=smtp;
+        check_smtp_send "HELO localhost\r\n";
     }
 
     server {
@@ -51,4 +46,4 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^2(.*)$
