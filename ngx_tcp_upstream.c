@@ -29,6 +29,14 @@ static ngx_conf_bitmask_t  ngx_check_http_expect_alive_masks[] = {
     { ngx_null_string, 0 }
 };
 
+static ngx_conf_bitmask_t  ngx_check_smtp_expect_alive_masks[] = {
+    { ngx_string("smtp_2xx"), NGX_CHECK_SMTP_2XX },
+    { ngx_string("smtp_3xx"), NGX_CHECK_SMTP_3XX },
+    { ngx_string("smtp_4xx"), NGX_CHECK_SMTP_4XX },
+    { ngx_string("smtp_5xx"), NGX_CHECK_SMTP_5XX },
+    { ngx_null_string, 0 }
+};
+
 static ngx_command_t  ngx_tcp_upstream_commands[] = {
 
     { ngx_string("upstream"),
@@ -72,6 +80,13 @@ static ngx_command_t  ngx_tcp_upstream_commands[] = {
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_upstream_srv_conf_t, status_alive),
         &ngx_check_http_expect_alive_masks },
+
+    { ngx_string("check_smtp_expect_alive"),
+        NGX_TCP_UPS_CONF|NGX_CONF_1MORE,
+        ngx_conf_set_bitmask_slot,
+        NGX_TCP_SRV_CONF_OFFSET,
+        offsetof(ngx_tcp_upstream_srv_conf_t, status_alive),
+        &ngx_check_smtp_expect_alive_masks },
 
     { ngx_string("check_shm_size"),
         NGX_TCP_MAIN_CONF|NGX_CONF_TAKE1,
@@ -647,6 +662,7 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags) {
     uscf->line = cf->conf_file->line;
     uscf->port = u->port;
     uscf->default_port = u->default_port;
+    uscf->status_alive = 0;
 
     if (u->naddrs == 1) {
         uscf->servers = ngx_array_create(cf->pool, 1,

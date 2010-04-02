@@ -144,7 +144,7 @@ Directives
 
     ==check==
     syntax: check interval=milliseconds [fall=count] [rise=count]
-    [timeout=milliseconds] [type=tcp|ssl_hello]
+    [timeout=milliseconds] [type=tcp|ssl_hello|smtp|mysql]
     default: none, if parameters omitted, default parameters are 'interval=30000
     fall=5 rise=2 timeout=1000'
     context: upstream
@@ -161,8 +161,13 @@ Directives
             'tcp' is a simple tcp socket connect and peek one byte. 
             'ssl_hello' sends a client ssl hello packet and receives the server
             ssl hello packet.
-            'http' sends a http requst packet and recvives and parses the http
+            'http' sends a http requst packet, recvives and parses the http
             response to diagnose if the upstream server is alive.  
+            'smtp' sends a smtp requst packet, recvives and parses the smtp
+            response to diagnose if the upstream server is alive. The response
+            begins with '2' will be judged to be a OK response. 
+            'mysql' connects to the mysql server, recvives the greeting response 
+            to diagnose if the upstream server is alive.  
 
     ==check_http_send=
     syntax: check_http_send http_packet
@@ -177,6 +182,21 @@ Directives
     context: upstream
     description: These status codes indicate the upstream server's http response
     is ok, the backend is alive.
+
+    ==check_smtp_send=
+    syntax: check_smtp_send smtp_packet
+    default: "HELO smtp.localdomain\r\n"
+    context: upstream
+    description: If you set the check type is smtp, then the check function will
+    sends this smtp packet to check the upstream server.
+
+    ==check_smtp_expect_alive=
+    syntax: check_smtp_expect_alive [smtp_2xx | smtp_3xx | smtp_4xx | smtp_5xx]
+    default: check_smtp_expect_alive smtp_2xx;
+    context: upstream
+    description: These status codes indicate the upstream server's smtp response
+    is ok, the backend is alive.
+
 
     ==check_shm_size==
     syntax: check_shm_size size

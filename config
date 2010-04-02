@@ -4,7 +4,7 @@ ngx_feature_run=no
 ngx_feature_incs=
 ngx_feature_path="$ngx_addon_dir/modules $ngx_addon_dir"
 ngx_feature_deps="$ngx_addon_dir/ngx_tcp.h $ngx_addon_dir/ngx_tcp_session.h $ngx_addon_dir/ngx_tcp_upstream.h $ngx_addon_dir/ngx_tcp_upstream_check.h $ngx_addon_dir/ngx_tcp_upstream_round_robin.h"
-ngx_tcp_src="$ngx_addon_dir/ngx_tcp.c $ngx_addon_dir/ngx_tcp_core_module.c $ngx_addon_dir/ngx_tcp_session.c $ngx_addon_dir/ngx_tcp_upstream.c $ngx_addon_dir/ngx_tcp_upstream_round_robin.c $ngx_addon_dir/modules/ngx_tcp_proxy_module.c $ngx_addon_dir/modules/ngx_tcp_upstream_ip_hash_module.c $ngx_addon_dir/ngx_tcp_upstream_check.c $ngx_addon_dir/http_response_parse.c"
+ngx_tcp_src="$ngx_addon_dir/ngx_tcp.c $ngx_addon_dir/ngx_tcp_core_module.c $ngx_addon_dir/ngx_tcp_session.c $ngx_addon_dir/ngx_tcp_upstream.c $ngx_addon_dir/ngx_tcp_upstream_round_robin.c $ngx_addon_dir/modules/ngx_tcp_proxy_module.c $ngx_addon_dir/modules/ngx_tcp_upstream_ip_hash_module.c $ngx_addon_dir/ngx_tcp_upstream_check.c $ngx_addon_dir/http_response_parse.c $ngx_addon_dir/smtp_response_parse.c"
 ngx_feature_test="int a;"
 . auto/feature
 

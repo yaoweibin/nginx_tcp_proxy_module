@@ -28,6 +28,10 @@ static ngx_int_t ngx_tcp_check_smtp_init(ngx_tcp_check_peer_conf_t *peer_conf);
 static ngx_int_t ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf);
 static void ngx_tcp_check_smtp_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
 
+static ngx_int_t ngx_tcp_check_mysql_init(ngx_tcp_check_peer_conf_t *peer_conf);
+static ngx_int_t ngx_tcp_check_mysql_parse(ngx_tcp_check_peer_conf_t *peer_conf);
+static void ngx_tcp_check_mysql_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
+
 static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf);
 
@@ -109,13 +113,25 @@ static check_conf_t  ngx_check_types[] = {
     {
         NGX_TCP_CHECK_SMTP,
         "smtp",
-        ngx_string("HELO localhost\r\n"),
-        0,
+        ngx_string("HELO smtp.localdomain\r\n"),
+        NGX_CONF_BITMASK_SET | NGX_CHECK_SMTP_2XX,
         ngx_tcp_check_send_handler,
         ngx_tcp_check_recv_handler,
         ngx_tcp_check_smtp_init,
         ngx_tcp_check_smtp_parse,
         ngx_tcp_check_smtp_reinit,
+        1
+    },
+    {
+        NGX_TCP_CHECK_MYSQL,
+        "mysql",
+        ngx_null_string,
+        0,
+        ngx_tcp_check_send_handler,
+        ngx_tcp_check_recv_handler,
+        ngx_tcp_check_mysql_init,
+        ngx_tcp_check_mysql_parse,
+        ngx_tcp_check_mysql_reinit,
         1
     },
 
@@ -588,7 +604,7 @@ void header_done(void *data, const char *at, size_t length)
 
 }
 
-static void parser_init(http_parser *hp, void *data) 
+static void check_http_parser_init(http_parser *hp, void *data) 
 {
     hp->data = data;
     hp->http_field = http_field;
@@ -619,10 +635,10 @@ ngx_tcp_check_http_init(ngx_tcp_check_peer_conf_t *peer_conf) {
 
     ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(http_parser));
     if (ctx->parser == NULL) {
-        return NGX_OK;
+        return NGX_ERROR;
     }
 
-    parser_init(ctx->parser, peer_conf);
+    check_http_parser_init(ctx->parser, peer_conf);
 
     return NGX_OK;
 }
@@ -687,7 +703,7 @@ ngx_tcp_check_http_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
 
     ctx->recv.pos = ctx->recv.last = ctx->recv.start;
 
-    parser_init(ctx->parser, peer_conf);
+    check_http_parser_init(ctx->parser, peer_conf);
 }
    
 
@@ -758,6 +774,93 @@ ngx_tcp_check_ssl_hello_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
     ctx->recv.pos = ctx->recv.last = ctx->recv.start;
 }
 
+static void domain(void *data, const char *at, size_t length)
+{
+    ngx_str_t str;
+
+    str.data = (u_char *) at;
+    str.len = length;
+
+    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "DOMAIN: \"%V\"", &str);
+}
+
+static void greeting_text(void *data, const char *at, size_t length)
+{
+    ngx_str_t str;
+
+    str.data = (u_char *) at;
+    str.len = length;
+
+    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "GREETING_TEXT: \"%V\"", &str);
+}
+
+static void reply_code(void *data, const char *at, size_t length)
+{
+    ngx_tcp_check_peer_conf_t *peer_conf = data;
+    ngx_tcp_check_ctx         *ctx;
+    smtp_parser               *sp;
+    ngx_str_t                  str;
+    int                        code;
+
+    str.data = (u_char *) at;
+    str.len = length;
+
+    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "REPLY_CODE: \"%V\"", &str);
+
+    ctx = peer_conf->check_data;
+    sp = ctx->parser;
+
+    code = ngx_atoi((u_char*)at, length);
+
+    if (code >= 200 && code < 300) {
+        sp->hello_reply_code = NGX_CHECK_SMTP_2XX;
+    }
+    else if (code >= 300 && code < 400) {
+        sp->hello_reply_code = NGX_CHECK_SMTP_3XX;
+    }
+    else if (code >= 400 && code < 500) {
+        sp->hello_reply_code = NGX_CHECK_SMTP_4XX;
+    }
+    else if (code >= 500 && code < 600) {
+        sp->hello_reply_code = NGX_CHECK_SMTP_5XX;
+    }
+    else {
+        sp->hello_reply_code = NGX_CHECK_SMTP_ERR;
+    }
+}
+
+static void reply_text(void *data, const char *at, size_t length)
+{
+    ngx_str_t str;
+
+    str.data = (u_char *) at;
+    str.len = length;
+
+    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "REPLY_TEXT: \"%V\"", &str);
+}
+
+static void smtp_done(void *data, const char *at, size_t length)
+{
+}
+
+static void check_smtp_parser_init(smtp_parser *sp, void *data) 
+{
+    sp->data = data;
+    sp->hello_reply_code = 0;
+
+    sp->domain = domain;
+    sp->greeting_text = greeting_text;
+    sp->reply_code = reply_code;
+    sp->reply_text = reply_text;
+    sp->smtp_done = smtp_done;
+
+    smtp_parser_init(sp);
+}
+
 static ngx_int_t 
 ngx_tcp_check_smtp_init(ngx_tcp_check_peer_conf_t *peer_conf) {
 
@@ -770,11 +873,18 @@ ngx_tcp_check_smtp_init(ngx_tcp_check_peer_conf_t *peer_conf) {
     ctx->send.start = ctx->send.pos = (u_char *)uscf->send.data;
     ctx->send.end = ctx->send.last = ctx->send.start + uscf->send.len;
 
+    ctx->recv.start = ctx->recv.pos = NULL;
+    ctx->recv.end = ctx->recv.last = NULL;
+
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "smtp_init: send:%V", &uscf->send);
 
-    ctx->recv.start = ctx->recv.pos = NULL;
-    ctx->recv.end = ctx->recv.last = NULL;
+    ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(smtp_parser));
+    if (ctx->parser == NULL) {
+        return NGX_ERROR;
+    }
+
+    check_smtp_parser_init(ctx->parser, peer_conf);
 
     return NGX_OK;
 }
@@ -782,21 +892,43 @@ ngx_tcp_check_smtp_init(ngx_tcp_check_peer_conf_t *peer_conf) {
 static ngx_int_t 
 ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
 
-    u_char                        ch;
+    ssize_t                       n, offset, length;
+    smtp_parser                  *sp;
     ngx_tcp_check_ctx            *ctx;
+    ngx_tcp_upstream_srv_conf_t  *uscf;
 
+    uscf = peer_conf->conf;
     ctx = peer_conf->check_data;
+    sp = ctx->parser;
 
     if (ctx->recv.last - ctx->recv.pos <= 0 ) {
         return NGX_AGAIN;
     }
 
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "smtp_parse: recv:%s", ctx->recv.pos);
+    offset = ctx->recv.pos - ctx->recv.start;
+    length = ctx->recv.last - ctx->recv.start;
 
-    ch = (u_char) *(ctx->recv.pos);
+    n = smtp_parser_execute(sp, (char *)ctx->recv.start, length, offset);
+    ctx->recv.pos += n;
 
-    if (ch != '2') {
+    if (smtp_parser_finish(sp) == -1) {
+        ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
+                "smtp parse error with peer: %V, recv data: %s", 
+                &peer_conf->peer->name, ctx->recv.pos);
+        return NGX_ERROR;
+    }
+
+    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "smtp_parse: sp->hello_reply_code: %d, conf: %d",
+            sp->hello_reply_code, uscf->status_alive);
+
+    if (sp->hello_reply_code == 0) {
+        return NGX_AGAIN;
+    }
+    else if (sp->hello_reply_code & uscf->status_alive) {
+        return NGX_OK;
+    }
+    else {
         return NGX_ERROR;
     }
 
@@ -814,8 +946,69 @@ ngx_tcp_check_smtp_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
     ctx->send.last = ctx->send.end;
 
     ctx->recv.pos = ctx->recv.last = ctx->recv.start;
+
+    check_smtp_parser_init(ctx->parser, peer_conf);
 }
    
+static ngx_int_t 
+ngx_tcp_check_mysql_init(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx            *ctx;
+    ngx_tcp_upstream_srv_conf_t  *uscf;
+    
+    ctx = peer_conf->check_data;
+    uscf = peer_conf->conf;
+
+    ctx->send.start = ctx->send.pos = (u_char *)uscf->send.data;
+    ctx->send.end = ctx->send.last = ctx->send.start + uscf->send.len;
+
+    ctx->recv.start = ctx->recv.pos = NULL;
+    ctx->recv.end = ctx->recv.last = NULL;
+
+    return NGX_OK;
+}
+
+static ngx_int_t 
+ngx_tcp_check_mysql_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx            *ctx;
+    mysql_handshake_init_t       *handshake;
+
+    ctx = peer_conf->check_data;
+
+    if (ctx->recv.last - ctx->recv.pos <= 0 ) {
+        return NGX_AGAIN;
+    }
+
+    handshake = (mysql_handshake_init_t *) ctx->recv.pos;
+
+    ngx_log_debug3(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "mysql_parse: packet_number=%d, protocol=%d, server=%s", 
+            handshake->packet_number,
+            handshake->protocol_version,
+            handshake->others);
+
+    /* The mysql greeting packet's serial number always begin with 0. */
+    if (handshake->packet_number != 0x00) {
+        return NGX_ERROR;
+    }
+
+    return NGX_OK;
+}
+
+static void
+ngx_tcp_check_mysql_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx *ctx;
+
+    ctx = peer_conf->check_data;
+
+    ctx->send.pos = ctx->send.start;
+    ctx->send.last = ctx->send.end;
+
+    ctx->recv.pos = ctx->recv.last = ctx->recv.start;
+}
+
 static void 
 ngx_tcp_check_send_handler(ngx_event_t *event) {
 
@@ -842,6 +1035,10 @@ ngx_tcp_check_send_handler(ngx_event_t *event) {
     }
 
     if (peer_conf->state != NGX_TCP_CHECK_CONNECT_DONE) {
+        if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
+                goto check_send_fail;
+        }
+
         return;
     }
 
@@ -883,6 +1080,7 @@ ngx_tcp_check_send_handler(ngx_event_t *event) {
     }
 
     if (ctx->send.pos == ctx->send.last) {
+        ngx_log_debug(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp check send done.");
         peer_conf->state = NGX_TCP_CHECK_SEND_DONE;
     }
 
@@ -912,6 +1110,11 @@ ngx_tcp_check_recv_handler(ngx_event_t *event) {
     peer_conf = c->data;
 
     if (peer_conf->state != NGX_TCP_CHECK_SEND_DONE) {
+
+        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+            goto check_recv_fail;
+        }
+
         return;
     }
 
@@ -1095,13 +1298,8 @@ ngx_tcp_upstream_init_check_conf(ngx_tcp_upstream_srv_conf_t *uscf) {
         uscf->send.len = cf->default_send.len;
     }
 
-    if (cf->type & NGX_TCP_CHECK_HTTP) {
-
-        if ((uscf->status_alive < NGX_CHECK_HTTP_2XX) || 
-                    (uscf->status_alive >= NGX_CHECK_HTTP_6XX)) {
-
-            uscf->status_alive = cf->default_status_alive;
-        }
+    if (uscf->status_alive == 0) { 
+        uscf->status_alive = cf->default_status_alive;
     }
 }
 

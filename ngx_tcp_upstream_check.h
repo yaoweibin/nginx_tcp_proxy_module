@@ -31,6 +31,15 @@ typedef struct {
 } __attribute__((packed)) server_ssl_hello_t;
 
 typedef struct {
+
+    u_char                 packet_length[3];
+    u_char                 packet_number;
+
+    u_char                 protocol_version;
+    u_char                 others[0];
+} __attribute__((packed)) mysql_handshake_init_t;
+
+typedef struct {
     ngx_buf_t send;
     ngx_buf_t recv;
 
@@ -76,6 +85,7 @@ typedef void (*ngx_tcp_check_packet_clean_pt)(ngx_tcp_check_peer_conf_t *peer_co
 #define NGX_TCP_CHECK_HTTP             0x0002
 #define NGX_TCP_CHECK_SSL_HELLO        0x0004
 #define NGX_TCP_CHECK_SMTP             0x0008
+#define NGX_TCP_CHECK_MYSQL            0x0010
 
 
 #define NGX_CHECK_HTTP_2XX             0x0002
@@ -84,6 +94,13 @@ typedef void (*ngx_tcp_check_packet_clean_pt)(ngx_tcp_check_peer_conf_t *peer_co
 #define NGX_CHECK_HTTP_5XX             0x0010
 #define NGX_CHECK_HTTP_6XX             0x0020
 #define NGX_CHECK_HTTP_ERR             0x8000
+
+#define NGX_CHECK_SMTP_2XX             0x0002
+#define NGX_CHECK_SMTP_3XX             0x0004
+#define NGX_CHECK_SMTP_4XX             0x0008
+#define NGX_CHECK_SMTP_5XX             0x0010
+#define NGX_CHECK_SMTP_6XX             0x0020
+#define NGX_CHECK_SMTP_ERR             0x8000
 
 struct check_conf_s {
     ngx_uint_t type;
@@ -166,6 +183,32 @@ int http_parser_finish(http_parser *parser);
 size_t http_parser_execute(http_parser *parser, const char *data, size_t len, size_t off);
 int http_parser_has_error(http_parser *parser);
 int http_parser_is_finished(http_parser *parser);
+
+#define http_parser_nread(parser) (parser)->nread 
+
+typedef struct smtp_parser {
+
+  int cs;
+  size_t nread;
+  size_t mark;
+
+  int hello_reply_code;
+
+  void *data;
+
+  element_cb domain;
+  element_cb greeting_text;
+  element_cb reply_code;
+  element_cb reply_text;
+  element_cb smtp_done;
+    
+} smtp_parser;
+
+int smtp_parser_init(smtp_parser *parser);
+int smtp_parser_finish(smtp_parser *parser);
+size_t smtp_parser_execute(smtp_parser *parser, const char *data, size_t len, size_t off);
+int smtp_parser_has_error(smtp_parser *parser);
+int smtp_parser_is_finished(smtp_parser *parser);
 
 #define http_parser_nread(parser) (parser)->nread 
 
