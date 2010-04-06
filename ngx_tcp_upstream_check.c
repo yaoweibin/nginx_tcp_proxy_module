@@ -32,6 +32,14 @@ static ngx_int_t ngx_tcp_check_mysql_init(ngx_tcp_check_peer_conf_t *peer_conf);
 static ngx_int_t ngx_tcp_check_mysql_parse(ngx_tcp_check_peer_conf_t *peer_conf);
 static void ngx_tcp_check_mysql_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
 
+static ngx_int_t ngx_tcp_check_pop3_init(ngx_tcp_check_peer_conf_t *peer_conf);
+static ngx_int_t ngx_tcp_check_pop3_parse(ngx_tcp_check_peer_conf_t *peer_conf);
+static void ngx_tcp_check_pop3_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
+
+static ngx_int_t ngx_tcp_check_imap_init(ngx_tcp_check_peer_conf_t *peer_conf);
+static ngx_int_t ngx_tcp_check_imap_parse(ngx_tcp_check_peer_conf_t *peer_conf);
+static void ngx_tcp_check_imap_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
+
 static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf);
 
@@ -134,6 +142,31 @@ static check_conf_t  ngx_check_types[] = {
         ngx_tcp_check_mysql_reinit,
         1
     },
+    {
+        NGX_TCP_CHECK_POP3,
+        "pop3",
+        ngx_null_string,
+        0,
+        ngx_tcp_check_send_handler,
+        ngx_tcp_check_recv_handler,
+        ngx_tcp_check_pop3_init,
+        ngx_tcp_check_pop3_parse,
+        ngx_tcp_check_pop3_reinit,
+        1
+    },
+    {
+        NGX_TCP_CHECK_IMAP,
+        "imap",
+        ngx_null_string,
+        0,
+        ngx_tcp_check_send_handler,
+        ngx_tcp_check_recv_handler,
+        ngx_tcp_check_imap_init,
+        ngx_tcp_check_imap_parse,
+        ngx_tcp_check_imap_reinit,
+        1
+    },
+
 
     {0, "", ngx_null_string, 0, NULL, NULL, NULL, NULL, NULL, 0}
 };
@@ -915,6 +948,12 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
         ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
                 "smtp parse error with peer: %V, recv data: %s", 
                 &peer_conf->peer->name, ctx->recv.pos);
+
+        /*Some SMTP servers are not strictly designed with the RFC2821, but it does work*/
+        if (*ctx->recv.start == '2') {
+            return NGX_OK;
+        }
+
         return NGX_ERROR;
     }
 
@@ -998,6 +1037,138 @@ ngx_tcp_check_mysql_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
 
 static void
 ngx_tcp_check_mysql_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx *ctx;
+
+    ctx = peer_conf->check_data;
+
+    ctx->send.pos = ctx->send.start;
+    ctx->send.last = ctx->send.end;
+
+    ctx->recv.pos = ctx->recv.last = ctx->recv.start;
+}
+
+
+static ngx_int_t 
+ngx_tcp_check_pop3_init(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx            *ctx;
+    ngx_tcp_upstream_srv_conf_t  *uscf;
+    
+    ctx = peer_conf->check_data;
+    uscf = peer_conf->conf;
+
+    ctx->send.start = ctx->send.pos = (u_char *)uscf->send.data;
+    ctx->send.end = ctx->send.last = ctx->send.start + uscf->send.len;
+
+    ctx->recv.start = ctx->recv.pos = NULL;
+    ctx->recv.end = ctx->recv.last = NULL;
+
+    return NGX_OK;
+}
+
+static ngx_int_t 
+ngx_tcp_check_pop3_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    u_char                        ch;
+    ngx_tcp_check_ctx            *ctx;
+
+    ctx = peer_conf->check_data;
+
+    if (ctx->recv.last - ctx->recv.pos <= 0 ) {
+        return NGX_AGAIN;
+    }
+
+    ch = *(ctx->recv.start);
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "pop3_parse: packet_greeting \"%s\"", ctx->recv.start);
+
+    /* RFC 1939
+       There are currently two status indicators: positive ("+OK") and 
+       negative ("-ERR").  Servers MUST send the "+OK" and "-ERR" in upper case.
+     */
+    if (ch != '+') {
+        return NGX_ERROR;
+    }
+
+    return NGX_OK;
+}
+
+static void
+ngx_tcp_check_pop3_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx *ctx;
+
+    ctx = peer_conf->check_data;
+
+    ctx->send.pos = ctx->send.start;
+    ctx->send.last = ctx->send.end;
+
+    ctx->recv.pos = ctx->recv.last = ctx->recv.start;
+}
+
+static ngx_int_t 
+ngx_tcp_check_imap_init(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    ngx_tcp_check_ctx            *ctx;
+    ngx_tcp_upstream_srv_conf_t  *uscf;
+    
+    ctx = peer_conf->check_data;
+    uscf = peer_conf->conf;
+
+    ctx->send.start = ctx->send.pos = (u_char *)uscf->send.data;
+    ctx->send.end = ctx->send.last = ctx->send.start + uscf->send.len;
+
+    ctx->recv.start = ctx->recv.pos = NULL;
+    ctx->recv.end = ctx->recv.last = NULL;
+
+    return NGX_OK;
+}
+
+static ngx_int_t 
+ngx_tcp_check_imap_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
+
+    u_char                       *p;
+    ngx_tcp_check_ctx            *ctx;
+
+    ctx = peer_conf->check_data;
+
+    if (ctx->recv.last - ctx->recv.pos <= 0 ) {
+        return NGX_AGAIN;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+            "imap_parse: packet_greeting \"%s\"", ctx->recv.start);
+
+    /* RFC 3501
+       command         = tag SP (command-any / command-auth / command-nonauth /
+        command-select) CRLF
+     */
+
+    p = ctx->recv.start;
+    while (p < ctx->recv.last) {
+
+        if (*p == ' ') {
+            if ((p + 2) >= ctx->recv.last) {
+                return NGX_AGAIN;
+            }
+            else if (*(p + 1) == 'O' && *(p + 2) == 'K') {
+                return NGX_OK;
+            }
+            else {
+                return NGX_ERROR;
+            }
+        }
+
+        p++;
+    }
+
+    return NGX_AGAIN;
+}
+
+static void
+ngx_tcp_check_imap_reinit(ngx_tcp_check_peer_conf_t *peer_conf) {
 
     ngx_tcp_check_ctx *ctx;
 
@@ -1177,6 +1348,9 @@ ngx_tcp_check_recv_handler(ngx_event_t *event) {
         case NGX_AGAIN:
             return;
         case NGX_ERROR:
+            ngx_log_error(NGX_LOG_ERR, event->log, 0,
+                    "check protocol %s error with peer: %V ", 
+                    peer_conf->conf->check_type_conf->name, &peer_conf->peer->name);
             ngx_tcp_check_status_update(peer_conf, 0);
             break;
         case NGX_OK:

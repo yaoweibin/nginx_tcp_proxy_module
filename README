@@ -58,7 +58,7 @@ Description
     upstream server health check, status monitor.
 
     The motivation of writing these modules is Nginx's high performance and
-    robustness. It's more scalable in the SMP system when compared with HAProxy.
+    robustness.
 
 
 Directives
@@ -144,7 +144,7 @@ Directives
 
     ==check==
     syntax: check interval=milliseconds [fall=count] [rise=count]
-    [timeout=milliseconds] [type=tcp|ssl_hello|smtp|mysql]
+    [timeout=milliseconds] [type=tcp|ssl_hello|smtp|mysql|pop3|imap]
     default: none, if parameters omitted, default parameters are 'interval=30000
     fall=5 rise=2 timeout=1000'
     context: upstream
@@ -165,8 +165,13 @@ Directives
             response to diagnose if the upstream server is alive.  
             'smtp' sends a smtp requst packet, recvives and parses the smtp
             response to diagnose if the upstream server is alive. The response
-            begins with '2' will be judged to be a OK response. 
+            begins with '2' should be an OK response. 
             'mysql' connects to the mysql server, recvives the greeting response 
+            to diagnose if the upstream server is alive.  
+            'pop3' recvives and parses the pop3 response to diagnose if the
+            upstream server is alive. The response begins with '+' should be an
+            OK response.
+            'imap' connects to the imap server, recvives the greeting response 
             to diagnose if the upstream server is alive.  
 
     ==check_http_send=

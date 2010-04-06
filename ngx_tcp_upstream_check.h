@@ -86,6 +86,8 @@ typedef void (*ngx_tcp_check_packet_clean_pt)(ngx_tcp_check_peer_conf_t *peer_co
 #define NGX_TCP_CHECK_SSL_HELLO        0x0004
 #define NGX_TCP_CHECK_SMTP             0x0008
 #define NGX_TCP_CHECK_MYSQL            0x0010
+#define NGX_TCP_CHECK_POP3             0x0020
+#define NGX_TCP_CHECK_IMAP             0x0040
 
 
 #define NGX_CHECK_HTTP_2XX             0x0002
