@@ -6,6 +6,7 @@
 
 
 static void ngx_tcp_init_session(ngx_connection_t *c);
+static void ngx_tcp_process_session(ngx_connection_t *c);
 
 void
 ngx_tcp_init_connection(ngx_connection_t *c)
@@ -165,21 +166,24 @@ ngx_tcp_init_session(ngx_connection_t *c)
         return;
     }
 
-    /*if (s->buffer == NULL) {*/
-
-    /*s->buffer = ngx_create_temp_buf(s->pool, 4096);*/
-    /*if (s->buffer == NULL) {*/
-    /*ngx_tcp_finalize_session(s);*/
-    /*return;*/
-    /*}*/
-    /*}*/
-
-    /*c->write->handler = ngx_tcp_send;*/
-
-    /*Maybe I'll add more handlers module in the future*/
-    ngx_tcp_proxy_init_session(c, s);
-
 	/*cscf->protocol->init_session(s, c);*/
+    ngx_tcp_process_session(c);
+}
+
+static void
+ngx_tcp_process_session(ngx_connection_t *c)
+{
+    ngx_tcp_session_t        *s;
+
+    s = c->data;
+
+    /*process the acl*/
+    if (ngx_tcp_access_handler(s) == NGX_ERROR) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    ngx_tcp_proxy_init_session(c, s);
 }
 
 void

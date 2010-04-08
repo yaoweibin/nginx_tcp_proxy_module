@@ -72,6 +72,7 @@ void ngx_tcp_finalize_session(ngx_tcp_session_t *s);
 
 ngx_tcp_cleanup_t * ngx_tcp_cleanup_add(ngx_tcp_session_t *s, size_t size);
 
+ngx_int_t ngx_tcp_access_handler(ngx_tcp_session_t *s);
 void ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s);
 
 extern ngx_module_t  ngx_tcp_proxy_module;

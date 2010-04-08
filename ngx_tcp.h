@@ -102,6 +102,11 @@ typedef struct {
 #endif
 } ngx_tcp_conf_addr_t;
 
+typedef struct {
+    in_addr_t     mask;
+    in_addr_t     addr;
+    ngx_uint_t    deny;      /* unsigned  deny:1; */
+} ngx_tcp_access_rule_t;
 
 typedef struct {
     ngx_array_t             servers;     /* ngx_tcp_core_srv_conf_t */
@@ -124,6 +129,9 @@ typedef struct {
     ngx_int_t               line;
 
     ngx_resolver_t         *resolver;
+
+    /*ACL rules*/
+    ngx_array_t            *rules;
 
     /* server ctx */
     ngx_tcp_conf_ctx_t    *ctx;
