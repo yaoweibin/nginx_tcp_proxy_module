@@ -42,36 +42,11 @@ typedef struct ngx_tcp_session_s {
 
     /*unsigned                protocol:3;*/
     /*unsigned                blocked:1;*/
+
     unsigned                quit:1;
-    /*unsigned                quoted:1;*/
-    /*unsigned                backslash:1;*/
-    /*unsigned                no_sync_literal:1;*/
-    /*unsigned                starttls:1;*/
-    /*unsigned                esmtp:1;*/
-    /*unsigned                auth_method:3;*/
-    /*unsigned                auth_wait:1;*/
-
-    /*ngx_str_t               login;*/
-    /*ngx_str_t               passwd;*/
-
-    /*ngx_str_t               salt;*/
-    /*ngx_str_t               tag;*/
-    /*ngx_str_t               tagged_line;*/
-    /*ngx_str_t               text;*/
-
     ngx_str_t              *addr_text;
     ngx_str_t               host;
 
-    /*ngx_uint_t              command;*/
-    /*ngx_array_t             args;*/
-
-    /*ngx_uint_t              login_attempt;*/
-
-    /*ngx_uint_t              state;*/
-    /*u_char                 *cmd_start;*/
-    /*u_char                 *arg_start;*/
-    /*u_char                 *arg_end;*/
-    /*ngx_uint_t              literal_len;*/
 } ngx_tcp_session_t;
 
 typedef void (*ngx_tcp_cleanup_pt)(void *data);

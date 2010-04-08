@@ -186,51 +186,6 @@ typedef struct {
 } ngx_tcp_upstream_conf_t;
 
 
-/*typedef struct {*/
-/*ngx_str_t                        name;*/
-/**//*ngx_tcp_header_handler_pt       handler;*/
-/*ngx_uint_t                       offset;*/
-/**//*ngx_tcp_header_handler_pt       copy_handler;*/
-/*ngx_uint_t                       conf;*/
-/*ngx_uint_t                       redirect;  *//* unsigned   redirect:1; */
-/*} ngx_tcp_upstream_header_t;*/
-
-
-/*typedef struct {*/
-    /*ngx_list_t                       headers;*/
-
-/*ngx_uint_t                       status_n;*/
-/*ngx_str_t                        status_line;*/
-
-/*ngx_table_elt_t                 *status;*/
-/*ngx_table_elt_t                 *date;*/
-/*ngx_table_elt_t                 *server;*/
-/*ngx_table_elt_t                 *connection;*/
-
-/*ngx_table_elt_t                 *expires;*/
-/*ngx_table_elt_t                 *etag;*/
-/*ngx_table_elt_t                 *x_accel_expires;*/
-/*ngx_table_elt_t                 *x_accel_redirect;*/
-/*ngx_table_elt_t                 *x_accel_limit_rate;*/
-
-/*ngx_table_elt_t                 *content_type;*/
-/*ngx_table_elt_t                 *content_length;*/
-
-/*ngx_table_elt_t                 *last_modified;*/
-/*ngx_table_elt_t                 *location;*/
-/*ngx_table_elt_t                 *accept_ranges;*/
-/*ngx_table_elt_t                 *www_authenticate;*/
-
-/*#if (NGX_TCP_GZIP)*/
-/*ngx_table_elt_t                 *content_encoding;*/
-/*#endif*/
-
-/*off_t                            content_length_n;*/
-
-/*ngx_array_t                      cache_control;*/
-/*} ngx_tcp_upstream_headers_in_t;*/
-
-
 struct ngx_tcp_upstream_resolved_s {
     ngx_str_t                        host;
     in_port_t                        port;

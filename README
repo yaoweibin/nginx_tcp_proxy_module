@@ -10,9 +10,6 @@ Status
     We need your help! If you find this module useful and/or
     interesting, please consider joining the development!
 
-Version
-    Release date: 2010.03.10, version 0.01
-
 Synopsis
 
     http {
@@ -297,13 +294,10 @@ OTHERS
         $ ragel -G2 http_response_parse.rl
 
 TODO
-    *  health check, more method 
+    *  ACL 
 
 Known Issues
-    *  test
-
-See Also
-    *  test 
+    *  
 
 Authors
     Weibin Yao(姚伟斌) <yaoweibin at gmail dot com>

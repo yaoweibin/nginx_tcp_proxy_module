@@ -227,7 +227,8 @@ ngx_tcp_get_check_type_conf(ngx_str_t *str) {
             break;
         }
 
-        if (ngx_strncmp(str->data, (u_char *)ngx_check_types[i].name, str->len) == 0) {
+        if (ngx_strncmp(str->data, 
+                    (u_char *)ngx_check_types[i].name, str->len) == 0) {
             return &ngx_check_types[i];
         }
     }
