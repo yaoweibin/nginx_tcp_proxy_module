@@ -1630,8 +1630,8 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) {
         return rc;
     }
 
-    r->headers_out.content_type.len = sizeof("text/plain") - 1;
-    r->headers_out.content_type.data = (u_char *) "text/plain";
+    r->headers_out.content_type.len = sizeof("text/html; charset=utf-8") - 1;
+    r->headers_out.content_type.data = (u_char *) "text/html; charset=utf-8";
 
     if (r->method == NGX_HTTP_HEAD) {
         r->headers_out.status = NGX_HTTP_OK;
@@ -1673,17 +1673,46 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) {
     out.next = NULL;
 
     b->last = ngx_sprintf(b->last, 
-            "check upstream server number: %ui, shm_name: %V\n\n",
+            "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\n"
+            "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+            "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+            "<head>\n"
+            "  <title>Nginx tcp upstream check status</title>\n"
+            "</head>\n"
+            "<body>\n"
+            "<h1>Nginx tcp upstream check status</h1>\n"
+            "<h2>Check upstream server number: %ui, shm_name: %V</h2>\n"
+            "<table style=\"background-color:white\" cellspacing=\"0\" cellpadding=\"3\" border=\"1\">\n"
+            "  <tr bgcolor=\"#C0C0C0\">\n"
+            "    <th>Index</th>\n"
+            "    <th>Name</th>\n"
+            "    <th>Status</th>\n"
+            "    <th>Rise counts</th>\n"
+            "    <th>Fall counts</th>\n"
+            "    <th>Check type</th>\n"
+            "  </tr>\n",
             peers_conf->peers.nelts, &shm_name);
 
     for (i = 0; i < peers_conf->peers.nelts; i++) {
-
         b->last = ngx_sprintf(b->last, 
-                "server %ui: name=%V, down=%ui, rise=%ui, fall=%ui, type=%s\n",
-                i, &peer_conf[i].peer->name, peer_shm[i].down, 
+                "  <tr%s>\n"
+                "    <td>%ui</td>\n" 
+                "    <td>%V</td>\n" 
+                "    <td>%s</td>\n" 
+                "    <td>%ui</td>\n" 
+                "    <td>%ui</td>\n" 
+                "    <td>%s</td>\n" 
+                "  </tr>\n",
+                peer_shm[i].down ? " bgcolor=\"#FF0000\"" : "",
+                i, &peer_conf[i].peer->name, 
+                peer_shm[i].down ? "down" : "up",
                 peer_shm[i].rise_count, peer_shm[i].fall_count, 
                 peer_conf[i].conf->check_type_conf->name);
     }
+
+    b->last = ngx_sprintf(b->last, 
+            "</body>\n"
+            "</html>\n");
 
     r->headers_out.status = NGX_HTTP_OK;
     r->headers_out.content_length_n = b->last - b->pos;

@@ -5,6 +5,9 @@
 #include <ngx_event_connect.h>
 #include <ngx_tcp.h>
 
+#define _GNU_SOURCE
+#include <fcntl.h>
+
 
 typedef struct ngx_tcp_proxy_conf_s {
     ngx_tcp_upstream_conf_t  upstream;
