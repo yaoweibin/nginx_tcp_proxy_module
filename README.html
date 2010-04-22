@@ -1,0 +1,476 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Name</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">Name</a></li>
+	<li><a href="#status">Status</a></li>
+	<li><a href="#synopsis">Synopsis</a></li>
+	<li><a href="#description">Description</a></li>
+	<li><a href="#directives">Directives</a></li>
+	<ul>
+
+		<li><a href="#ngx_tcp_moodule">ngx_tcp_moodule</a></li>
+		<ul>
+
+			<li><a href="#tcp">tcp</a></li>
+			<li><a href="#server">server</a></li>
+			<li><a href="#listen">listen</a></li>
+			<li><a href="#allow">allow</a></li>
+			<li><a href="#deny">deny</a></li>
+			<li><a href="#so_keepalive">so_keepalive</a></li>
+			<li><a href="#tcp_nodelay">tcp_nodelay</a></li>
+			<li><a href="#timeout">timeout</a></li>
+			<li><a href="#server_name">server_name</a></li>
+			<li><a href="#resolver">resolver</a></li>
+			<li><a href="#resolver_timeout">resolver_timeout</a></li>
+		</ul>
+
+		<li><a href="#ngx_tcp_upstream_module">ngx_tcp_upstream_module</a></li>
+		<ul>
+
+			<li><a href="#upstream">upstream</a></li>
+			<li><a href="#server">server</a></li>
+			<li><a href="#check">check</a></li>
+			<li><a href="#check_http_send">check_http_send</a></li>
+			<li><a href="#check_http_expect_alive">check_http_expect_alive</a></li>
+			<li><a href="#check_smtp_send">check_smtp_send</a></li>
+			<li><a href="#check_smtp_expect_alive">check_smtp_expect_alive</a></li>
+			<li><a href="#check_shm_size">check_shm_size</a></li>
+			<li><a href="#check_status">check_status</a></li>
+			<li><a href="#ip_hash">ip_hash</a></li>
+		</ul>
+
+		<li><a href="#ngx_tcp_proxy_module">ngx_tcp_proxy_module</a></li>
+		<ul>
+
+			<li><a href="#proxy_pass">proxy_pass</a></li>
+			<li><a href="#proxy_buffer">proxy_buffer</a></li>
+			<li><a href="#proxy_connect_timeout">proxy_connect_timeout</a></li>
+			<li><a href="#proxy_read_timeout">proxy_read_timeout</a></li>
+			<li><a href="#proxy_write_timeout">proxy_write_timeout</a></li>
+		</ul>
+
+	</ul>
+
+	<li><a href="#installation">Installation</a></li>
+	<li><a href="#compatibility">Compatibility</a></li>
+	<li><a href="#notes">Notes</a></li>
+	<li><a href="#todo">TODO</a></li>
+	<li><a href="#known_issues">Known Issues</a></li>
+	<li><a href="#changelogs">Changelogs</a></li>
+	<ul>
+
+		<li><a href="#v0_19">v0.19</a></li>
+		<li><a href="#v0_1">v0.1</a></li>
+	</ul>
+
+	<li><a href="#authors">Authors</a></li>
+	<li><a href="#copyright___license">Copyright &amp; License</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<hr />
+<h1><a name="name">Name</a></h1>
+<p><strong>nginx_tcp_proxy_module</strong> - support TCP proxy with Nginx</p>
+<p>
+</p>
+<hr />
+<h1><a name="status">Status</a></h1>
+<p>This module is at its very early phase of development and considered highly experimental. But you're encouraged to test it out on your side and report any quirks that you experience.</p>
+<p>We need your help! If you find this module useful and/or interesting, please consider joining the development!</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">Synopsis</a></h1>
+<p>http {</p>
+<pre>
+    listen 80;</pre>
+<pre>
+    location /status {
+        check_status;
+    }
+}</pre>
+<p>tcp {</p>
+<pre>
+    upstream cluster {
+        # simple round-robin
+        server 127.0.0.1:3306;
+        server 127.0.0.1:1234;</pre>
+<pre>
+        check interval=3000 rise=2 fall=5 timeout=1000;</pre>
+<pre>
+        #check interval=3000 rise=2 fall=5 timeout=1000 type=ssl_hello;</pre>
+<pre>
+        #check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+        #check_http_send &quot;GET / HTTP/1.0\r\n\r\n&quot;;
+        #check_http_expect_alive http_2xx http_3xx;
+    }</pre>
+<pre>
+    server {
+        listen 8888;</pre>
+<pre>
+        proxy_pass cluster;
+    }
+}</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">Description</a></h1>
+<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
+<p>The motivation of writing these modules is Nginx's high performance and robustness.</p>
+<p>
+</p>
+<hr />
+<h1><a name="directives">Directives</a></h1>
+<p>
+</p>
+<h2><a name="ngx_tcp_moodule">ngx_tcp_moodule</a></h2>
+<p>
+</p>
+<h3><a name="tcp">tcp</a></h3>
+<p><strong>syntax:</strong> <em>tcp {...}</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>main</em></p>
+<p><strong>description:</strong> All the tcp related directives are contained in the tcp block.</p>
+<p><strong>ngx_tcp_core_moodule</strong></p>
+<p>
+</p>
+<h3><a name="server">server</a></h3>
+<p><strong>syntax:</strong> <em>server {...}</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp</em></p>
+<p><strong>description:</strong> All the specific server directives are contained in the server block.</p>
+<p>
+</p>
+<h3><a name="listen">listen</a></h3>
+<p><strong>syntax:</strong> <em>listen address:port [ bind ]</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>server</em></p>
+<p><strong>description:</strong> The same as listen (<a href="http://wiki.nginx.org/NginxMailCoreModule#listen">http://wiki.nginx.org/NginxMailCoreModule#listen</a>).</p>
+<p>
+</p>
+<h3><a name="allow">allow</a></h3>
+<p><strong>syntax:</strong> <em>allow [ address | CIDR | all ]</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>server</em></p>
+<p><strong>description:</strong> Directive grants access for the network or addresses indicated.</p>
+<p>
+</p>
+<h3><a name="deny">deny</a></h3>
+<p><strong>syntax:</strong> <em>deny [ address | CIDR | all ]</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>server</em></p>
+<p><strong>description:</strong> Directive grants access for the network or addresses indicated.</p>
+<p>
+</p>
+<h3><a name="so_keepalive">so_keepalive</a></h3>
+<p><strong>syntax:</strong> <em>so_keepalive on|off</em></p>
+<p><strong>default:</strong> <em>off</em></p>
+<p><strong>context:</strong> <em>main, server</em></p>
+<p><strong>description:</strong> The same as so_keepalive (<a href="http://wiki.nginx.org/NginxMailCoreModule#so_keepalive">http://wiki.nginx.org/NginxMailCoreModule#so_keepalive</a>).</p>
+<p>
+</p>
+<h3><a name="tcp_nodelay">tcp_nodelay</a></h3>
+<p><strong>syntax:</strong> <em>tcp_nodelay on|off</em></p>
+<p><strong>default:</strong> <em>on</em></p>
+<p><strong>context:</strong> <em>main, server</em></p>
+<p><strong>description:</strong> The same as tcp_nodelay (<a href="http://wiki.nginx.org/NginxHttpCoreModule#tcp_nodelay">http://wiki.nginx.org/NginxHttpCoreModule#tcp_nodelay</a>).</p>
+<p>
+</p>
+<h3><a name="timeout">timeout</a></h3>
+<p><strong>syntax:</strong> <em>timeout milliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>main, server</em></p>
+<p><strong>description:</strong> set the timeout value with clients.</p>
+<p>
+</p>
+<h3><a name="server_name">server_name</a></h3>
+<p><strong>syntax:</strong> <em>server_name name fqdn_server_host</em></p>
+<p><strong>default:</strong> <em>The name of the host, obtained through gethostname()</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>).</p>
+<p>
+</p>
+<h3><a name="resolver">resolver</a></h3>
+<p><strong>syntax:</strong> <em>resolver address</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> DNS server</p>
+<p>
+</p>
+<h3><a name="resolver_timeout">resolver_timeout</a></h3>
+<p><strong>syntax:</strong> <em>resolver_timeout time</em></p>
+<p><strong>default:</strong> <em>30s</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> Resolver timeout in seconds.</p>
+<p>
+</p>
+<h2><a name="ngx_tcp_upstream_module">ngx_tcp_upstream_module</a></h2>
+<p>
+</p>
+<h3><a name="upstream">upstream</a></h3>
+<p><strong>syntax:</strong> <em>upstream {...}</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp</em></p>
+<p><strong>description:</strong> All the upstream directives are contained in this  block. The upstream server will be dispatched with round robin by default.</p>
+<p>
+</p>
+<h3><a name="server">server</a></h3>
+<p><strong>syntax:</strong> <em>server name [parameters]</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> Most of the parameters are the same as server (<a href="http://wiki.nginx.org/NginxHttpUpstreamModule#server">http://wiki.nginx.org/NginxHttpUpstreamModule#server</a>). Default port is 80.</p>
+<p>
+</p>
+<h3><a name="check">check</a></h3>
+<p><strong>syntax:</strong> <em>check interval=milliseconds [fall=count] [rise=count] [timeout=milliseconds] [type=tcp|ssl_hello|smtp|mysql|pop3|imap]</em></p>
+<p><strong>default:</strong> <em>none, if parameters omitted, default parameters are interval=30000 fall=5 rise=2 timeout=1000</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> Add the health check for the upstream servers. At present, the check method is a simple tcp connect.</p>
+<p>The parameters' meanings are:</p>
+<ul>
+<li>
+<p><em>interval</em>: the check request's interval time.</p>
+</li>
+<li>
+<p><em>fall</em>(fall_count): After fall_count check failures, the server is marked down.</p>
+</li>
+<li>
+<p><em>rise</em>(rise_count): After rise_count check success, the server is marked up.</p>
+</li>
+<li>
+<p><em>timeout</em>: the check request's timeout.</p>
+</li>
+<li>
+<p><em>type</em>: the check protocol type:</p>
+<ol>
+<li>
+<p><em>tcp</em> is a simple tcp socket connect and peek one byte.</p>
+</li>
+<li>
+<p><em>ssl_hello</em> sends a client ssl hello packet and receives the server ssl hello packet.</p>
+</li>
+<li>
+<p><em>http</em> sends a http requst packet, recvives and parses the http response to diagnose if the upstream server is alive.</p>
+</li>
+<li>
+<p><em>smtp</em> sends a smtp requst packet, recvives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.</p>
+</li>
+<li>
+<p><em>mysql</em> connects to the mysql server, recvives the greeting response to diagnose if the upstream server is alive.</p>
+</li>
+<li>
+<p><em>pop3</em> recvives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should be an OK response.</p>
+</li>
+<li>
+<p><em>imap</em> connects to the imap server, recvives the greeting response to diagnose if the upstream server is alive.</p>
+</li>
+</ol>
+</li>
+</ul>
+<p>
+</p>
+<h3><a name="check_http_send">check_http_send</a></h3>
+<p><strong>syntax:</strong> <em>check_http_send http_packet</em></p>
+<p><strong>default:</strong> <em>&quot;GET / HTTP/1.0\r\n\r\n&quot;</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> If you set the check type is http, then the check function will sends this http packet to check the upstream server.</p>
+<p>
+</p>
+<h3><a name="check_http_expect_alive">check_http_expect_alive</a></h3>
+<p><strong>syntax:</strong> <em>check_http_expect_alive [ http_2xx | http_3xx | http_4xx | http_5xx ]</em></p>
+<p><strong>default:</strong> <em>http_2xx | http_3xx</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> These status codes indicate the upstream server's http response is ok, the backend is alive.</p>
+<p>
+</p>
+<h3><a name="check_smtp_send">check_smtp_send</a></h3>
+<p><strong>syntax:</strong> <em>check_smtp_send smtp_packet</em></p>
+<p><strong>default:</strong> <em>&quot;HELO smtp.localdomain\r\n&quot;</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> If you set the check type is smtp, then the check function will sends this smtp packet to check the upstream server.</p>
+<p>
+</p>
+<h3><a name="check_smtp_expect_alive">check_smtp_expect_alive</a></h3>
+<p><strong>syntax:</strong> <em>check_smtp_expect_alive [smtp_2xx | smtp_3xx | smtp_4xx | smtp_5xx]</em></p>
+<p><strong>default:</strong> <em>smtp_2xx</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> These status codes indicate the upstream server's smtp response is ok, the backend is alive.</p>
+<p>
+</p>
+<h3><a name="check_shm_size">check_shm_size</a></h3>
+<p><strong>syntax:</strong> <em>check_shm_size size</em></p>
+<p><strong>default:</strong> <em>(number_of_checked_upstream_blocks + 1) * pagesize</em></p>
+<p><strong>context:</strong> <em>tcp</em></p>
+<p><strong>description:</strong> If you store hundreds of serveres in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.</p>
+<p>
+</p>
+<h3><a name="check_status">check_status</a></h3>
+<p><strong>syntax:</strong> <em>check_status</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>location</em></p>
+<p><strong>description:</strong> Display the health checking servers' status by HTTP. This directive is set in the http block.</p>
+<p><strong>ngx_tcp_upstream_ip_hash_module</strong></p>
+<p>
+</p>
+<h3><a name="ip_hash">ip_hash</a></h3>
+<p><strong>syntax:</strong> <em>ip_hash</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> the upstream server will be dispatched by ip_hash.</p>
+<p>
+</p>
+<h2><a name="ngx_tcp_proxy_module">ngx_tcp_proxy_module</a></h2>
+<p>
+</p>
+<h3><a name="proxy_pass">proxy_pass</a></h3>
+<p><strong>syntax:</strong> <em>proxy_pass host:port</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>server</em></p>
+<p><strong>description:</strong> proxy the request to the backend server. Default port is 80.</p>
+<p>
+</p>
+<h3><a name="proxy_buffer">proxy_buffer</a></h3>
+<p><strong>syntax:</strong> <em>proxy_buffer size</em></p>
+<p><strong>default:</strong> <em>4k</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the size of proxy buffer.</p>
+<p>
+</p>
+<h3><a name="proxy_connect_timeout">proxy_connect_timeout</a></h3>
+<p><strong>syntax:</strong> <em>proxy_connect_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of connection to backends.</p>
+<p>
+</p>
+<h3><a name="proxy_read_timeout">proxy_read_timeout</a></h3>
+<p><strong>syntax:</strong> <em>proxy_read_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of reading from backends.</p>
+<p>
+</p>
+<h3><a name="proxy_write_timeout">proxy_write_timeout</a></h3>
+<p><strong>syntax:</strong> <em>proxy_write_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of writing to backends.</p>
+<p>
+</p>
+<hr />
+<h1><a name="installation">Installation</a></h1>
+<p>Download the latest version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
+<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:</p>
+<pre>
+    $ wget '<a href="http://nginx.org/download/nginx-0.7.65.tar.gz">http://nginx.org/download/nginx-0.7.65.tar.gz</a>'
+    $ tar -xzvf nginx-0.7.65.tar.gz
+    $ cd nginx-0.7.65/
+    $ patch -p1 &lt; /path/to/nginx_tcp_proxy_module/tcp.patch</pre>
+<pre>
+    $ ./configure --add-module=/path/to/nginx_tcp_proxy_module</pre>
+<pre>
+    $ make
+    $ make install</pre>
+<p>
+</p>
+<hr />
+<h1><a name="compatibility">Compatibility</a></h1>
+<ul>
+<li>
+<p>My test bed is 0.7.65 and 0.8.34.</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="notes">Notes</a></h1>
+<p>The http_response_parse.rl and smtp_response_parse.rl are ragel (<a href="http://www.complang.org/ragel/">http://www.complang.org/ragel/</a>) scripts , you can edit the script and compile it like this:</p>
+<pre>
+    $ ragel -G2 http_response_parse.rl
+    $ ragel -G2 smtp_response_parse.rl</pre>
+<p>
+</p>
+<hr />
+<h1><a name="todo">TODO</a></h1>
+<ul>
+<li>
+<p>ACL</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="known_issues">Known Issues</a></h1>
+<ul>
+<li>
+<p>Developing</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="changelogs">Changelogs</a></h1>
+<p>
+</p>
+<h2><a name="v0_19">v0.19</a></h2>
+<ul>
+<li>
+<p>add many check methods</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="v0_1">v0.1</a></h2>
+<ul>
+<li>
+<p>first release</p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="authors">Authors</a></h1>
+<p>Weibin Yao(姚伟斌) <em>yaoweibin at gmail dot com</em></p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright___license">Copyright &amp; License</a></h1>
+<p>This README template copy from agentzh (<a href="http://github.com/agentzh">http://github.com/agentzh</a>).</p>
+<p>I borrowed a lot of code from upstream and mail module from the nginx 0.7.* core. This part of code is copyrighted by Igor Sysoev. And the health check part is borrowed the design of Jack Lindamood's healthcheck module healthcheck_nginx_upstreams (<a href="http://github.com/cep21/healthcheck_nginx_upstreams">http://github.com/cep21/healthcheck_nginx_upstreams</a>);</p>
+<p>This module is licensed under the BSD license.</p>
+<p>Copyright (C) 2010 by Weibin Yao &lt;<a href="mailto:yaoweibin@gmail.com">yaoweibin@gmail.com</a>&gt;.</p>
+<p>All rights reserved.</p>
+<p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</p>
+<ul>
+<li>
+<p>Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.</p>
+</li>
+<li>
+<p>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</p>
+</li>
+</ul>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+
+</body>
+
+</html>
