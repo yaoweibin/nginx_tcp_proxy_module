@@ -418,9 +418,11 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
         return;
     }
 
-    /*u->state->peer = u->peer.name;*/
-
     /* rc == NGX_OK || rc == NGX_AGAIN */
+
+    if (u->peer.check_index != NGX_INVALID_INDEX) {
+        ngx_tcp_check_get_peer(u->peer.check_index);
+    }
 
     c = u->peer.connection;
 
@@ -447,7 +449,6 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
         c->tcp_nodelay = NGX_TCP_NODELAY_SET;
     }
-
 
     if (rc == NGX_AGAIN) {
         /*connect busy*/
@@ -555,6 +556,11 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
 
     if (u->peer.free) {
         u->peer.free(&u->peer, u->peer.data, 0);
+    }
+
+    if (u->peer.check_index != NGX_INVALID_INDEX) {
+        ngx_tcp_check_free_peer(u->peer.check_index);
+        u->peer.check_index = NGX_INVALID_INDEX;
     }
 
     if (u->peer.connection) {
@@ -831,7 +837,7 @@ ngx_tcp_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
     weight = 1;
     max_fails = 1;
-    max_busy = 0;
+    max_busy = (ngx_uint_t)-1;
     fail_timeout = 10;
 
     for (i = 2; i < cf->args->nelts; i++) {

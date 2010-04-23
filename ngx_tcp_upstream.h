@@ -77,7 +77,6 @@ typedef struct {
     ngx_uint_t                       max_fails;
     time_t                           fail_timeout;
     ngx_uint_t                       max_busy;
-    ngx_str_t                        srun_id;
 
     unsigned                         down:1;
     unsigned                         backup:1;

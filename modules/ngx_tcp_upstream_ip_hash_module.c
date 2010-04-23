@@ -202,6 +202,7 @@ ngx_tcp_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
     pc->sockaddr = peer->sockaddr;
     pc->socklen = peer->socklen;
     pc->name = &peer->name;
+    pc->check_index = peer->check_index;
 
     /* ngx_unlock_mutex(iphp->rrp.peers->mutex); */
 
@@ -210,7 +211,6 @@ ngx_tcp_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
 
     return NGX_OK;
 }
-
 
 static char *
 ngx_tcp_upstream_ip_hash(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)

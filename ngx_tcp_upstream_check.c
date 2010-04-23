@@ -236,23 +236,9 @@ ngx_tcp_get_check_type_conf(ngx_str_t *str) {
     return NULL;
 }
 
-ngx_uint_t 
-ngx_tcp_check_peer_down(ngx_uint_t index){
-
-    ngx_tcp_check_peer_conf_t     *peer_conf;
-
-    if (check_peers_ctx == NULL || index >= check_peers_ctx->peers.nelts) {
-        return 0;
-    }
-
-    peer_conf = check_peers_ctx->peers.elts;
-
-    return peer_conf[index].shm->down;
-}
-
 ngx_uint_t
 ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
-        ngx_peer_addr_t *peer) {
+        ngx_peer_addr_t *peer, ngx_uint_t max_busy) {
 
     ngx_tcp_upstream_main_conf_t  *umcf; 
     ngx_tcp_check_peers_conf_t    *peers_conf;
@@ -264,10 +250,65 @@ ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
 
     peer_conf = ngx_array_push(&peers_conf->peers);
     peer_conf->index = peers_conf->peers.nelts - 1;
+    peer_conf->max_busy = max_busy;
     peer_conf->conf = uscf;
     peer_conf->peer = peer;
 
     return peer_conf->index;
+}
+
+ngx_uint_t 
+ngx_tcp_check_peer_down(ngx_uint_t index){
+
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+
+    if (check_peers_ctx == NULL || index >= check_peers_ctx->peers.nelts) {
+        return 0;
+    }
+
+    peer_conf = check_peers_ctx->peers.elts;
+
+    return (peer_conf[index].shm->down | 
+            (peer_conf[index].shm->business > peer_conf[index].max_busy));
+}
+
+void 
+ngx_tcp_check_get_peer(ngx_uint_t index) {
+
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+
+    if (check_peers_ctx == NULL || index >= check_peers_ctx->peers.nelts) {
+        return;
+    }
+
+    peer_conf = check_peers_ctx->peers.elts;
+
+    ngx_spinlock(&peer_conf[index].shm->lock, ngx_pid, 1024);
+
+    peer_conf[index].shm->business++;
+    peer_conf[index].shm->access_count++;
+
+    ngx_spinlock_unlock(&peer_conf[index].shm->lock);
+}
+
+void 
+ngx_tcp_check_free_peer(ngx_uint_t index) {
+
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+
+    if (check_peers_ctx == NULL || index >= check_peers_ctx->peers.nelts) {
+        return;
+    }
+
+    peer_conf = check_peers_ctx->peers.elts;
+
+    ngx_spinlock(&peer_conf[index].shm->lock, ngx_pid, 1024);
+
+    if (peer_conf[index].shm->business > 0) {
+        peer_conf[index].shm->business--;
+    }
+
+    ngx_spinlock_unlock(&peer_conf[index].shm->lock);
 }
 
 #define SHM_NAME_LEN 256
@@ -309,10 +350,14 @@ ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data) {
         peer_shm = &peers_shm->peers[i];
 
         peer_shm->owner = NGX_INVALID_PID;
+
         peer_shm->access_time = 0;
+        peer_shm->access_count = 0;
+
         peer_shm->fall_count = 0;
         peer_shm->rise_count = 0;
 
+        peer_shm->business = 0;
         peer_shm->down = 1;
     }
 
@@ -1687,8 +1732,10 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) {
             "    <th>Index</th>\n"
             "    <th>Name</th>\n"
             "    <th>Status</th>\n"
+            "    <th>Business</th>\n"
             "    <th>Rise counts</th>\n"
             "    <th>Fall counts</th>\n"
+            "    <th>Access counts</th>\n"
             "    <th>Check type</th>\n"
             "  </tr>\n",
             peers_conf->peers.nelts, &shm_name);
@@ -1701,16 +1748,23 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) {
                 "    <td>%s</td>\n" 
                 "    <td>%ui</td>\n" 
                 "    <td>%ui</td>\n" 
+                "    <td>%ui</td>\n" 
+                "    <td>%ui</td>\n" 
                 "    <td>%s</td>\n" 
                 "  </tr>\n",
                 peer_shm[i].down ? " bgcolor=\"#FF0000\"" : "",
-                i, &peer_conf[i].peer->name, 
+                i, 
+                &peer_conf[i].peer->name, 
                 peer_shm[i].down ? "down" : "up",
-                peer_shm[i].rise_count, peer_shm[i].fall_count, 
+                peer_shm[i].business,
+                peer_shm[i].rise_count, 
+                peer_shm[i].fall_count, 
+                peer_shm[i].access_count, 
                 peer_conf[i].conf->check_type_conf->name);
     }
 
     b->last = ngx_sprintf(b->last, 
+            "</table>\n"
             "</body>\n"
             "</html>\n");
 

@@ -61,10 +61,10 @@ typedef struct {
     ngx_uint_t rise_count;
 
     ngx_atomic_t lock;
-    ngx_atomic_t busy;
+    ngx_atomic_t business;
     ngx_atomic_t down;
 
-    unsigned last_down:1;
+    ngx_uint_t access_count;
 } ngx_tcp_check_peer_shm_t;
 
 typedef struct {
@@ -129,6 +129,7 @@ struct ngx_tcp_check_peer_conf_s {
     ngx_flag_t                       state;
     ngx_pool_t                      *pool;
     ngx_uint_t                       index;
+    ngx_uint_t                       max_busy;
     ngx_tcp_upstream_srv_conf_t     *conf;
     ngx_peer_addr_t                 *peer;
     ngx_event_t                      check_ev;
@@ -218,9 +219,12 @@ int smtp_parser_is_finished(smtp_parser *parser);
 ngx_int_t ngx_tcp_upstream_init_main_check_conf(ngx_conf_t *cf, void*conf);
 
 ngx_uint_t ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
-        ngx_peer_addr_t *peer);
+        ngx_peer_addr_t *peer, ngx_uint_t max_busy);
 
 ngx_uint_t ngx_tcp_check_peer_down(ngx_uint_t index);
+
+void ngx_tcp_check_get_peer(ngx_uint_t index);
+void ngx_tcp_check_free_peer(ngx_uint_t index);
 
 check_conf_t *ngx_tcp_get_check_type_conf(ngx_str_t *str);
 

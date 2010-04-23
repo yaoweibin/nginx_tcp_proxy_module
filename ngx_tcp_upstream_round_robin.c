@@ -59,7 +59,7 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
 
                 if (!server[i].down && us->check_interval) {
                     peers->peer[n].check_index = 
-                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j]);
+                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j], server[i].max_busy);
 
                     if (peers->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
                         return NGX_ERROR;
@@ -124,7 +124,7 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
                 backup->peer[n].down = server[i].down;
                 if (!server[i].down && us->check_interval) {
                     backup->peer[n].check_index = 
-                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j]);
+                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j], server[i].max_busy);
 
                     if (backup->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
                         return NGX_ERROR;
@@ -542,6 +542,7 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
     pc->sockaddr = peer->sockaddr;
     pc->socklen = peer->socklen;
     pc->name = &peer->name;
+    pc->check_index = peer->check_index;
 
     /* ngx_unlock_mutex(rrp->peers->mutex); */
 
@@ -675,9 +676,8 @@ ngx_tcp_upstream_free_round_robin_peer(ngx_peer_connection_t *pc, void *data,
     if (state & NGX_PEER_FAILED) {
         now = ngx_time();
 
-        peer = &rrp->peers->peer[rrp->current];
-
         /* ngx_lock_mutex(rrp->peers->mutex); */
+        peer = &rrp->peers->peer[rrp->current];
 
         peer->fails++;
         peer->accessed = now;
