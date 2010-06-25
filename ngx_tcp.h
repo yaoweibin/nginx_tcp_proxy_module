@@ -3,7 +3,6 @@
 #define _NGX_TCP_H_INCLUDED_
 
 
-
 #include <nginx.h>
 #include <ngx_config.h>
 #include <ngx_core.h>
@@ -60,7 +59,7 @@ typedef struct {
 } ngx_tcp_addr_conf_t;
 
 typedef struct {
-    in_addr_t               addr;
+    in_addr_t              addr;
     ngx_tcp_addr_conf_t    conf;
 } ngx_tcp_in_addr_t;
 
@@ -93,7 +92,7 @@ typedef struct {
     struct sockaddr        *sockaddr;
     socklen_t               socklen;
 
-    ngx_tcp_conf_ctx_t    *ctx;
+    ngx_tcp_conf_ctx_t     *ctx;
 
     unsigned                bind:1;
     unsigned                wildcard:1;
@@ -137,9 +136,10 @@ typedef struct {
     ngx_tcp_conf_ctx_t    *ctx;
 } ngx_tcp_core_srv_conf_t;
 
+
 typedef struct {
     ngx_str_t              *client;
-    ngx_tcp_session_t     *session;
+    ngx_tcp_session_t      *session;
 } ngx_tcp_log_ctx_t;
 
 
@@ -155,17 +155,17 @@ struct ngx_tcp_protocol_s {
     in_port_t                   port[4];
     ngx_uint_t                  type;
 
-    ngx_tcp_init_session_pt    init_session;
-    ngx_tcp_init_protocol_pt   init_protocol;
-    ngx_tcp_parse_command_pt   parse_command;
-    ngx_tcp_auth_state_pt      auth_state;
+    ngx_tcp_init_session_pt     init_session;
+    ngx_tcp_init_protocol_pt    init_protocol;
+    ngx_tcp_parse_command_pt    parse_command;
+    ngx_tcp_auth_state_pt       auth_state;
 
     ngx_str_t                   internal_server_error;
 };
 
 
 typedef struct {
-    ngx_tcp_protocol_t        *protocol;
+    ngx_tcp_protocol_t         *protocol;
 
     void                       *(*create_main_conf)(ngx_conf_t *cf);
     char                       *(*init_main_conf)(ngx_conf_t *cf, void *conf);

@@ -21,7 +21,9 @@ typedef struct ngx_tcp_proxy_conf_s {
 } ngx_tcp_proxy_conf_t;
 
 
+static void ngx_tcp_set_session_socket(ngx_tcp_session_t *s);
 static  void ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s);
+static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_dummy_write_handler(ngx_event_t *ev);
@@ -98,6 +100,143 @@ ngx_module_t  ngx_tcp_proxy_module = {
 };
 
 void 
+ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) {
+
+    ngx_tcp_proxy_conf_t     *pcf;
+
+    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
+
+    s->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
+    if (s->buffer == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    c->write->handler = ngx_tcp_proxy_dummy_write_handler;
+    c->read->handler = ngx_tcp_proxy_dummy_read_handler;
+
+    if (ngx_tcp_upstream_create(s) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    /*do something about the proxy related part in the session struct*/
+
+    ngx_tcp_set_session_socket(s);
+
+    ngx_tcp_proxy_init(c, s);
+
+    return;
+}
+
+static void
+ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) {
+
+    ngx_connection_t    *c;
+    ngx_tcp_session_t  *s;
+
+    c = wev->data;
+    s = c->data;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0, "tcp proxy dummy write handler: %d", c->fd);
+
+    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+    }
+}
+
+static void
+ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) {
+
+    ngx_connection_t    *c;
+    ngx_tcp_session_t  *s;
+
+    c = rev->data;
+    s = c->data;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0, "tcp proxy dummy read handler: %d", c->fd);
+
+    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+    }
+}
+
+static void 
+ngx_tcp_set_session_socket(ngx_tcp_session_t *s) {
+
+    int                       keepalive;
+    int                       tcp_nodelay;
+    ngx_tcp_core_srv_conf_t  *cscf;
+
+    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
+
+    if (cscf->so_keepalive) {
+        keepalive = 1;
+
+        if (setsockopt(s->connection->fd, SOL_SOCKET, SO_KEEPALIVE,
+                    (const void *) &keepalive, sizeof(int)) == -1)
+        {
+            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
+                    "setsockopt(SO_KEEPALIVE) failed");
+        }
+    }
+
+    if (cscf->tcp_nodelay) {
+        tcp_nodelay = 1;
+        if (setsockopt(s->connection->fd, IPPROTO_TCP, TCP_NODELAY,
+                       (const void *) &tcp_nodelay, sizeof(int))
+            == -1)
+        {
+            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
+                    "setsockopt(TCP_NODELAY) failed");
+        }
+
+        s->connection->tcp_nodelay = NGX_TCP_NODELAY_SET;
+    }
+}
+
+static  void
+ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) {
+
+    ngx_tcp_proxy_ctx_t      *p;
+    ngx_tcp_proxy_conf_t     *pcf;
+    ngx_tcp_upstream_t       *u;
+
+    s->connection->log->action = "ngx_tcp_proxy_init";
+
+    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
+
+    p = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_proxy_ctx_t));
+    if (p == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    ngx_tcp_set_ctx(s, p, ngx_tcp_proxy_module);
+
+    u = s->upstream;
+
+    u->conf = &pcf->upstream;
+
+    u->write_event_handler = ngx_tcp_upstream_proxy_generic_handler;
+    u->read_event_handler = ngx_tcp_upstream_proxy_generic_handler;
+
+    p->upstream = &u->peer;
+
+    p->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
+    if (p->buffer == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    s->out.len = 0;
+
+    ngx_tcp_upstream_init(s);
+
+    return;
+}
+
+static void 
 ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
     ngx_tcp_proxy_conf_t     *pcf;
@@ -153,199 +292,19 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
     return;
 }
 
-void 
-ngx_tcp_set_session_socket(ngx_tcp_session_t *s) {
-
-    int                       keepalive;
-    int                       tcp_nodelay;
-    ngx_tcp_core_srv_conf_t  *cscf;
-
-    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
-
-    if (cscf->so_keepalive) {
-        keepalive = 1;
-
-        if (setsockopt(s->connection->fd, SOL_SOCKET, SO_KEEPALIVE,
-                    (const void *) &keepalive, sizeof(int)) == -1)
-        {
-            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
-                    "setsockopt(SO_KEEPALIVE) failed");
-        }
-    }
-
-    if (cscf->tcp_nodelay) {
-        tcp_nodelay = 1;
-        if (setsockopt(s->connection->fd, IPPROTO_TCP, TCP_NODELAY,
-                       (const void *) &tcp_nodelay, sizeof(int))
-            == -1)
-        {
-            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
-                    "setsockopt(TCP_NODELAY) failed");
-        }
-
-        s->connection->tcp_nodelay = NGX_TCP_NODELAY_SET;
-    }
-}
-
-void 
-ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) {
-
-    ngx_tcp_proxy_conf_t     *pcf;
-
-    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
-
-    s->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
-    if (s->buffer == NULL) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    c->write->handler = ngx_tcp_proxy_dummy_write_handler;
-    c->read->handler = ngx_tcp_proxy_dummy_read_handler;
-
-    if (ngx_tcp_upstream_create(s) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    /*do something about the proxy related part in the session struct*/
-
-    ngx_tcp_set_session_socket(s);
-
-    ngx_tcp_proxy_init(c, s);
-
-    return;
-}
-
-static  void
-ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) {
-
-    ngx_tcp_proxy_ctx_t      *p;
-    ngx_tcp_proxy_conf_t     *pcf;
-    ngx_tcp_upstream_t       *u;
-
-    s->connection->log->action = "ngx_tcp_proxy_init";
-
-    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
-
-    p = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_proxy_ctx_t));
-    if (p == NULL) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    ngx_tcp_set_ctx(s, p, ngx_tcp_proxy_module);
-
-    u = s->upstream;
-
-    u->conf = &pcf->upstream;
-
-    u->write_event_handler = ngx_tcp_upstream_proxy_generic_handler;
-    u->read_event_handler = ngx_tcp_upstream_proxy_generic_handler;
-
-    p->upstream = &u->peer;
-
-    p->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
-    if (p->buffer == NULL) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    s->out.len = 0;
-
-    ngx_tcp_upstream_init(s);
-
-    return;
-}
-
-ngx_int_t
-ngx_tcp_proxy_test_connect(ngx_connection_t *c) {
-
-    int        err;
-    socklen_t  len;
-
-#if (NGX_HAVE_KQUEUE)
-
-    if (ngx_event_flags & NGX_USE_KQUEUE_EVENT)  {
-        if (c->write->pending_eof) {
-            c->log->action = "connecting to upstream";
-            (void) ngx_connection_error(c, c->write->kq_errno,
-                    "kevent() reported that connect() failed");
-            return NGX_ERROR;
-        }
-
-    } else
-#endif
-    {
-        err = 0;
-        len = sizeof(int);
-
-        /**/
-        /** BSDs and Linux return 0 and set a pending error in err*/
-        /** Solaris returns -1 and sets errno*/
-
-
-        if (getsockopt(c->fd, SOL_SOCKET, SO_ERROR, (void *) &err, &len)
-                == -1)
-        {
-            err = ngx_errno;
-        }
-
-        if (err) {
-            c->log->action = "connecting to upstream";
-            (void) ngx_connection_error(c, err, "connect() failed");
-            return NGX_ERROR;
-        }
-    }
-
-    return NGX_OK;
-}
-
-static void
-ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) {
-
-    ngx_connection_t    *c;
-    ngx_tcp_session_t  *s;
-
-    c = wev->data;
-    s = c->data;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0, "tcp proxy dummy write handler: %d", c->fd);
-
-    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-    }
-}
-
-static void
-ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) {
-
-    ngx_connection_t    *c;
-    ngx_tcp_session_t  *s;
-
-    c = rev->data;
-    s = c->data;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0, "tcp proxy dummy read handler: %d", c->fd);
-
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-    }
-}
-
 static void
 ngx_tcp_proxy_handler(ngx_event_t *ev) {
 
-    char                   *action, *recv_action, *send_action;
-    size_t                  size;
-    ssize_t                 n;
-    ngx_buf_t              *b;
-    ngx_err_t               err;
-    ngx_uint_t              do_write;
-    ngx_connection_t       *c, *src, *dst;
-    ngx_tcp_session_t      *s;
-    ngx_tcp_proxy_conf_t   *pcf;
-    ngx_tcp_proxy_ctx_t    *pctx;
+    char                     *action, *recv_action, *send_action;
+    size_t                    size;
+    ssize_t                   n;
+    ngx_buf_t                *b;
+    ngx_err_t                 err;
+    ngx_uint_t                do_write;
+    ngx_connection_t         *c, *src, *dst;
+    ngx_tcp_session_t        *s;
+    ngx_tcp_proxy_conf_t     *pcf;
+    ngx_tcp_proxy_ctx_t      *pctx;
     ngx_tcp_core_srv_conf_t  *cscf;
 
     c = ev->data;
@@ -526,6 +485,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
 
 static char *
 ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
+
     ngx_tcp_proxy_conf_t *pcf = conf;
 
     u_short                     port = 80;

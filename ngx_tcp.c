@@ -43,8 +43,8 @@ static ngx_core_module_t  ngx_tcp_module_ctx = {
 
 ngx_module_t  ngx_tcp_module = {
     NGX_MODULE_V1,
-    &ngx_tcp_module_ctx,                  /* module context */
-    ngx_tcp_commands,                     /* module directives */
+    &ngx_tcp_module_ctx,                   /* module context */
+    ngx_tcp_commands,                      /* module directives */
     NGX_CORE_MODULE,                       /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
@@ -226,8 +226,8 @@ ngx_tcp_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
     ngx_uint_t             i;
     struct sockaddr       *sa;
     struct sockaddr_in    *sin;
-    ngx_tcp_conf_port_t  *port;
-    ngx_tcp_conf_addr_t  *addr;
+    ngx_tcp_conf_port_t   *port;
+    ngx_tcp_conf_addr_t   *addr;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6   *sin6;
 #endif
@@ -302,9 +302,9 @@ ngx_tcp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
 {
     ngx_uint_t             i, p, last, bind_wildcard;
     ngx_listening_t       *ls;
-    ngx_tcp_port_t       *mport;
-    ngx_tcp_conf_port_t  *port;
-    ngx_tcp_conf_addr_t  *addr;
+    ngx_tcp_port_t        *mport;
+    ngx_tcp_conf_port_t   *port;
+    ngx_tcp_conf_addr_t   *addr;
 
     port = ports->elts;
     for (p = 0; p < ports->nelts; p++) {

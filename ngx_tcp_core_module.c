@@ -20,20 +20,6 @@ static char *ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd,
 
 static ngx_command_t  ngx_tcp_core_commands[] = {
 
-    { ngx_string("allow"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_access_rule,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
-
-    { ngx_string("deny"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_access_rule,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
-
     { ngx_string("server"),
         NGX_TCP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_MULTI|NGX_CONF_NOARGS,
         ngx_tcp_core_server,
@@ -89,6 +75,21 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_core_srv_conf_t, resolver_timeout),
         NULL },
+
+    { ngx_string("allow"),
+        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+        ngx_tcp_access_rule,
+        NGX_TCP_SRV_CONF_OFFSET,
+        0,
+        NULL },
+
+    { ngx_string("deny"),
+        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+        ngx_tcp_access_rule,
+        NGX_TCP_SRV_CONF_OFFSET,
+        0,
+        NULL },
+
 
     ngx_null_command
 };
@@ -207,75 +208,16 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child) {
 }
 
 static char *
-ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
-{
-    ngx_tcp_core_srv_conf_t  *cscf = conf;
-
-    ngx_int_t                rc;
-    ngx_str_t               *value;
-    ngx_cidr_t               cidr;
-    ngx_tcp_access_rule_t   *rule;
-
-    if (cscf->rules == NULL) {
-        cscf->rules = ngx_array_create(cf->pool, 4,
-                                       sizeof(ngx_tcp_access_rule_t));
-        if (cscf->rules == NULL) {
-            return NGX_CONF_ERROR;
-        }
-    }
-
-    rule = ngx_array_push(cscf->rules);
-    if (rule == NULL) {
-        return NGX_CONF_ERROR;
-    }
-
-    value = cf->args->elts;
-
-    rule->deny = (value[0].data[0] == 'd') ? 1 : 0;
-
-    if (value[1].len == 3 && ngx_strcmp(value[1].data, "all") == 0) {
-        rule->mask = 0;
-        rule->addr = 0;
-
-        return NGX_CONF_OK;
-    }
-
-    rc = ngx_ptocidr(&value[1], &cidr);
-
-    if (rc == NGX_ERROR) {
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "invalid parameter \"%V\"",
-                           &value[1]);
-        return NGX_CONF_ERROR;
-    }
-
-    if (cidr.family != AF_INET) {
-        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                           "\"allow\" supports IPv4 only");
-        return NGX_CONF_ERROR;
-    }
-
-    if (rc == NGX_DONE) {
-        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
-                           "low address bits of %V are meaningless", &value[1]);
-    }
-
-    rule->mask = cidr.u.in.mask;
-    rule->addr = cidr.u.in.addr;
-
-    return NGX_CONF_OK;
-}
-
-static char *
 ngx_tcp_core_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
     char                       *rv;
     void                       *mconf;
     ngx_uint_t                  m;
     ngx_conf_t                  pcf;
-    ngx_tcp_module_t          *module;
-    ngx_tcp_conf_ctx_t        *ctx, *tcp_ctx;
-    ngx_tcp_core_srv_conf_t   *cscf, **cscfp;
-    ngx_tcp_core_main_conf_t  *cmcf;
+    ngx_tcp_module_t           *module;
+    ngx_tcp_conf_ctx_t         *ctx, *tcp_ctx;
+    ngx_tcp_core_srv_conf_t    *cscf, **cscfp;
+    ngx_tcp_core_main_conf_t   *cmcf;
 
     ctx = ngx_pcalloc(cf->pool, sizeof(ngx_tcp_conf_ctx_t));
     if (ctx == NULL) {
@@ -438,13 +380,6 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
         if (module->protocol == NULL) {
             continue;
         }
-
-        /*for (i = 0; module->protocol->port[i]; i++) {*/
-        /*if (module->protocol->port[i] == u.port) {*/
-        /*cscf->protocol = module->protocol;*/
-        /*break;*/
-        /*}*/
-        /*}*/
     }
 
     for (i = 2; i < cf->args->nelts; i++) {
@@ -503,7 +438,6 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     return NGX_CONF_OK;
 }
 
-
 static char *
 ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
@@ -541,28 +475,62 @@ ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     return NGX_CONF_OK;
 }
 
+static char *
+ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
-char *
-ngx_tcp_capabilities(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
+    ngx_tcp_core_srv_conf_t *cscf = conf;
 
-    char  *p = conf;
+    ngx_int_t                rc;
+    ngx_str_t               *value;
+    ngx_cidr_t               cidr;
+    ngx_tcp_access_rule_t   *rule;
 
-    ngx_str_t    *c, *value;
-    ngx_uint_t    i;
-    ngx_array_t  *a;
+    if (cscf->rules == NULL) {
+        cscf->rules = ngx_array_create(cf->pool, 4,
+                                       sizeof(ngx_tcp_access_rule_t));
+        if (cscf->rules == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
 
-    a = (ngx_array_t *) (p + cmd->offset);
+    rule = ngx_array_push(cscf->rules);
+    if (rule == NULL) {
+        return NGX_CONF_ERROR;
+    }
 
     value = cf->args->elts;
 
-    for (i = 1; i < cf->args->nelts; i++) {
-        c = ngx_array_push(a);
-        if (c == NULL) {
-            return NGX_CONF_ERROR;
-        }
+    rule->deny = (value[0].data[0] == 'd') ? 1 : 0;
 
-        *c = value[i];
+    if (value[1].len == 3 && ngx_strcmp(value[1].data, "all") == 0) {
+        rule->mask = 0;
+        rule->addr = 0;
+
+        return NGX_CONF_OK;
     }
+
+    rc = ngx_ptocidr(&value[1], &cidr);
+
+    if (rc == NGX_ERROR) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "invalid parameter \"%V\"",
+                           &value[1]);
+        return NGX_CONF_ERROR;
+    }
+
+    if (cidr.family != AF_INET) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "\"allow\" supports IPv4 only");
+        return NGX_CONF_ERROR;
+    }
+
+    if (rc == NGX_DONE) {
+        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+                           "low address bits of %V are meaningless", &value[1]);
+    }
+
+    rule->mask = cidr.u.in.mask;
+    rule->addr = cidr.u.in.addr;
 
     return NGX_CONF_OK;
 }
+

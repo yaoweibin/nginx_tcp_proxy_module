@@ -11,16 +11,16 @@ static void ngx_tcp_process_session(ngx_connection_t *c);
 void
 ngx_tcp_init_connection(ngx_connection_t *c)
 {
-    ngx_uint_t             i;
+    ngx_uint_t            i;
     ngx_tcp_port_t       *port;
-    struct sockaddr       *sa;
-    struct sockaddr_in    *sin;
+    struct sockaddr      *sa;
+    struct sockaddr_in   *sin;
     ngx_tcp_log_ctx_t    *ctx;
     ngx_tcp_in_addr_t    *addr;
     ngx_tcp_session_t    *s;
     ngx_tcp_addr_conf_t  *addr_conf;
 #if (NGX_HAVE_INET6)
-    struct sockaddr_in6   *sin6;
+    struct sockaddr_in6  *sin6;
     ngx_tcp_in6_addr_t   *addr6;
 #endif
 
