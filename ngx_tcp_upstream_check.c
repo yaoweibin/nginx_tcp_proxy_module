@@ -627,7 +627,7 @@ void http_version(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "VERSION: \"%V\"", &str);
 }
 
@@ -642,7 +642,7 @@ void status_code(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "STATUS_CODE: \"%V\"", &str);
 
     ctx = peer_conf->check_data;
@@ -674,7 +674,7 @@ void reason_phrase(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "REASON_PHRASE: \"%V\"", &str);
 }
 
@@ -822,7 +822,7 @@ ngx_tcp_check_ssl_hello_parse(ngx_tcp_check_peer_conf_t *peer_conf) {
 
     resp = (server_ssl_hello_t *) ctx->recv.pos;
 
-    ngx_log_debug5(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug7(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "tcp check ssl_parse, type: %d, version: %d.%d, length: %d, handshanke_type: %d, "
             "hello_version: %d.%d", 
             resp->msg_type, resp->version.major, resp->version.minor, 
@@ -860,7 +860,7 @@ static void domain(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "DOMAIN: \"%V\"", &str);
 }
 
@@ -871,7 +871,7 @@ static void greeting_text(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "GREETING_TEXT: \"%V\"", &str);
 }
 
@@ -886,7 +886,7 @@ static void reply_code(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "REPLY_CODE: \"%V\"", &str);
 
     ctx = peer_conf->check_data;
@@ -918,7 +918,7 @@ static void reply_text(void *data, const char *at, size_t length)
     str.data = (u_char *) at;
     str.len = length;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "REPLY_TEXT: \"%V\"", &str);
 }
 
@@ -1297,7 +1297,7 @@ ngx_tcp_check_send_handler(ngx_event_t *event) {
     }
 
     if (ctx->send.pos == ctx->send.last) {
-        ngx_log_debug(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp check send done.");
+        ngx_log_debug0(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp check send done.");
         peer_conf->state = NGX_TCP_CHECK_SEND_DONE;
     }
 
