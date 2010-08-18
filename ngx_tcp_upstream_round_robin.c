@@ -492,7 +492,7 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 
                     if (!peer->down) {
 
-                        if (ngx_tcp_check_peer_down(peer->check_index)) {
+                        if (!ngx_tcp_check_peer_down(peer->check_index)) {
                             
                             if (peer->max_fails == 0
                                     || peer->fails < peer->max_fails)

@@ -32,3 +32,24 @@ index b736aa2..0b1507b 100644
  #define NGX_LOG_DEBUG_CONNECTION  0x80000000
  #define NGX_LOG_DEBUG_ALL         0x7ffffff0
  
+diff --git a/src/event/ngx_event_connect.h b/src/event/ngx_event_connect.h
+index 6cad042..8371b55 100644
+--- a/src/event/ngx_event_connect.h
++++ b/src/event/ngx_event_connect.h
+@@ -32,6 +32,7 @@ typedef void (*ngx_event_save_peer_session_pt)(ngx_peer_connection_t *pc,
+     void *data);
+ #endif
+ 
++#define NGX_INVALED_INDEX (-1)
+ 
+ struct ngx_peer_connection_s {
+     ngx_connection_t                *connection;
+@@ -42,6 +43,8 @@ struct ngx_peer_connection_s {
+ 
+     ngx_uint_t                       tries;
+ 
++    ngx_uint_t                       check_index;
++
+     ngx_event_get_peer_pt            get;
+     ngx_event_free_peer_pt           free;
+     void                            *data;
