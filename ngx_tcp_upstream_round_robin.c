@@ -6,14 +6,15 @@
 static ngx_int_t ngx_tcp_upstream_cmp_servers(const void *one, const void *two);
 static ngx_uint_t ngx_tcp_upstream_get_peer(ngx_tcp_upstream_rr_peers_t *peers);
 
+
 ngx_int_t
 ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
     ngx_tcp_upstream_srv_conf_t *us)
 {
     ngx_url_t                      u;
     ngx_uint_t                     i, j, n;
-    ngx_tcp_upstream_server_t    *server;
-    ngx_tcp_upstream_rr_peers_t  *peers, *backup;
+    ngx_tcp_upstream_server_t     *server;
+    ngx_tcp_upstream_rr_peers_t   *peers, *backup;
 
     us->peer.init = ngx_tcp_upstream_init_round_robin_peer;
 
@@ -271,8 +272,8 @@ ngx_tcp_upstream_create_round_robin_peer(ngx_tcp_session_t *s,
     size_t                             len;
     ngx_uint_t                         i, n;
     struct sockaddr_in                *sin;
-    ngx_tcp_upstream_rr_peers_t      *peers;
-    ngx_tcp_upstream_rr_peer_data_t  *rrp;
+    ngx_tcp_upstream_rr_peers_t       *peers;
+    ngx_tcp_upstream_rr_peer_data_t   *rrp;
 
     rrp = s->upstream->peer.data;
 
@@ -379,8 +380,8 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
     ngx_int_t                      rc;
     ngx_uint_t                     i, n;
     ngx_connection_t              *c;
-    ngx_tcp_upstream_rr_peer_t   *peer;
-    ngx_tcp_upstream_rr_peers_t  *peers;
+    ngx_tcp_upstream_rr_peer_t    *peer;
+    ngx_tcp_upstream_rr_peers_t   *peers;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, pc->log, 0,
                    "get rr peer, try: %ui", pc->tries);
@@ -605,7 +606,7 @@ static ngx_uint_t
 ngx_tcp_upstream_get_peer(ngx_tcp_upstream_rr_peers_t *peers)
 {
     ngx_uint_t                    i, n;
-    ngx_tcp_upstream_rr_peer_t  *peer;
+    ngx_tcp_upstream_rr_peer_t   *peer;
 
     peer = &peers->peer[0];
 
@@ -721,7 +722,7 @@ ngx_tcp_upstream_set_round_robin_peer_session(ngx_peer_connection_t *pc,
 
     ngx_int_t                     rc;
     ngx_ssl_session_t            *ssl_session;
-    ngx_tcp_upstream_rr_peer_t  *peer;
+    ngx_tcp_upstream_rr_peer_t   *peer;
 
     peer = &rrp->peers->peer[rrp->current];
 

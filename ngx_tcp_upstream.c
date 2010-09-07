@@ -110,6 +110,7 @@ static ngx_tcp_module_t  ngx_tcp_upstream_module_ctx = {
     NULL,                                  /* merge server configuration */
 };
 
+
 ngx_module_t  ngx_tcp_upstream_module = {
     NGX_MODULE_V1,
     &ngx_tcp_upstream_module_ctx,          /* module context */
@@ -125,9 +126,10 @@ ngx_module_t  ngx_tcp_upstream_module = {
     NGX_MODULE_V1_PADDING
 };
 
-ngx_int_t
-ngx_tcp_upstream_create(ngx_tcp_session_t *s) {
 
+ngx_int_t
+ngx_tcp_upstream_create(ngx_tcp_session_t *s) 
+{
     ngx_tcp_upstream_t  *u;
 
     u = s->upstream;
@@ -151,9 +153,10 @@ ngx_tcp_upstream_create(ngx_tcp_session_t *s) {
     return NGX_OK;
 }
 
-void
-ngx_tcp_upstream_init(ngx_tcp_session_t *s) {
 
+void
+ngx_tcp_upstream_init(ngx_tcp_session_t *s)
+{
     ngx_str_t                      *host;
     ngx_uint_t                      i;
     ngx_connection_t               *c;
@@ -265,9 +268,10 @@ found:
     ngx_tcp_upstream_connect(s, u);
 }
 
-static void
-ngx_tcp_upstream_resolve_handler(ngx_resolver_ctx_t *ctx) {
 
+static void
+ngx_tcp_upstream_resolve_handler(ngx_resolver_ctx_t *ctx) 
+{
     ngx_tcp_session_t            *s;
     ngx_tcp_upstream_resolved_t  *ur;
 
@@ -319,13 +323,14 @@ ngx_tcp_upstream_resolve_handler(ngx_resolver_ctx_t *ctx) {
     /*need add the event.*/
 }
 
-static void
-ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
+static void
+ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
+{
     int                       tcp_nodelay;
     ngx_int_t                 rc;
-    ngx_tcp_core_srv_conf_t  *cscf;
     ngx_connection_t         *c;
+    ngx_tcp_core_srv_conf_t  *cscf;
 
     s->connection->log->action = "connecting to upstream";
 
@@ -387,12 +392,13 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
     }
 }
 
-static void
-ngx_tcp_upstream_handler(ngx_event_t *ev) {
 
+static void
+ngx_tcp_upstream_handler(ngx_event_t *ev) 
+{
     ngx_connection_t     *c;
-    ngx_tcp_session_t   *s;
-    ngx_tcp_upstream_t  *u;
+    ngx_tcp_session_t    *s;
+    ngx_tcp_upstream_t   *u;
 
     c = ev->data;
     s = c->data;
@@ -413,14 +419,15 @@ ngx_tcp_upstream_handler(ngx_event_t *ev) {
     }
 }
 
-ngx_int_t 
-ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s) {
 
+ngx_int_t 
+ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s) 
+{
     int                  n;
     char                 buf[1];
     ngx_err_t            err;
-    ngx_connection_t     *c;
-    ngx_tcp_upstream_t   *u;
+    ngx_connection_t    *c;
+    ngx_tcp_upstream_t  *u;
 
     u = s->upstream;
     c = u->peer.connection;
@@ -446,10 +453,11 @@ ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s) {
     return NGX_ERROR;
 }
 
+
 void
 ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
-    ngx_uint_t ft_type) {
-
+    ngx_uint_t ft_type) 
+{
     ngx_uint_t  state;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
@@ -492,9 +500,10 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
     ngx_tcp_upstream_connect(s, u);
 }
 
-static void
-ngx_tcp_upstream_cleanup(void *data) {
 
+static void
+ngx_tcp_upstream_cleanup(void *data) 
+{
     ngx_tcp_session_t *s = data;
 
     ngx_tcp_upstream_t  *u;
@@ -511,10 +520,11 @@ ngx_tcp_upstream_cleanup(void *data) {
     ngx_tcp_upstream_finalize_session(s, u, NGX_DONE);
 }
 
+
 static void
 ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
-        ngx_tcp_upstream_t *u, ngx_int_t rc) {
-
+        ngx_tcp_upstream_t *u, ngx_int_t rc) 
+{
     ngx_time_t  *tp;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
@@ -560,10 +570,11 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
     ngx_tcp_finalize_session(s);
 }
 
-ngx_tcp_upstream_srv_conf_t *
-ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags) {
 
-    ngx_uint_t                      i;
+ngx_tcp_upstream_srv_conf_t *
+ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags) 
+{
+    ngx_uint_t                     i;
     ngx_tcp_upstream_server_t     *us;
     ngx_tcp_upstream_srv_conf_t   *uscf, **uscfp;
     ngx_tcp_upstream_main_conf_t  *umcf;
@@ -669,18 +680,19 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags) {
     return uscf;
 }
 
-static char *
-ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy) {
 
+static char *
+ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy) 
+{
     char                          *rv;
     void                          *mconf;
     ngx_str_t                     *value;
     ngx_url_t                      u;
     ngx_uint_t                     m;
     ngx_conf_t                     pcf;
-    ngx_tcp_module_t             *module;
-    ngx_tcp_conf_ctx_t           *ctx, *tcp_ctx;
-    ngx_tcp_upstream_srv_conf_t  *uscf;
+    ngx_tcp_module_t              *module;
+    ngx_tcp_conf_ctx_t            *ctx, *tcp_ctx;
+    ngx_tcp_upstream_srv_conf_t   *uscf;
 
     ngx_memzero(&u, sizeof(ngx_url_t));
 
@@ -761,9 +773,10 @@ ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy) {
     return rv;
 }
 
-static char *
-ngx_tcp_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
+static char *
+ngx_tcp_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
+{
     ngx_tcp_upstream_srv_conf_t  *uscf = conf;
 
     time_t                       fail_timeout;
@@ -771,7 +784,7 @@ ngx_tcp_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     ngx_url_t                    u;
     ngx_int_t                    weight, max_fails, max_busy;
     ngx_uint_t                   i;
-    ngx_tcp_upstream_server_t  *us;
+    ngx_tcp_upstream_server_t   *us;
 
     if (uscf->servers == NULL) {
         uscf->servers = ngx_array_create(cf->pool, 4,
@@ -916,13 +929,15 @@ invalid:
     return NGX_CONF_ERROR;
 }
 
-static char *
-ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
+static char *
+ngx_tcp_upstream_check(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
+{
     ngx_tcp_upstream_srv_conf_t  *uscf = conf;
-    ngx_str_t *value, s;
-    ngx_uint_t i, rise, fall;
-    ngx_msec_t interval, timeout;
+
+    ngx_str_t   *value, s;
+    ngx_uint_t   i, rise, fall;
+    ngx_msec_t   interval, timeout;
 
     /*set default*/
     rise = 2;
@@ -1019,9 +1034,10 @@ invalid_check_parameter:
     return NGX_CONF_ERROR;
 }
 
-static void *
-ngx_tcp_upstream_create_main_conf(ngx_conf_t *cf) {
 
+static void *
+ngx_tcp_upstream_create_main_conf(ngx_conf_t *cf) 
+{
     ngx_tcp_upstream_main_conf_t  *umcf;
 
     umcf = ngx_pcalloc(cf->pool, sizeof(ngx_tcp_upstream_main_conf_t));
@@ -1049,9 +1065,10 @@ ngx_tcp_upstream_create_main_conf(ngx_conf_t *cf) {
     return umcf;
 }
 
-static char *
-ngx_tcp_upstream_init_main_conf(ngx_conf_t *cf, void *conf) {
 
+static char *
+ngx_tcp_upstream_init_main_conf(ngx_conf_t *cf, void *conf) 
+{
     ngx_tcp_upstream_main_conf_t   *umcf = conf;
 
     ngx_uint_t                      i;

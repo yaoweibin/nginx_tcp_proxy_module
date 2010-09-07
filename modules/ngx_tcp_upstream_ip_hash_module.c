@@ -132,7 +132,7 @@ ngx_tcp_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
     time_t                        now;
     uintptr_t                     m;
     ngx_uint_t                    i, n, p, hash;
-    ngx_tcp_upstream_rr_peer_t  *peer;
+    ngx_tcp_upstream_rr_peer_t   *peer;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, pc->log, 0,
                    "get ip hash peer, try: %ui", pc->tries);
@@ -211,6 +211,7 @@ ngx_tcp_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
 
     return NGX_OK;
 }
+
 
 static char *
 ngx_tcp_upstream_ip_hash(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)

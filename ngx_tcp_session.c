@@ -8,6 +8,7 @@
 static void ngx_tcp_init_session(ngx_connection_t *c);
 static void ngx_tcp_process_session(ngx_connection_t *c);
 
+
 void
 ngx_tcp_init_connection(ngx_connection_t *c)
 {
@@ -170,6 +171,7 @@ ngx_tcp_init_session(ngx_connection_t *c)
     ngx_tcp_process_session(c);
 }
 
+
 static void
 ngx_tcp_process_session(ngx_connection_t *c)
 {
@@ -186,13 +188,14 @@ ngx_tcp_process_session(ngx_connection_t *c)
     ngx_tcp_proxy_init_session(c, s);
 }
 
+
 void
 ngx_tcp_send(ngx_event_t *wev)
 {
     ngx_int_t                  n;
     ngx_connection_t          *c;
-    ngx_tcp_session_t        *s;
-    ngx_tcp_core_srv_conf_t  *cscf;
+    ngx_tcp_session_t         *s;
+    ngx_tcp_core_srv_conf_t   *cscf;
 
     c = wev->data;
     s = c->data;
@@ -247,6 +250,7 @@ ngx_tcp_send(ngx_event_t *wev)
     }
 }
 
+
 void
 ngx_tcp_session_internal_server_error(ngx_tcp_session_t *s)
 {
@@ -259,6 +263,7 @@ ngx_tcp_session_internal_server_error(ngx_tcp_session_t *s)
 
     ngx_tcp_send(s->connection->write);
 }
+
 
 void 
 ngx_tcp_finalize_session(ngx_tcp_session_t *s)
@@ -282,6 +287,7 @@ ngx_tcp_finalize_session(ngx_tcp_session_t *s)
 
     return;
 }
+
 
 void
 ngx_tcp_close_connection(ngx_connection_t *c)
@@ -309,8 +315,8 @@ u_char *
 ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
 {
     u_char              *p;
-    ngx_tcp_session_t  *s;
-    ngx_tcp_log_ctx_t  *ctx;
+    ngx_tcp_session_t   *s;
+    ngx_tcp_log_ctx_t   *ctx;
     ngx_tcp_proxy_ctx_t *pctx;
 
 

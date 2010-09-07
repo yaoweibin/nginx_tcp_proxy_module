@@ -5,12 +5,12 @@
 
 
 ngx_int_t
-ngx_tcp_access_handler(ngx_tcp_session_t *s) {
-
+ngx_tcp_access_handler(ngx_tcp_session_t *s) 
+{
     ngx_uint_t                   i;
     struct sockaddr_in          *sin;
-    ngx_tcp_access_rule_t      *rule;
-    ngx_tcp_core_srv_conf_t    *cscf;
+    ngx_tcp_access_rule_t       *rule;
+    ngx_tcp_core_srv_conf_t     *cscf;
 
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 

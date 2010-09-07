@@ -23,7 +23,8 @@ typedef struct ngx_tcp_proxy_conf_s {
 
 static void ngx_tcp_set_session_socket(ngx_tcp_session_t *s);
 static  void ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s);
-static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u);
+static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, 
+        ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_dummy_write_handler(ngx_event_t *ev);
@@ -79,16 +80,16 @@ static ngx_tcp_module_t  ngx_tcp_proxy_module_ctx = {
     NULL,                                  /* create main configuration */
     NULL,                                  /* init main configuration */
 
-    ngx_tcp_proxy_create_conf,            /* create server configuration */
-    ngx_tcp_proxy_merge_conf              /* merge server configuration */
+    ngx_tcp_proxy_create_conf,             /* create server configuration */
+    ngx_tcp_proxy_merge_conf               /* merge server configuration */
 };
 
 
 ngx_module_t  ngx_tcp_proxy_module = {
     NGX_MODULE_V1,
-    &ngx_tcp_proxy_module_ctx,            /* module context */
-    ngx_tcp_proxy_commands,               /* module directives */
-    NGX_TCP_MODULE,                       /* module type */
+    &ngx_tcp_proxy_module_ctx,             /* module context */
+    ngx_tcp_proxy_commands,                /* module directives */
+    NGX_TCP_MODULE,                        /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
     NULL,                                  /* init process */
@@ -99,9 +100,10 @@ ngx_module_t  ngx_tcp_proxy_module = {
     NGX_MODULE_V1_PADDING
 };
 
-void 
-ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) {
 
+void 
+ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) 
+{
     ngx_tcp_proxy_conf_t     *pcf;
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
@@ -129,11 +131,12 @@ ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) {
     return;
 }
 
-static void
-ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) {
 
+static void
+ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) 
+{
     ngx_connection_t    *c;
-    ngx_tcp_session_t  *s;
+    ngx_tcp_session_t   *s;
 
     c = wev->data;
     s = c->data;
@@ -145,11 +148,12 @@ ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) {
     }
 }
 
-static void
-ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) {
 
+static void
+ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) 
+{
     ngx_connection_t    *c;
-    ngx_tcp_session_t  *s;
+    ngx_tcp_session_t   *s;
 
     c = rev->data;
     s = c->data;
@@ -161,9 +165,10 @@ ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) {
     }
 }
 
-static void 
-ngx_tcp_set_session_socket(ngx_tcp_session_t *s) {
 
+static void 
+ngx_tcp_set_session_socket(ngx_tcp_session_t *s) 
+{
     int                       keepalive;
     int                       tcp_nodelay;
     ngx_tcp_core_srv_conf_t  *cscf;
@@ -195,12 +200,13 @@ ngx_tcp_set_session_socket(ngx_tcp_session_t *s) {
     }
 }
 
-static  void
-ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) {
 
+static  void
+ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) 
+{
+    ngx_tcp_upstream_t       *u;
     ngx_tcp_proxy_ctx_t      *p;
     ngx_tcp_proxy_conf_t     *pcf;
-    ngx_tcp_upstream_t       *u;
 
     s->connection->log->action = "ngx_tcp_proxy_init";
 
@@ -236,12 +242,13 @@ ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) {
     return;
 }
 
-static void 
-ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) {
 
-    ngx_tcp_proxy_conf_t     *pcf;
-    ngx_tcp_proxy_ctx_t      *pctx;
+static void 
+ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
+{
     ngx_connection_t         *c;
+    ngx_tcp_proxy_ctx_t      *pctx;
+    ngx_tcp_proxy_conf_t     *pcf;
     ngx_tcp_core_srv_conf_t  *cscf;
 
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
@@ -292,9 +299,10 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
     return;
 }
 
-static void
-ngx_tcp_proxy_handler(ngx_event_t *ev) {
 
+static void
+ngx_tcp_proxy_handler(ngx_event_t *ev) 
+{
     char                     *action, *recv_action, *send_action;
     size_t                    size;
     ssize_t                   n;
@@ -483,9 +491,10 @@ ngx_tcp_proxy_handler(ngx_event_t *ev) {
     return;
 }
 
-static char *
-ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
 
+static char *
+ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
+{
     ngx_tcp_proxy_conf_t *pcf = conf;
 
     u_short                     port = 80;
@@ -516,8 +525,10 @@ ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
     return NGX_CONF_OK;
 }
 
+
 static void *
-ngx_tcp_proxy_create_conf(ngx_conf_t *cf) {
+ngx_tcp_proxy_create_conf(ngx_conf_t *cf) 
+{
     ngx_tcp_proxy_conf_t  *pcf;
 
     pcf = ngx_pcalloc(cf->pool, sizeof(ngx_tcp_proxy_conf_t));
@@ -534,8 +545,10 @@ ngx_tcp_proxy_create_conf(ngx_conf_t *cf) {
     return pcf;
 }
 
+
 static char *
-ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent, void *child) {
+ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent, void *child) 
+{
     ngx_tcp_proxy_conf_t *prev = parent;
     ngx_tcp_proxy_conf_t *conf = child;
 

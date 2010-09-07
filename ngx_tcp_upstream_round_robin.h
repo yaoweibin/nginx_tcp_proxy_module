@@ -70,13 +70,11 @@ void ngx_tcp_upstream_free_round_robin_peer(ngx_peer_connection_t *pc,
     void *data, ngx_uint_t state);
 
 #if (NGX_TCP_SSL)
-ngx_int_t
-    ngx_tcp_upstream_set_round_robin_peer_session(ngx_peer_connection_t *pc,
-    void *data);
+ngx_int_t ngx_tcp_upstream_set_round_robin_peer_session(
+        ngx_peer_connection_t *pc, void *data);
 void ngx_tcp_upstream_save_round_robin_peer_session(ngx_peer_connection_t *pc,
-    void *data);
+        void *data);
 #endif
-
 
 
 #endif /* _NGX_TCP_UPSTREAM_ROUND_ROBIN_H_INCLUDED_ */
