@@ -296,6 +296,16 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
         return;
     }
 
+#if (NGX_TCP_SSL)
+
+    /* The ssl connection with client may not trigger the read event again, 
+     * So I trigger it in this function.  */
+    if (s->connection->ssl) {
+        ngx_tcp_proxy_handler(s->connection->read); 
+    }
+
+#endif
+
     return;
 }
 

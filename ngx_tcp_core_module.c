@@ -430,6 +430,18 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #endif
         }
 
+        if (ngx_strcmp(value[i].data, "ssl") == 0) {
+#if (NGX_TCP_SSL)
+            ls->ssl = 1;
+            continue;
+#else
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "the \"ssl\" parameter requires "
+                               "ngx_tcp_ssl_module");
+            return NGX_CONF_ERROR;
+#endif
+        }
+
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                 "the invalid \"%V\" parameter", &value[i]);
         return NGX_CONF_ERROR;

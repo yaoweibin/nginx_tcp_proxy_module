@@ -79,6 +79,32 @@ sub parse_request ($$) {
     };
 }
 
+sub parse_request_https ($$) {
+    my ($name, $rrequest) = @_;
+    open my $in, '<', $rrequest;
+    my $first = <$in>;
+    if (!$first) {
+        Test::More::BAIL_OUT("$name - Request line should be non-empty");
+        die;
+    }
+    $first =~ s/^\s+|\s+$//g;
+    my ($meth, $rel_url) = split /\s+/, $first, 2;
+    my $url = "https://localhost:$ServerPortForClient" . $rel_url;
+
+    my $content = do { local $/; <$in> };
+    if ($content) {
+        $content =~ s/^\s+|\s+$//s;
+    }
+
+    close $in;
+
+    return {
+        method  => $meth,
+        url     => $url,
+        content => $content,
+    };
+}
+
 sub chunk_it ($$$) {
     my ($chunks, $start_delay, $middle_delay) = @_;
     my $i = 0;
@@ -98,13 +124,22 @@ sub run_test_helper ($) {
     my ($block) = @_;
 
     my $request = $block->request;
+    my $request_https = $block->request_https;
 
     my $name = $block->name;
     #if (defined $TODO) {
     #$name .= "# $TODO";
     #}
 
-    my $req_spec = parse_request($name, \$request);
+    my $req_spec;
+
+    if ($request) {
+        $req_spec = parse_request($name, \$request);
+    }
+    else {
+        $req_spec = parse_request_https($name, \$request_https);
+    }
+
     ## $req_spec
     my $method = $req_spec->{method};
     my $req = HTTP::Request->new($method);

@@ -289,6 +289,9 @@ found:
     addr->ctx = listen->ctx;
     addr->bind = listen->bind;
     addr->wildcard = listen->wildcard;
+#if (NGX_TCP_SSL)
+    addr->ssl = listen->ssl;
+#endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     addr->ipv6only = listen->ipv6only;
 #endif
@@ -419,6 +422,9 @@ ngx_tcp_add_addrs(ngx_conf_t *cf, ngx_tcp_port_t *mport,
         addrs[i].addr = sin->sin_addr.s_addr;
 
         addrs[i].conf.ctx = addr[i].ctx;
+#if (NGX_TCP_SSL)
+        addrs[i].conf.ssl = addr[i].ssl;
+#endif
 
         len = ngx_sock_ntop(addr[i].sockaddr, buf, NGX_SOCKADDR_STRLEN, 1);
 
@@ -464,6 +470,9 @@ ngx_tcp_add_addrs6(ngx_conf_t *cf, ngx_tcp_port_t *mport,
         addrs6[i].addr6 = sin6->sin6_addr;
 
         addrs6[i].conf.ctx = addr[i].ctx;
+#if (NGX_TCP_SSL)
+        addrs6[i].conf.ssl = addr[i].ssl;
+#endif
 
         len = ngx_sock_ntop(addr[i].sockaddr, buf, NGX_SOCKADDR_STRLEN, 1);
 

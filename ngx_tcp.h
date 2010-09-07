@@ -31,6 +31,10 @@ typedef ngx_addr_t ngx_peer_addr_t;
 #include <ngx_tcp_upstream_check.h>
 #include <ngx_tcp_upstream_round_robin.h>
 
+#if (NGX_TCP_SSL)
+#include <ngx_tcp_ssl_module.h>
+#endif
+
 
 typedef struct {
     void                  **main_conf;
@@ -47,6 +51,9 @@ typedef struct {
 
     unsigned                bind:1;
     unsigned                wildcard:1;
+#if (NGX_TCP_SSL)
+    unsigned                ssl:1;
+#endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                ipv6only:2;
 #endif
@@ -56,6 +63,9 @@ typedef struct {
 typedef struct {
     ngx_tcp_conf_ctx_t    *ctx;
     ngx_str_t              addr_text;
+#if (NGX_TCP_SSL)
+    ngx_uint_t              ssl;    /* unsigned   ssl:1; */
+#endif
 } ngx_tcp_addr_conf_t;
 
 typedef struct {
@@ -96,6 +106,9 @@ typedef struct {
 
     unsigned                bind:1;
     unsigned                wildcard:1;
+#if (NGX_TCP_SSL)
+    unsigned                ssl:1;
+#endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                ipv6only:2;
 #endif
