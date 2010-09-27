@@ -1,4 +1,4 @@
-= Name =
+﻿= Name =
 
 '''nginx_tcp_proxy_module''' - support TCP proxy with Nginx
 
@@ -334,15 +334,15 @@ The parameters' meanings are:
 
 '''description:''' set the timeout value of reading from backends.
 
-=== proxy_write_timeout ===
+=== proxy_send_timeout ===
 
-'''syntax:''' ''proxy_write_timeout miliseconds''
+'''syntax:''' ''proxy_send_timeout miliseconds''
 
 '''default:''' ''60000''
 
 '''context:''' ''tcp, server''
 
-'''description:''' set the timeout value of writing to backends.
+'''description:''' set the timeout value of sending to backends.
 
 
 = Installation =

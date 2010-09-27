@@ -345,14 +345,14 @@ Directives
 
     description: set the timeout value of reading from backends.
 
-   proxy_write_timeout
-    syntax: *proxy_write_timeout miliseconds*
+   proxy_send_timeout
+    syntax: *proxy_send_timeout miliseconds*
 
     default: *60000*
 
     context: *tcp, server*
 
-    description: set the timeout value of writing to backends.
+    description: set the timeout value of sending to backends.
 
 Installation
     Download the latest version of the release tarball of this module from
