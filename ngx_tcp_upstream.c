@@ -346,6 +346,7 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
                 "upstream servers error or busy!");
 
         ngx_tcp_upstream_finalize_session(s, u, 0);
+
         return;
     }
 
@@ -389,6 +390,8 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     else {
         ngx_add_timer(c->read, u->conf->read_timeout);
         ngx_add_timer(c->write, u->conf->send_timeout);
+
+        c->write->handler(c->write);
     }
 }
 

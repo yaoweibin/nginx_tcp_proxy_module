@@ -35,7 +35,7 @@ __DATA__
         server pop3.163.com:110;
 
         #ip_hash;
-        check interval=3000 rise=2 fall=5 timeout=1000 type=pop3;
+        check interval=3000 rise=1 fall=5 timeout=1000 type=pop3;
     }
 
     server {

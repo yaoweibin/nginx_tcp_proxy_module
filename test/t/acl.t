@@ -32,16 +32,7 @@ __DATA__
 === TEST 1: test ACL
 --- config
     upstream test{
-        server 172.19.0.129;
-        server 172.19.0.130;
-        server 172.19.0.131;
-        server 172.19.0.132;
-        server 172.19.0.235;
-        server 172.19.0.236;
-        server 172.19.0.237;
-        server 172.19.0.238;
-        server 172.19.0.239;
-        #ip_hash;
+        server blog.163.com;
     }
 
     server {
@@ -53,4 +44,5 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- error_code: 500
+--- response_body_like: ^.*$

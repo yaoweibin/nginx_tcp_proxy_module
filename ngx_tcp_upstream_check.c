@@ -1515,6 +1515,11 @@ ngx_tcp_check_connect_handler(ngx_event_t *event)
     c->read->handler = peer_conf->recv_handler;
 
     ngx_add_timer(&peer_conf->check_timeout_ev, uscf->check_timeout);
+
+    /* The kqueue's loop interface need it. */
+    if (rc == NGX_OK) {
+        c->write->handler(c->write);
+    }
 }
 
 

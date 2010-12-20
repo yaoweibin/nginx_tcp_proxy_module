@@ -1,14 +1,6 @@
 Name
     nginx_tcp_proxy_module - support TCP proxy with Nginx
 
-Status
-    This module is at its very early phase of development and considered
-    highly experimental. But you're encouraged to test it out on your side
-    and report any quirks that you experience.
-
-    We need your help! If you find this module useful and/or interesting,
-    please consider joining the development!
-
 Synopsis
     http {
 
@@ -373,7 +365,7 @@ Installation
         $ make install
 
 Compatibility
-    *   My test bed is 0.7.65 and 0.8.34.
+    *   My test bed is 0.7.65 and 0.8.53
 
 Notes
     The http_response_parse.rl and smtp_response_parse.rl are ragel
@@ -384,8 +376,6 @@ Notes
         $ ragel -G2 smtp_response_parse.rl
 
 TODO
-    *   ACL
-
 Known Issues
     *   Developing
 

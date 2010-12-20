@@ -35,7 +35,7 @@ __DATA__
         server 127.0.0.1:3306;
 
         #ip_hash;
-        check interval=3000 rise=2 fall=5 timeout=1000 type=mysql;
+        check interval=3000 rise=1 fall=5 timeout=1000 type=mysql;
     }
 
     server {

@@ -35,7 +35,7 @@ __DATA__
         server www.battlenet.com.cn:443;
 
         #ip_hash;
-        check interval=3000 rise=2 fall=5 timeout=1000 type=ssl_hello;
+        check interval=3000 rise=1 fall=5 timeout=1000 type=ssl_hello;
     }
 
     server {
