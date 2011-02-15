@@ -4,7 +4,7 @@
 <head>
 <title>Name</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:root@localhost" />
+<link rev="made" href="mailto:ports-i386@jail-3.isc.freebsd.org" />
 </head>
 
 <body style="background-color: white">
@@ -17,7 +17,6 @@
 <ul>
 
 	<li><a href="#name">Name</a></li>
-	<li><a href="#status">Status</a></li>
 	<li><a href="#synopsis">Synopsis</a></li>
 	<li><a href="#description">Description</a></li>
 	<li><a href="#directives">Directives</a></li>
@@ -61,7 +60,7 @@
 			<li><a href="#proxy_buffer">proxy_buffer</a></li>
 			<li><a href="#proxy_connect_timeout">proxy_connect_timeout</a></li>
 			<li><a href="#proxy_read_timeout">proxy_read_timeout</a></li>
-			<li><a href="#proxy_write_timeout">proxy_write_timeout</a></li>
+			<li><a href="#proxy_send_timeout">proxy_send_timeout</a></li>
 		</ul>
 
 		<li><a href="#ngx_tcp_ssl_module">ngx_tcp_ssl_module</a></li>
@@ -112,12 +111,6 @@
 <p>
 </p>
 <hr />
-<h1><a name="status">Status</a></h1>
-<p>This module is at its very early phase of development and considered highly experimental. But you're encouraged to test it out on your side and report any quirks that you experience.</p>
-<p>We need your help! If you find this module useful and/or interesting, please consider joining the development!</p>
-<p>
-</p>
-<hr />
 <h1><a name="synopsis">Synopsis</a></h1>
 <p>http {</p>
 <pre>
@@ -153,7 +146,7 @@
 </p>
 <hr />
 <h1><a name="description">Description</a></h1>
-<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, nngx_tcp_ssl_module, gx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
+<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
 <p>The motivation of writing these modules is Nginx's high performance and robustness.</p>
 <p>
 </p>
@@ -388,14 +381,15 @@
 <p><strong>description:</strong> set the timeout value of reading from backends.</p>
 <p>
 </p>
-<h3><a name="proxy_write_timeout">proxy_write_timeout</a></h3>
-<p><strong>syntax:</strong> <em>proxy_write_timeout miliseconds</em></p>
+<h3><a name="proxy_send_timeout">proxy_send_timeout</a></h3>
+<p><strong>syntax:</strong> <em>proxy_send_timeout miliseconds</em></p>
 <p><strong>default:</strong> <em>60000</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p><strong>description:</strong> set the timeout value of writing to backends.</p>
+<p><strong>description:</strong> set the timeout value of sending to backends.</p>
 <p>
 </p>
 <h2><a name="ngx_tcp_ssl_module">ngx_tcp_ssl_module</a></h2>
+<p>The default config file includes this ngx_tcp_ssl_module. If you want to compile nginx without ngx_tcp_ssl_module, copy the ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config,  reconfigrure and compile nginx.</p>
 <p>
 </p>
 <h3><a name="ssl">ssl</a></h3>
@@ -531,7 +525,7 @@ Bear in mind however, that using only shared cache, i.e., without builtin, shoul
 <h1><a name="compatibility">Compatibility</a></h1>
 <ul>
 <li>
-<p>My test bed is 0.7.65 and 0.8.34.</p>
+<p>My test bed is 0.7.65 and 0.8.53</p>
 </li>
 </ul>
 <p>

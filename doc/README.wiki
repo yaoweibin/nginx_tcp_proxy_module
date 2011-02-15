@@ -2,12 +2,6 @@
 
 '''nginx_tcp_proxy_module''' - support TCP proxy with Nginx
 
-= Status =
-
-This module is at its very early phase of development and considered highly experimental. But you're encouraged to test it out on your side and report any quirks that you experience.
-
-We need your help! If you find this module useful and/or interesting, please consider joining the development!
-
 = Synopsis =
 
 <geshi lang="nginx">
@@ -48,7 +42,7 @@ tcp {
 
 = Description =
 
-This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, nngx_tcp_ssl_module, gx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.
+This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.
 
 The motivation of writing these modules is Nginx's high performance and robustness.
 
@@ -334,15 +328,15 @@ The parameters' meanings are:
 
 '''description:''' set the timeout value of reading from backends.
 
-=== proxy_write_timeout ===
+=== proxy_send_timeout ===
 
-'''syntax:''' ''proxy_write_timeout miliseconds''
+'''syntax:''' ''proxy_send_timeout miliseconds''
 
 '''default:''' ''60000''
 
 '''context:''' ''tcp, server''
 
-'''description:''' set the timeout value of writing to backends.
+'''description:''' set the timeout value of sending to backends.
 
 
 == ngx_tcp_ssl_module ==
@@ -524,7 +518,7 @@ Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the 
     
 = Compatibility =
 
-* My test bed is 0.7.65 and 0.8.34.
+* My test bed is 0.7.65 and 0.8.53
 
 = Notes =
 

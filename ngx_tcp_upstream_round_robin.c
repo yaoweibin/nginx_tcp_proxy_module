@@ -193,6 +193,7 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
         peers->peer[i].current_weight = 1;
         peers->peer[i].max_fails = 1;
         peers->peer[i].fail_timeout = 10;
+        peers->peer[i].check_index = (ngx_uint_t) NGX_ERROR;
     }
 
     us->peer.data = peers;
@@ -415,7 +416,9 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
 
     if (rrp->peers->single) {
         peer = &rrp->peers->peer[0];
-
+        if (ngx_tcp_check_peer_down(peer->check_index)) {
+            return NGX_BUSY;
+        }
     } else {
 
         /* there are several peers */
