@@ -191,9 +191,9 @@ typedef struct {
 
 #define NGX_TCP_MODULE         0x00504354     /* "TCP" */
 
-#define NGX_TCP_MAIN_CONF      0x10000000
-#define NGX_TCP_SRV_CONF       0x20000000
-#define NGX_TCP_UPS_CONF       0x40000000
+#define NGX_TCP_MAIN_CONF      0x02000000
+#define NGX_TCP_SRV_CONF       0x04000000
+#define NGX_TCP_UPS_CONF       0x10000000
 
 
 #define NGX_TCP_MAIN_CONF_OFFSET  offsetof(ngx_tcp_conf_ctx_t, main_conf)

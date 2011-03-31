@@ -251,6 +251,9 @@ ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
     peers_conf = umcf->peers_conf;
 
     peer_conf = ngx_array_push(&peers_conf->peers);
+
+    ngx_memzero(peer_conf, sizeof(ngx_tcp_check_peer_conf_t));
+
     peer_conf->index = peers_conf->peers.nelts - 1;
     peer_conf->max_busy = max_busy;
     peer_conf->conf = uscf;
