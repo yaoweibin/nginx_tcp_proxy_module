@@ -4,10 +4,12 @@ Name
 Synopsis
     http {
 
-        listen 80;
+        server {
+            listen 80;
 
-        location /status {
-            check_status;
+            location /status {
+                check_status;
+            }
         }
     }
 
@@ -44,7 +46,9 @@ Description
     The motivation of writing these modules is Nginx's high performance and
     robustness. At first, I developed this module just for general TCP
     proxy. And now, this module is frequently used in websocket reverse
-    proxying. But you can't use the same port with HTTP modules.
+    proxying.
+
+    You can't use the same listening port with HTTP modules.
 
 Directives
   ngx_tcp_moodule

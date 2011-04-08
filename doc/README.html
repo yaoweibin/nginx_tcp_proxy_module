@@ -96,10 +96,12 @@
 <h1><a name="synopsis">Synopsis</a></h1>
 <p>http {</p>
 <pre>
-    listen 80;</pre>
+    server {
+        listen 80;</pre>
 <pre>
-    location /status {
-        check_status;
+        location /status {
+            check_status;
+        }
     }
 }</pre>
 <p>tcp {</p>
@@ -129,7 +131,8 @@
 <hr />
 <h1><a name="description">Description</a></h1>
 <p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
-<p>The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying. But you can't use the same port with HTTP modules.</p>
+<p>The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying.</p>
+<p>You can't use the same listening port with HTTP modules.</p>
 <p>
 </p>
 <hr />
