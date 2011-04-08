@@ -62,12 +62,12 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
                     peers->peer[n].check_index = 
                         ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j], server[i].max_busy);
 
-                    if (peers->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
+                    if (peers->peer[n].check_index == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
                         return NGX_ERROR;
                     }
                 }
                 else {
-                    peers->peer[n].check_index = (ngx_uint_t) NGX_ERROR;
+                    peers->peer[n].check_index = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
                 }
 
                 n++;
@@ -127,12 +127,12 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
                     backup->peer[n].check_index = 
                         ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j], server[i].max_busy);
 
-                    if (backup->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
+                    if (backup->peer[n].check_index == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
                         return NGX_ERROR;
                     }
                 }
                 else {
-                    backup->peer[n].check_index = (ngx_uint_t) NGX_ERROR;
+                    backup->peer[n].check_index = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
                 }
 
                 n++;
@@ -193,7 +193,7 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
         peers->peer[i].current_weight = 1;
         peers->peer[i].max_fails = 1;
         peers->peer[i].fail_timeout = 10;
-        peers->peer[i].check_index = (ngx_uint_t) NGX_ERROR;
+        peers->peer[i].check_index = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
     }
 
     us->peer.data = peers;
@@ -254,6 +254,8 @@ ngx_tcp_upstream_init_round_robin_peer(ngx_tcp_session_t *s,
     s->upstream->peer.get = ngx_tcp_upstream_get_round_robin_peer;
     s->upstream->peer.free = ngx_tcp_upstream_free_round_robin_peer;
     s->upstream->peer.tries = rrp->peers->number;
+    s->upstream->peer.check_index = NGX_INVALID_CHECK_INDEX;
+    s->upstream->peer.name = NULL;
 #if (NGX_TCP_SSL)
     s->upstream->peer.set_session =
                                ngx_tcp_upstream_set_round_robin_peer_session;

@@ -352,7 +352,7 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 
     /* rc == NGX_OK or rc == NGX_AGAIN */
 
-    if (u->peer.check_index != NGX_INVALID_INDEX) {
+    if (u->peer.check_index != NGX_INVALID_CHECK_INDEX) {
         ngx_tcp_check_get_peer(u->peer.check_index);
     }
 
@@ -496,6 +496,11 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
             (void) ngx_ssl_shutdown(u->peer.connection);
         }
 #endif
+        
+        if (u->peer.check_index != NGX_INVALID_CHECK_INDEX) {
+            ngx_tcp_check_free_peer(u->peer.check_index);
+            u->peer.check_index = NGX_INVALID_CHECK_INDEX;
+        }
 
         ngx_close_connection(u->peer.connection);
     }
@@ -548,9 +553,9 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
         u->peer.free(&u->peer, u->peer.data, 0);
     }
 
-    if (u->peer.check_index != NGX_INVALID_INDEX) {
+    if (u->peer.check_index != NGX_INVALID_CHECK_INDEX) {
         ngx_tcp_check_free_peer(u->peer.check_index);
-        u->peer.check_index = NGX_INVALID_INDEX;
+        u->peer.check_index = NGX_INVALID_CHECK_INDEX;
     }
 
     if (u->peer.connection) {
@@ -559,7 +564,7 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
                 "close tcp upstream connection: %d",
                 u->peer.connection->fd);
 
-            ngx_close_connection(u->peer.connection);
+        ngx_close_connection(u->peer.connection);
     }
 
     u->peer.connection = NULL;

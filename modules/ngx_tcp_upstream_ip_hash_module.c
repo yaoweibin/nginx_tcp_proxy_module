@@ -225,6 +225,7 @@ ngx_tcp_upstream_ip_hash(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     uscf->flags = NGX_TCP_UPSTREAM_CREATE
                   |NGX_TCP_UPSTREAM_MAX_FAILS
                   |NGX_TCP_UPSTREAM_FAIL_TIMEOUT
+                  |NGX_TCP_UPSTREAM_MAX_BUSY
                   |NGX_TCP_UPSTREAM_DOWN;
 
     return NGX_CONF_OK;

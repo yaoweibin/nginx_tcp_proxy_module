@@ -61,7 +61,7 @@ typedef struct {
     ngx_uint_t rise_count;
 
     ngx_atomic_t lock;
-    ngx_atomic_t business;
+    ngx_atomic_t busyness;
     ngx_atomic_t down;
 
     ngx_uint_t access_count;
@@ -222,6 +222,8 @@ ngx_uint_t ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *u
         ngx_peer_addr_t *peer, ngx_uint_t max_busy);
 
 ngx_uint_t ngx_tcp_check_peer_down(ngx_uint_t index);
+
+ngx_uint_t ngx_tcp_check_get_peer_busyness(ngx_uint_t index);
 
 void ngx_tcp_check_get_peer(ngx_uint_t index);
 void ngx_tcp_check_free_peer(ngx_uint_t index);
