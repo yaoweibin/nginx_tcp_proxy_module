@@ -42,7 +42,9 @@ Description
     other features: ip_hash, upstream server health check, status monitor.
 
     The motivation of writing these modules is Nginx's high performance and
-    robustness.
+    robustness. At first, I developed this module just for general TCP
+    proxy. And now, this module is frequently used in websocket reverse
+    proxying. But you can't use the same port with HTTP modules.
 
 Directives
   ngx_tcp_moodule
@@ -563,7 +565,7 @@ TODO
     *
 
 Known Issues
-    *   Developing
+    *   This module can't use the same listening port with the HTTP module.
 
 Changelogs
   v0.19
@@ -586,7 +588,7 @@ Copyright & License
 
     This module is licensed under the BSD license.
 
-    Copyright (C) 2010 by Weibin Yao <yaoweibin@gmail.com>.
+    Copyright (C) 2011 by Weibin Yao <yaoweibin@gmail.com>.
 
     All rights reserved.
 

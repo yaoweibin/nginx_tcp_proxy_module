@@ -44,7 +44,7 @@ tcp {
 
 This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.
 
-The motivation of writing these modules is Nginx's high performance and robustness.
+The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying. But you can't use the same port with HTTP modules. 
 
 = Directives =
 
@@ -535,7 +535,7 @@ The http_response_parse.rl and smtp_response_parse.rl are [http://www.complang.o
 
 = Known Issues =
 
-* Developing  
+* This module can't use the same listening port with the HTTP module.
 
 = Changelogs =
 
@@ -559,7 +559,7 @@ I borrowed a lot of code from upstream and mail module from the nginx 0.7.* core
 
 This module is licensed under the BSD license.
 
-Copyright (C) 2010 by Weibin Yao <yaoweibin@gmail.com>.
+Copyright (C) 2011 by Weibin Yao <yaoweibin@gmail.com>.
 
 All rights reserved.
 
