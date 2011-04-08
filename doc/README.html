@@ -129,7 +129,7 @@
 <hr />
 <h1><a name="description">Description</a></h1>
 <p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
-<p>The motivation of writing these modules is Nginx's high performance and robustness.</p>
+<p>The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying. But you can't use the same port with HTTP modules.</p>
 <p>
 </p>
 <hr />
@@ -411,7 +411,7 @@
 <h1><a name="known_issues">Known Issues</a></h1>
 <ul>
 <li>
-<p>Developing</p>
+<p>This module can't use the same listening port with the HTTP module.</p>
 </li>
 </ul>
 <p>
@@ -446,7 +446,7 @@
 <p>This README template copy from agentzh (<a href="http://github.com/agentzh">http://github.com/agentzh</a>).</p>
 <p>I borrowed a lot of code from upstream and mail module from the nginx 0.7.* core. This part of code is copyrighted by Igor Sysoev. And the health check part is borrowed the design of Jack Lindamood's healthcheck module healthcheck_nginx_upstreams (<a href="http://github.com/cep21/healthcheck_nginx_upstreams">http://github.com/cep21/healthcheck_nginx_upstreams</a>);</p>
 <p>This module is licensed under the BSD license.</p>
-<p>Copyright (C) 2010 by Weibin Yao &lt;<a href="mailto:yaoweibin@gmail.com">yaoweibin@gmail.com</a>&gt;.</p>
+<p>Copyright (C) 2011 by Weibin Yao &lt;<a href="mailto:yaoweibin@gmail.com">yaoweibin@gmail.com</a>&gt;.</p>
 <p>All rights reserved.</p>
 <p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</p>
 <ul>

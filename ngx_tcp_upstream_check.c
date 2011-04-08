@@ -372,7 +372,6 @@ ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data)
 
     peers_conf->peers_shm = peers_shm;
 
-
     return NGX_OK;
 }
 
