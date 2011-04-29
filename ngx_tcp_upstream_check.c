@@ -1630,6 +1630,9 @@ ngx_tcp_upstream_init_main_check_conf(ngx_conf_t *cf, void*conf)
 
         shm_zone->init = ngx_tcp_upstream_check_init_shm_zone;
     }
+    else {
+        check_peers_ctx = NULL;
+    }
 
     return NGX_OK;
 }
