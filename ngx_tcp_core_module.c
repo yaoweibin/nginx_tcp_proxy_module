@@ -20,70 +20,70 @@ static char *ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd,
 
 static ngx_command_t  ngx_tcp_core_commands[] = {
 
-    { ngx_string("server"),
+    {   ngx_string("server"),
         NGX_TCP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_MULTI|NGX_CONF_NOARGS,
         ngx_tcp_core_server,
         0,
         0,
         NULL },
 
-    { ngx_string("listen"),
+    {   ngx_string("listen"),
         NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
         ngx_tcp_core_listen,
         NGX_TCP_SRV_CONF_OFFSET,
         0,
         NULL },
 
-    { ngx_string("so_keepalive"),
+    {   ngx_string("so_keepalive"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
         ngx_conf_set_flag_slot,
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_core_srv_conf_t, so_keepalive),
         NULL },
 
-    { ngx_string("tcp_nodelay"),
+    {   ngx_string("tcp_nodelay"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
         ngx_conf_set_flag_slot,
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_core_srv_conf_t, tcp_nodelay),
         NULL },
 
-    { ngx_string("timeout"),
+    {   ngx_string("timeout"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
         ngx_conf_set_msec_slot,
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_core_srv_conf_t, timeout),
         NULL },
 
-    { ngx_string("server_name"),
+    {   ngx_string("server_name"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
         ngx_conf_set_str_slot,
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_core_srv_conf_t, server_name),
         NULL },
 
-    { ngx_string("resolver"),
+    {   ngx_string("resolver"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
         ngx_tcp_core_resolver,
         NGX_TCP_SRV_CONF_OFFSET,
         0,
         NULL },
 
-    { ngx_string("resolver_timeout"),
+    {   ngx_string("resolver_timeout"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
         ngx_conf_set_msec_slot,
         NGX_TCP_SRV_CONF_OFFSET,
         offsetof(ngx_tcp_core_srv_conf_t, resolver_timeout),
         NULL },
 
-    { ngx_string("allow"),
+    {   ngx_string("allow"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
         ngx_tcp_access_rule,
         NGX_TCP_SRV_CONF_OFFSET,
         0,
         NULL },
 
-    { ngx_string("deny"),
+    {   ngx_string("deny"),
         NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
         ngx_tcp_access_rule,
         NGX_TCP_SRV_CONF_OFFSET,
@@ -288,10 +288,10 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_url_t                   u;
     ngx_uint_t                  i, m;
     struct sockaddr            *sa;
-    ngx_tcp_listen_t          *ls;
-    ngx_tcp_module_t          *module;
+    ngx_tcp_listen_t           *ls;
+    ngx_tcp_module_t           *module;
     struct sockaddr_in         *sin;
-    ngx_tcp_core_main_conf_t  *cmcf;
+    ngx_tcp_core_main_conf_t   *cmcf;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6        *sin6;
 #endif

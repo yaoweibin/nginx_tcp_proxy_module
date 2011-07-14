@@ -50,6 +50,7 @@
 			<li><a href="#check_smtp_expect_alive">check_smtp_expect_alive</a></li>
 			<li><a href="#check_shm_size">check_shm_size</a></li>
 			<li><a href="#check_status">check_status</a></li>
+			<li><a href="#busyness">busyness</a></li>
 			<li><a href="#ip_hash">ip_hash</a></li>
 		</ul>
 
@@ -343,6 +344,14 @@
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>location</em></p>
 <p><strong>description:</strong> Display the health checking servers' status by HTTP. This directive is set in the http block.</p>
+<p><strong>ngx_tcp_upstream_busyness_module</strong></p>
+<p>
+</p>
+<h3><a name="busyness">busyness</a></h3>
+<p><strong>syntax:</strong> <em>busyness</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> the upstream server will be dispatched by backend servers' busyness.</p>
 <p><strong>ngx_tcp_upstream_ip_hash_module</strong></p>
 <p>
 </p>

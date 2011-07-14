@@ -294,6 +294,18 @@ Directives
     description: Display the health checking servers' status by HTTP. This
     directive is set in the http block.
 
+    ngx_tcp_upstream_busyness_module
+
+   busyness
+    syntax: *busyness*
+
+    default: *none*
+
+    context: *upstream*
+
+    description: the upstream server will be dispatched by backend servers'
+    busyness.
+
     ngx_tcp_upstream_ip_hash_module
 
    ip_hash

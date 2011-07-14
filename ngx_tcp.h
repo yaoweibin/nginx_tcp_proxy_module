@@ -125,6 +125,15 @@ typedef struct {
     ngx_array_t             listen;      /* ngx_tcp_listen_t */
 } ngx_tcp_core_main_conf_t;
 
+typedef struct {
+    ngx_array_t                *logs;       /* array of ngx_http_log_t */
+
+    ngx_open_file_cache_t      *open_file_cache;
+    time_t                      open_file_cache_valid;
+    ngx_uint_t                  open_file_cache_min_uses;
+
+    ngx_uint_t                  off;        /* unsigned  off:1 */
+} ngx_tcp_log_srv_conf_t;
 
 typedef struct {
     ngx_tcp_protocol_t    *protocol;
@@ -144,6 +153,8 @@ typedef struct {
 
     /*ACL rules*/
     ngx_array_t            *rules;
+
+    ngx_tcp_log_srv_conf_t *access_log;
 
     /* server ctx */
     ngx_tcp_conf_ctx_t    *ctx;

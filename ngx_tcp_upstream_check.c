@@ -1564,7 +1564,7 @@ ngx_tcp_check_begin_handler(ngx_event_t *event)
     }
 
     ngx_log_debug4(NGX_LOG_DEBUG_TCP, event->log, 0, 
-            "tcp check begin handler index:%ud, owner: %d, ngx_pid: %ud, time:%ud", 
+            "tcp check begin handler index:%ud, owner: %d, ngx_pid: %ud, time:%d", 
             peer_conf->index, peer_conf->shm->owner, ngx_pid, 
             (ngx_current_msec - peer_conf->shm->access_time));
 
