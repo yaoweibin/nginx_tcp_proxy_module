@@ -126,7 +126,13 @@ typedef struct {
 } ngx_tcp_core_main_conf_t;
 
 typedef struct {
-    ngx_array_t                *logs;       /* array of ngx_http_log_t */
+    ngx_open_file_t            *file;
+    time_t                      disk_full_time;
+    time_t                      error_log_time;
+} ngx_tcp_log_t;
+
+typedef struct {
+    ngx_array_t                *logs;       /* array of ngx_tcp_log_t */
 
     ngx_open_file_cache_t      *open_file_cache;
     time_t                      open_file_cache_valid;

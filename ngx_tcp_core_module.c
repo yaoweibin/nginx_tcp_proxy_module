@@ -17,6 +17,10 @@ static char *ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+static char *ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+static char *ngx_tcp_log_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 
 static ngx_command_t  ngx_tcp_core_commands[] = {
 
@@ -90,6 +94,19 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
         0,
         NULL },
 
+    {   ngx_string("access_log"),
+        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
+        ngx_tcp_log_set_access_log,
+        NGX_TCP_SRV_CONF_OFFSET,
+        0,
+        NULL },
+
+    {   ngx_string("open_log_file_cache"),
+        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1234,
+        ngx_tcp_log_open_file_cache,
+        NGX_TCP_SRV_CONF_OFFSET,
+        0,
+        NULL },
 
     ngx_null_command
 };
@@ -153,6 +170,7 @@ static void *
 ngx_tcp_core_create_srv_conf(ngx_conf_t *cf) 
 {
     ngx_tcp_core_srv_conf_t  *cscf;
+    ngx_tcp_log_srv_conf_t   *lscf;
 
     cscf = ngx_pcalloc(cf->pool, sizeof(ngx_tcp_core_srv_conf_t));
     if (cscf == NULL) {
@@ -175,6 +193,20 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
     cscf->file_name = cf->conf_file->file.name.data;
     cscf->line = cf->conf_file->line;
 
+    lscf = cscf->access_log = ngx_pcalloc(cf->pool, 
+            sizeof(ngx_tcp_core_srv_conf_t));
+    if (lscf == NULL) {
+        return NULL;
+    }
+
+    /*
+     * set by ngx_pcalloc():
+     *
+     *     lscf->logs = NULL;
+     */
+
+    lscf->open_file_cache = NGX_CONF_UNSET_PTR;
+
     return cscf;
 }
 
@@ -184,6 +216,8 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_tcp_core_srv_conf_t *prev = parent;
     ngx_tcp_core_srv_conf_t *conf = child;
+    ngx_tcp_log_srv_conf_t  *plscf = prev->access_log;
+    ngx_tcp_log_srv_conf_t  *lscf = conf->access_log;
 
     ngx_conf_merge_msec_value(conf->timeout, prev->timeout, 60000);
     ngx_conf_merge_msec_value(conf->resolver_timeout, prev->resolver_timeout, 30000);
@@ -202,6 +236,24 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     if (conf->rules == NULL) {
         conf->rules = prev->rules;
     }
+
+    if (lscf->open_file_cache == NGX_CONF_UNSET_PTR) {
+
+        lscf->open_file_cache = plscf->open_file_cache;
+        lscf->open_file_cache_valid = plscf->open_file_cache_valid;
+        lscf->open_file_cache_min_uses = plscf->open_file_cache_min_uses;
+
+        if (lscf->open_file_cache == NGX_CONF_UNSET_PTR) {
+            lscf->open_file_cache = NULL;
+        }
+    }
+
+    if (lscf->logs || lscf->off) {
+        return NGX_CONF_OK;
+    }
+
+    lscf->logs = plscf->logs;
+    lscf->off = plscf->off;
 
     return NGX_CONF_OK;
 }
@@ -547,4 +599,194 @@ ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     return NGX_CONF_OK;
 }
+
+
+static char *
+ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t *cscf = conf;
+    ngx_tcp_log_srv_conf_t  *lscf = cscf->access_log;
+
+    ssize_t                     buf;
+    ngx_str_t                  *value, name;
+    ngx_tcp_log_t              *log;
+
+    value = cf->args->elts;
+
+    if (ngx_strcmp(value[1].data, "off") == 0) {
+        lscf->off = 1;
+        if (cf->args->nelts == 2) {
+            return NGX_CONF_OK;
+        }
+
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid parameter \"%V\"", &value[2]);
+        return NGX_CONF_ERROR;
+    }
+
+    if (lscf->logs == NULL) {
+        lscf->logs = ngx_array_create(cf->pool, 2, sizeof(ngx_tcp_log_t));
+        if (lscf->logs == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    log = ngx_array_push(lscf->logs);
+    if (log == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    ngx_memzero(log, sizeof(ngx_tcp_log_t));
+
+    log->file = ngx_conf_open_file(cf->cycle, &value[1]);
+    if (log->file == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    if (cf->args->nelts == 3) {
+        if (ngx_strncmp(value[2].data, "buffer=", 7) != 0) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "invalid parameter \"%V\"", &value[2]);
+            return NGX_CONF_ERROR;
+        }
+
+        name.len = value[2].len - 7;
+        name.data = value[2].data + 7;
+
+        buf = ngx_parse_size(&name);
+
+        if (buf == NGX_ERROR) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "invalid parameter \"%V\"", &value[2]);
+            return NGX_CONF_ERROR;
+        }
+
+        if (log->file->buffer && log->file->last - log->file->pos != buf) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "access_log \"%V\" already defined "
+                               "with different buffer size", &value[1]);
+            return NGX_CONF_ERROR;
+        }
+
+        log->file->buffer = ngx_palloc(cf->pool, buf);
+        if (log->file->buffer == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        log->file->pos = log->file->buffer;
+        log->file->last = log->file->buffer + buf;
+    }
+
+    return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_log_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t *cscf = conf;
+    ngx_tcp_log_srv_conf_t  *lscf = cscf->access_log;
+
+    time_t       inactive, valid;
+    ngx_str_t   *value, s;
+    ngx_int_t    max, min_uses;
+    ngx_uint_t   i;
+
+    if (lscf->open_file_cache != NGX_CONF_UNSET_PTR) {
+        return "is duplicate";
+    }
+
+    value = cf->args->elts;
+
+    max = 0;
+    inactive = 10;
+    valid = 60;
+    min_uses = 1;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+
+        if (ngx_strncmp(value[i].data, "max=", 4) == 0) {
+
+            max = ngx_atoi(value[i].data + 4, value[i].len - 4);
+            if (max == NGX_ERROR) {
+                goto failed;
+            }
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "inactive=", 9) == 0) {
+
+            s.len = value[i].len - 9;
+            s.data = value[i].data + 9;
+
+            inactive = ngx_parse_time(&s, 1);
+            if (inactive < 0) {
+                goto failed;
+            }
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "min_uses=", 9) == 0) {
+
+            min_uses = ngx_atoi(value[i].data + 9, value[i].len - 9);
+            if (min_uses == NGX_ERROR) {
+                goto failed;
+            }
+
+            continue;
+        }
+
+        if (ngx_strncmp(value[i].data, "valid=", 6) == 0) {
+
+            s.len = value[i].len - 6;
+            s.data = value[i].data + 6;
+
+            valid = ngx_parse_time(&s, 1);
+            if (valid < 0) {
+                goto failed;
+            }
+
+            continue;
+        }
+
+        if (ngx_strcmp(value[i].data, "off") == 0) {
+
+            lscf->open_file_cache = NULL;
+
+            continue;
+        }
+
+    failed:
+
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid \"open_log_file_cache\" parameter \"%V\"",
+                           &value[i]);
+        return NGX_CONF_ERROR;
+    }
+
+    if (lscf->open_file_cache == NULL) {
+        return NGX_CONF_OK;
+    }
+
+    if (max == 0) {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                        "\"open_log_file_cache\" must have \"max\" parameter");
+        return NGX_CONF_ERROR;
+    }
+
+    lscf->open_file_cache = ngx_open_file_cache_init(cf->pool, max, inactive);
+
+    if (lscf->open_file_cache) {
+
+        lscf->open_file_cache_valid = valid;
+        lscf->open_file_cache_min_uses = min_uses;
+
+        return NGX_CONF_OK;
+    }
+
+    return NGX_CONF_ERROR;
+}
+
 
