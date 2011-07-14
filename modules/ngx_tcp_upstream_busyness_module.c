@@ -102,26 +102,27 @@ ngx_tcp_upstream_init_busyness_peer(ngx_tcp_session_t *s,
 
 
 static ngx_uint_t
-ngx_tcp_upstream_get_busiest_index(ngx_tcp_upstream_rr_peers_t *rrps, ngx_uint_t current) 
+ngx_tcp_upstream_get_least_busy_index(ngx_tcp_upstream_rr_peers_t *rrps) 
 {
-    ngx_uint_t i, j, p_index, busyness, min_busyness;
+    ngx_uint_t i, j, peer_index, check_index, busyness, min_busyness, start;
 
     min_busyness = (ngx_uint_t) (-1);
 
-    p_index = current;
+    peer_index = start = ngx_random() % rrps->number;
 
-    for (i = 0; i < rrps->number; i++) {
+    for (i = 0; i < rrps->number; i++, start++) {
 
-        j = (i + current + 1) % rrps->number;
+        j =  start % rrps->number;
+        check_index = rrps->peer[j].check_index;
 
-        busyness = ngx_tcp_check_get_peer_busyness(rrps->peer[j].check_index);
-        if (busyness <= min_busyness) {
+        busyness = ngx_tcp_check_get_peer_busyness(check_index);
+        if (busyness < min_busyness && !ngx_tcp_check_peer_down(check_index)) {
             min_busyness = busyness;
-            p_index = j;
+            peer_index = j;
         }
     }
 
-    return p_index;
+    return peer_index;
 }
 
 
@@ -152,7 +153,7 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
     pc->connection = NULL;
 
     for ( ;; ) {
-        p = ngx_tcp_upstream_get_busiest_index(bp->rrp.peers, bp->rrp.current);
+        p = ngx_tcp_upstream_get_least_busy_index(bp->rrp.peers);
 
         n = p / (8 * sizeof(uintptr_t));
         m = (uintptr_t) 1 << p % (8 * sizeof(uintptr_t));
@@ -168,16 +169,13 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
             /* ngx_lock_mutex(bp->rrp.peers->mutex); */
 
             if (!peer->down) {
-                if (!ngx_tcp_check_peer_down(peer->check_index)) {
+                if (peer->max_fails == 0 || peer->fails < peer->max_fails) {
+                    break;
+                }
 
-                    if (peer->max_fails == 0 || peer->fails < peer->max_fails) {
-                        break;
-                    }
-
-                    if (now - peer->accessed > peer->fail_timeout) {
-                        peer->fails = 0;
-                        break;
-                    }
+                if (now - peer->accessed > peer->fail_timeout) {
+                    peer->fails = 0;
+                    break;
                 }
             }
 
