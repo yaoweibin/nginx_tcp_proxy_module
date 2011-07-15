@@ -441,9 +441,6 @@ static void
 ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf) 
 {
     ngx_connection_t            *c;
-    ngx_tcp_upstream_srv_conf_t *uscf;
-
-    uscf = peer_conf->conf;
 
     c = peer_conf->pc.connection;
 
@@ -522,15 +519,9 @@ ngx_tcp_check_need_exit()
 static void 
 ngx_tcp_check_finish_handler(ngx_event_t *event) 
 {
-    ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
-    
     if (ngx_tcp_check_need_exit()) {
         return;
     }
-
-    peer_conf = event->data;
-    uscf = peer_conf->conf;
 }
 
 
@@ -564,14 +555,12 @@ static void
 ngx_tcp_check_timeout_handler(ngx_event_t *event) 
 {
     ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
     
     if (ngx_tcp_check_need_exit()) {
         return;
     }
 
     peer_conf = event->data;
-    uscf = peer_conf->conf;
 
     ngx_log_error(NGX_LOG_ERR, event->log, 0,
             "check time out with peer: %V ", &peer_conf->peer->name);
@@ -589,7 +578,6 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
     ngx_err_t                      err;
     ngx_connection_t              *c;
     ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
 
     if (ngx_tcp_check_need_exit()) {
         return;
@@ -597,7 +585,6 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
 
     c = event->data;
     peer_conf = c->data;
-    uscf = peer_conf->conf;
 
     n = recv(c->fd, buf, 1, MSG_PEEK);
 
@@ -1284,7 +1271,6 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
     ngx_connection_t              *c;
     ngx_tcp_check_ctx             *ctx;
     ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
 
     if (ngx_tcp_check_need_exit()) {
         return;
@@ -1292,7 +1278,6 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
 
     c = event->data;
     peer_conf = c->data;
-    uscf = peer_conf->conf;
 
     if (c->pool == NULL) {
         ngx_log_error(NGX_LOG_ERR, event->log, 0,
@@ -1853,10 +1838,7 @@ static char *
 ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf) 
 {
-    ngx_str_t                               *value;
     ngx_http_core_loc_conf_t                *clcf;
-
-    value = cf->args->elts;
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 
