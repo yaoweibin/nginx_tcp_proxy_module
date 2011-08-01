@@ -35,10 +35,11 @@ typedef struct ngx_tcp_session_s {
 
     ngx_tcp_cleanup_t      *cleanup;
 
-    /*ngx_tcp_proxy_ctx_t   *proxy;*/
-    /*ngx_uint_t             tcp_state;*/
-    /*unsigned               protocol:3;*/
-    /*unsigned               blocked:1;*/
+    time_t                  start_sec;
+    ngx_msec_t              start_msec;
+
+    off_t                   bytes_read;
+    off_t                   bytes_write;
 
     unsigned                quit:1;
     ngx_str_t              *addr_text;

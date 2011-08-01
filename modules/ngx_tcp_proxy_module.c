@@ -314,6 +314,7 @@ static void
 ngx_tcp_proxy_handler(ngx_event_t *ev) 
 {
     char                     *action, *recv_action, *send_action;
+    off_t                    *read_bytes, *write_bytes;
     size_t                    size;
     ssize_t                   n;
     ngx_buf_t                *b;
@@ -347,6 +348,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
         return;
     }
 
+    read_bytes = write_bytes = NULL;
     if (c == s->connection) {
         if (ev->write) {
             recv_action = "client write: proxying and reading from upstream";
@@ -354,13 +356,14 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             src = pctx->upstream->connection;
             dst = c;
             b = pctx->buffer;
-
+            write_bytes = &s->bytes_write;
         } else {
             recv_action = "client read: proxying and reading from client";
             send_action = "client read: proxying and sending to upstream";
             src = c;
             dst = pctx->upstream->connection;
             b = s->buffer;
+            read_bytes = &s->bytes_read;
         }
 
     } else {
@@ -370,13 +373,14 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             src = s->connection;
             dst = c;
             b = s->buffer;
-
+            read_bytes = &s->bytes_read;
         } else {
             recv_action = "upstream read: proxying and reading from upstream";
             send_action = "upstream read: proxying and sending to client";
             src = c;
             dst = s->connection;
             b = pctx->buffer;
+            write_bytes = &s->bytes_write;
         }
     }
 
@@ -410,6 +414,10 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
                 if (n > 0) {
                     b->pos += n;
 
+                    if (write_bytes) {
+                        *write_bytes += n;
+                    }
+
                     if (b->pos == b->last) {
                         b->pos = b->start;
                         b->last = b->start;
@@ -435,6 +443,10 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             if (n > 0) {
                 do_write = 1;
                 b->last += n;
+
+                if (read_bytes) {
+                    *read_bytes += n;
+                }
 
                 continue;
             }

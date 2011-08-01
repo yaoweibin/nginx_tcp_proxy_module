@@ -228,6 +228,7 @@ ngx_tcp_ssl_handshake_handler(ngx_connection_t *c)
 static void
 ngx_tcp_init_session(ngx_connection_t *c)
 {
+    ngx_time_t               *tp;
     ngx_tcp_session_t        *s;
     ngx_tcp_core_srv_conf_t  *cscf;
 
@@ -242,15 +243,19 @@ ngx_tcp_init_session(ngx_connection_t *c)
         return;
     }
 
-    /*s->protocol = cscf->protocol->type;*/
-
     s->ctx = ngx_pcalloc(s->pool, sizeof(void *) * ngx_tcp_max_module);
     if (s->ctx == NULL) {
         ngx_tcp_finalize_session(s);
         return;
     }
 
-	/*cscf->protocol->init_session(s, c);*/
+    tp = ngx_timeofday();
+    s->start_sec = tp->sec;
+    s->start_msec = tp->msec;
+
+    s->bytes_read = 0;
+    s->bytes_write = 0;
+
     ngx_tcp_process_session(c);
 }
 
@@ -356,6 +361,8 @@ ngx_tcp_finalize_session(ngx_tcp_session_t *s)
 
     c = s->connection;
 
+    ngx_tcp_log_handler(s);
+
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, c->log, 0,
                    "close tcp session: %d", c->fd);
 
@@ -413,7 +420,6 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
     ngx_tcp_log_ctx_t   *ctx;
     ngx_tcp_proxy_ctx_t *pctx;
 
-
     if (log->action) {
         p = ngx_snprintf(buf, len, " while %s", log->action);
         len -= p - buf;
@@ -439,11 +445,7 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
     if (s->ctx) {
         pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_proxy_module);
 
-        if (pctx == NULL) {
-            return p;
-        }
-
-        if (pctx->upstream->connection) {
+        if (pctx && pctx->upstream->connection) {
             p = ngx_snprintf(buf, len, ", upstream: %V", pctx->upstream->name);
         }
     }
