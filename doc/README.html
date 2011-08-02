@@ -188,17 +188,35 @@
 <p><strong>syntax:</strong> <em>access_log path [buffer=size] | off</em></p>
 <p><strong>default:</strong> <em>access_log logs/tcp_access.log</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p><strong>description:</strong> Set the access.log. Each record's format is like this:
-log_time worker_process_pid client_ip host_ip accept_time upstream_ip bytes_read bytes_write
-2011/08/02 06:19:07 [5972] 127.0.0.1 0.0.0.0:1982 2011/08/02 06:18:19 172.19.0.129:80 80 236305</p>
-<p>log_time: The current time when writing this log. The log action is called when the proxy session is closed.
-worker_process_pid: the pid of worker process
-client_ip: the client ip
-host_ip: the server ip and port
-accept_time: the time when the server accepts client's connection
-upstream_ip: the upstream server's ip
-bytes_read: the bytes read from client
-bytes_write: the bytes written to client</p>
+<p><strong>description:</strong> Set the access.log. Each record's format is like this:</p>
+<p>log_time worker_process_pid client_ip host_ip accept_time upstream_ip bytes_read bytes_write</p>
+<p>2011/08/02 06:19:07 [5972] 127.0.0.1 0.0.0.0:1982 2011/08/02 06:18:19 172.19.0.129:80 80 236305</p>
+<ul>
+<li>
+<p><em>log_time</em>: The current time when writing this log. The log action is called when the proxy session is closed.</p>
+</li>
+<li>
+<p><em>worker_process_pid</em>: the pid of worker process</p>
+</li>
+<li>
+<p><em>client_ip</em>: the client ip</p>
+</li>
+<li>
+<p><em>host_ip</em>: the server ip and port</p>
+</li>
+<li>
+<p><em>accept_time</em>: the time when the server accepts client's connection</p>
+</li>
+<li>
+<p><em>upstream_ip</em>: the upstream server's ip</p>
+</li>
+<li>
+<p><em>bytes_read</em>: the bytes read from client</p>
+</li>
+<li>
+<p><em>bytes_write</em>: the bytes written to client</p>
+</li>
+</ul>
 <p>
 </p>
 <h3><a name="allow">allow</a></h3>
