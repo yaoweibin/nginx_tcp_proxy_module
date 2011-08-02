@@ -468,6 +468,10 @@ ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
 
     state = NGX_PEER_FAILED;
 
+    if (ft_type != NGX_TCP_UPSTREAM_FT_NOLIVE) {
+        u->peer.free(&u->peer, u->peer.data, state);
+    }
+
     if (ft_type == NGX_TCP_UPSTREAM_FT_TIMEOUT) {
         ngx_log_error(NGX_LOG_ERR, s->connection->log, NGX_ETIMEDOUT,
                       "upstream timed out");

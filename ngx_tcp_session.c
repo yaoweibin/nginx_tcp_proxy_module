@@ -420,17 +420,15 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
     ngx_tcp_log_ctx_t   *ctx;
     ngx_tcp_proxy_ctx_t *pctx;
 
+    p = buf;
+
     if (log->action) {
-        p = ngx_snprintf(buf, len, " while %s", log->action);
-        len -= p - buf;
-        buf = p;
+        p = ngx_snprintf(p, len + (buf - p), " while %s", log->action);
     }
 
     ctx = log->data;
 
-    p = ngx_snprintf(buf, len, ", client: %V", ctx->client);
-    len -= p - buf;
-    buf = p;
+    p = ngx_snprintf(p, len + (buf - p), ", client: %V", ctx->client);
 
     s = ctx->session;
 
@@ -438,15 +436,13 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
         return p;
     }
 
-    p = ngx_snprintf(buf, len, ", server: %V", s->addr_text);
-    len -= p - buf;
-    buf = p;
+    p = ngx_snprintf(p, len + (buf - p), ", server: %V", s->addr_text);
 
     if (s->ctx) {
         pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_proxy_module);
 
         if (pctx && pctx->upstream->connection) {
-            p = ngx_snprintf(buf, len, ", upstream: %V", pctx->upstream->name);
+            p = ngx_snprintf(p, len + (buf - p), ", upstream: %V", pctx->upstream->name);
         }
     }
 

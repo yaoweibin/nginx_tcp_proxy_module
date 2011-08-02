@@ -144,6 +144,9 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
     if (bp->tries > 20 || bp->rrp.peers->single ||
             bp->rrp.peers->peer[0].check_index == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
 
+        ngx_log_debug1(NGX_LOG_DEBUG_TCP, pc->log, 0,
+                "get busyness peer0, bp->tries: %ui", bp->tries);
+
         return bp->get_rr_peer(pc, &bp->rrp);
     }
 
@@ -186,6 +189,9 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
             pc->tries--;
 
         }
+
+        ngx_log_debug2(NGX_LOG_DEBUG_TCP, pc->log, 0,
+                "get busyness peer, bp->tries: %ui, p: %ui", bp->tries, p);
 
         if (++bp->tries >= 20) {
             return bp->get_rr_peer(pc, &bp->rrp);

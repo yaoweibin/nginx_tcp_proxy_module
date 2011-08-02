@@ -87,6 +87,27 @@ You can't use the same listening port with HTTP modules.
 
 '''description:''' The same as [http://wiki.nginx.org/NginxMailCoreModule#listen listen].
 
+=== access_log ===
+
+'''syntax:''' ''access_log path [buffer=size] | off'' 
+
+'''default:''' ''access_log logs/tcp_access.log''
+
+'''context:''' ''tcp, server''
+
+'''description:''' Set the access.log. Each record's format is like this:
+log_time worker_process_pid client_ip host_ip accept_time upstream_ip bytes_read bytes_write
+2011/08/02 06:19:07 [5972] 127.0.0.1 0.0.0.0:1982 2011/08/02 06:18:19 172.19.0.129:80 80 236305
+
+log_time: The current time when writing this log. The log action is called when the proxy session is closed.
+worker_process_pid: the pid of worker process
+client_ip: the client ip
+host_ip: the server ip and port
+accept_time: the time when the server accepts client's connection
+upstream_ip: the upstream server's ip
+bytes_read: the bytes read from client
+bytes_write: the bytes written to client
+
 === allow ===
 
 '''syntax:''' ''allow [ address | CIDR | all ]'' 

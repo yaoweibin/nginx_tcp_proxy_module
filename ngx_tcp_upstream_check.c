@@ -277,7 +277,7 @@ ngx_tcp_check_peer_down(ngx_uint_t index)
 
     peer_conf = check_peers_ctx->peers.elts;
 
-    return (peer_conf[index].shm->down | 
+    return (peer_conf[index].shm->down || 
             (peer_conf[index].shm->busyness > peer_conf[index].max_busy));
 }
 

@@ -28,6 +28,7 @@
 			<li><a href="#tcp">tcp</a></li>
 			<li><a href="#server">server</a></li>
 			<li><a href="#listen">listen</a></li>
+			<li><a href="#access_log">access_log</a></li>
 			<li><a href="#allow">allow</a></li>
 			<li><a href="#deny">deny</a></li>
 			<li><a href="#so_keepalive">so_keepalive</a></li>
@@ -181,6 +182,23 @@
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>server</em></p>
 <p><strong>description:</strong> The same as listen (<a href="http://wiki.nginx.org/NginxMailCoreModule#listen">http://wiki.nginx.org/NginxMailCoreModule#listen</a>).</p>
+<p>
+</p>
+<h3><a name="access_log">access_log</a></h3>
+<p><strong>syntax:</strong> <em>access_log path [buffer=size] | off</em></p>
+<p><strong>default:</strong> <em>access_log logs/tcp_access.log</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> Set the access.log. Each record's format is like this:
+log_time worker_process_pid client_ip host_ip accept_time upstream_ip bytes_read bytes_write
+2011/08/02 06:19:07 [5972] 127.0.0.1 0.0.0.0:1982 2011/08/02 06:18:19 172.19.0.129:80 80 236305</p>
+<p>log_time: The current time when writing this log. The log action is called when the proxy session is closed.
+worker_process_pid: the pid of worker process
+client_ip: the client ip
+host_ip: the server ip and port
+accept_time: the time when the server accepts client's connection
+upstream_ip: the upstream server's ip
+bytes_read: the bytes read from client
+bytes_write: the bytes written to client</p>
 <p>
 </p>
 <h3><a name="allow">allow</a></h3>

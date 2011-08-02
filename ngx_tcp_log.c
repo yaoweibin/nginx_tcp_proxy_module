@@ -5,17 +5,11 @@
 #include <ngx_tcp.h>
 
 
+static u_char * ngx_tcp_time(u_char *buf, time_t t);
 static u_char *ngx_tcp_log_fill(ngx_tcp_session_t *s, u_char *buf);
 static void ngx_tcp_log_write(ngx_tcp_session_t *s, ngx_tcp_log_t *log,
     u_char *buf, size_t len);
 
-/* 
-static ngx_str_t  ngx_http_combined_fmt =
-    ngx_string("$remote_addr - $remote_user [$time_local] "
-               "\"$request\" $status $body_bytes_sent "
-               "\"$http_referer\" \"$http_user_agent\"");
-
-*/
 
 ngx_int_t
 ngx_tcp_log_handler(ngx_tcp_session_t *s)
@@ -56,15 +50,15 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
 
         len = 0;
 
-        /*Calculate the length*/
-        len += sizeof("1970/09/28 12:00:00");  /* log time*/
-        len += NGX_INT64_LEN + 2; /*[ngx_pid]*/
-        len += c->addr_text.len + 1; /*client address*/
-        len += s->addr_text->len + 1; /*this session address*/
-        len += sizeof("1970/09/28 12:00:00"); /*accept time*/
-        len += sizeof("255.255.255.255:65536"); /*upstreami address*/
-        len += NGX_OFF_T_LEN + 1; /*read bytes from client*/
-        len += NGX_OFF_T_LEN + 1; /*write bytes to client*/
+        /* Calculate the length */
+        len += sizeof("1970/09/28 12:00:00");   /* log time */
+        len += NGX_INT64_LEN + 2;               /* [ngx_pid] */
+        len += c->addr_text.len + 1;            /* client address */
+        len += s->addr_text->len + 1;           /* this session address */
+        len += sizeof("1970/09/28 12:00:00");   /* accept time */
+        len += sizeof("255.255.255.255:65536"); /* upstream address */
+        len += NGX_OFF_T_LEN + 1;               /* read bytes from client */
+        len += NGX_OFF_T_LEN + 1;               /* write bytes to client */
         len += NGX_LINEFEED_SIZE;
 
         file = log[l].file;
@@ -83,7 +77,6 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
 
                 p = file->pos;
 
-                /*fill the log data with buffer*/
                 p = ngx_tcp_log_fill(s, p);
 
                 file->pos = p;
@@ -99,7 +92,6 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
 
         p = line;
 
-        /*fill the log data with line*/
         p = ngx_tcp_log_fill(s, p);
 
         ngx_tcp_log_write(s, &log[l], line, p - line);
@@ -134,9 +126,6 @@ static u_char *ngx_tcp_log_fill(ngx_tcp_session_t *s, u_char *buf)
 
     last = ngx_cpymem(buf, ngx_cached_err_log_time.data,
             ngx_cached_err_log_time.len);
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
-                   "tcp access log handler: %V", &ngx_cached_err_log_time);
 
     last = ngx_sprintf(last, " [%P]", ngx_pid);
     last = ngx_sprintf(last, " %V", &c->addr_text);
