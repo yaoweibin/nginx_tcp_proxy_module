@@ -34,7 +34,6 @@ __DATA__
     upstream test{
         server imap.163.com:143;
 
-        #ip_hash;
         check interval=3000 rise=1 fall=5 timeout=1000 type=imap;
     }
 
