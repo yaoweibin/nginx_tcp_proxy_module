@@ -43,7 +43,6 @@ __DATA__
 
         proxy_pass test;
     }
---- request
+--- request_https
 GET /
---- error_code: 400
 --- response_body_like: ^.*$

@@ -4,7 +4,10 @@
 #include <ngx_tcp.h>
 
 
-#define NGX_DEFAULT_CIPHERS  "HIGH:!ADH:!MD5"
+#define NGX_DEFAULT_CIPHERS  "HIGH:!aNULL:!MD5"
+#if defined(nginx_version) && nginx_version >= 1001000
+#define NGX_DEFAULT_ECDH_CURVE  "prime256v1" 
+#endif
 
 
 static void *ngx_tcp_ssl_create_srv_conf(ngx_conf_t *cf);
@@ -63,6 +66,15 @@ static ngx_command_t  ngx_tcp_ssl_commands[] = {
       offsetof(ngx_tcp_ssl_srv_conf_t, dhparam),
       NULL },
 
+#if defined(nginx_version) && nginx_version >= 1001000
+    { ngx_string("ssl_ecdh_curve"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_ssl_srv_conf_t, ecdh_curve),
+      NULL },
+
+#endif
     { ngx_string("ssl_protocols"),
       NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
@@ -177,6 +189,7 @@ ngx_tcp_ssl_create_srv_conf(ngx_conf_t *cf)
      *     sscf->certificate = { 0, NULL };
      *     sscf->certificate_key = { 0, NULL };
      *     sscf->dhparam = { 0, NULL };
+     *     sscf->ecdh_curve = { 0, NULL };
      *     sscf->client_certificate = { 0, NULL };
      *     sscf->crl = { 0, NULL };
      *     sscf->ciphers.len = 0;
@@ -222,6 +235,11 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_str_value(conf->dhparam, prev->dhparam, "");
 
+#if defined(nginx_version) && nginx_version >= 1001000
+    ngx_conf_merge_str_value(conf->ecdh_curve, prev->ecdh_curve, 
+                         NGX_DEFAULT_ECDH_CURVE); 
+
+#endif
     ngx_conf_merge_str_value(conf->client_certificate, prev->client_certificate,
                          "");
     ngx_conf_merge_str_value(conf->crl, prev->crl, "");
@@ -317,9 +335,13 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     /* a temporary 512-bit RSA key is required for export versions of MSIE */
+#if defined(nginx_version) && nginx_version >= 1001000
+    SSL_CTX_set_tmp_rsa_callback(conf->ssl.ctx, ngx_ssl_rsa512_key_callback); 
+#else
     if (ngx_ssl_generate_rsa512_key(&conf->ssl) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
+#endif
 
     if (ngx_ssl_dhparam(cf, &conf->ssl, &conf->dhparam) != NGX_OK) {
         return NGX_CONF_ERROR;
