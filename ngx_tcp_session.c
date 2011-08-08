@@ -338,8 +338,7 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
         return p;
     }
 
-    p = ngx_snprintf(buf, len, ", server: %V",
-                     s->addr_text);
+    p = ngx_snprintf(buf, len, ", server: %V", s->addr_text);
     len -= p - buf;
     buf = p;
 
@@ -349,7 +348,9 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
         return p;
     }
 
-    p = ngx_snprintf(buf, len, ", upstream: %V", pctx->upstream->name);
+    if (pctx->upstream->connection) {
+        p = ngx_snprintf(buf, len, ", upstream: %V", pctx->upstream->name);
+    }
 
     return p;
 }
