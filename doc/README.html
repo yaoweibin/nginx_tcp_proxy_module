@@ -541,8 +541,8 @@ openssl ciphers</p>
 </li>
 </ul>
 <p>It's possible to use both types of cache &amp;mdash; builtin and shared &amp;mdash; simultaneously, for example:</p>
-<p>ssl_session_cache  builtin:1000  shared:SSL:10m;
-Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.</p>
+<p>ssl_session_cache  builtin:1000  shared:SSL:10m;</p>
+<p>Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.</p>
 <p>For Nginx versions below 0.8.34 this directive shouldn't be set to 'none' or 'off' if ssl_verify_client is set to 'on' or 'optional'.</p>
 <p>
 </p>

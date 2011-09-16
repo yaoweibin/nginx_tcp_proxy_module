@@ -522,9 +522,10 @@ The cache types are:
 * shared -- the cache is shared between all worker processes. The size of the cache is assigned in bytes: 1 MB cache can contain roughly 4000 sessions. Each shared cache must be given an arbitrary name. A shared cache with a given name can be used in several virtual hosts.
 It's possible to use both types of cache &mdash; builtin and shared &mdash; simultaneously, for example:
 
-<pre>
+<geshi lang="nginx">
 ssl_session_cache  builtin:1000  shared:SSL:10m;
-</pre>
+</geshi>
+
 Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.
 
 For Nginx versions below 0.8.34 this directive shouldn't be set to 'none' or 'off' if ssl_verify_client is set to 'on' or 'optional'.

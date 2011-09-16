@@ -562,9 +562,10 @@ Directives
     It's possible to use both types of cache &mdash; builtin and shared
     &mdash; simultaneously, for example:
 
-    ssl_session_cache builtin:1000 shared:SSL:10m; Bear in mind however,
-    that using only shared cache, i.e., without builtin, should be more
-    effective.
+    ssl_session_cache builtin:1000 shared:SSL:10m;
+
+    Bear in mind however, that using only shared cache, i.e., without
+    builtin, should be more effective.
 
     For Nginx versions below 0.8.34 this directive shouldn't be set to
     'none' or 'off' if ssl_verify_client is set to 'on' or 'optional'.
