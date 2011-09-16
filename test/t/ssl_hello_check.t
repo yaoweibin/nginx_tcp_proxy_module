@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: the ssl_hello_check test
 --- config
     upstream test{
-        server www.battlenet.com.cn:443;
+        server www.varnish-cache.org:443;
 
         #ip_hash;
         check interval=3000 rise=1 fall=5 timeout=1000 type=ssl_hello;
