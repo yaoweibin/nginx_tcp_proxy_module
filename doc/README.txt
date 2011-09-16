@@ -5,7 +5,7 @@ Installation
     Download the latest stable version of the release tarball of this module
     from github (<http://github.com/yaoweibin/nginx_tcp_proxy_module>)
 
-    The development version of this module is here development
+    The development version of this module is here
     (<https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop>). I
     have added the features of tcp_ssl_proxy, tcp_upstream_busyness,
     access_log.
