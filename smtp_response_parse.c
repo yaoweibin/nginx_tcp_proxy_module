@@ -50,9 +50,9 @@ int smtp_parser_init(smtp_parser *parser)  {
 
 
 /** exec **/
-size_t smtp_parser_execute(smtp_parser *parser, const char *buffer, size_t len, size_t off)  {
+size_t smtp_parser_execute(smtp_parser *parser, const signed char *buffer, size_t len, size_t off)  {
 
-  const char *p, *pe;
+  const signed char *p, *pe;
   int cs = parser->cs;
 
   assert(off <= len && "offset past end of buffer");
@@ -485,16 +485,18 @@ st23:
 	if ( ++p == pe )
 		goto _test_eof23;
 case 23:
-	if ( 32 <= (*p) && (*p) <= 126 )
+	if ( 33 <= (*p) && (*p) <= 126 )
 		goto st24;
 	goto st0;
 st24:
 	if ( ++p == pe )
 		goto _test_eof24;
 case 24:
-	if ( (*p) == 13 )
-		goto tr21;
-	if ( 32 <= (*p) && (*p) <= 126 )
+	switch( (*p) ) {
+		case 13: goto tr21;
+		case 32: goto st23;
+	}
+	if ( 33 <= (*p) && (*p) <= 126 )
 		goto st24;
 	goto st0;
 tr37:
@@ -505,7 +507,7 @@ st25:
 	if ( ++p == pe )
 		goto _test_eof25;
 case 25:
-#line 509 "smtp_response_parse.c"
+#line 511 "smtp_response_parse.c"
 	switch( (*p) ) {
 		case 32: goto tr38;
 		case 53: goto st26;
@@ -556,7 +558,7 @@ st29:
 	if ( ++p == pe )
 		goto _test_eof29;
 case 29:
-#line 560 "smtp_response_parse.c"
+#line 562 "smtp_response_parse.c"
 	switch( (*p) ) {
 		case 13: goto tr48;
 		case 32: goto st30;
@@ -576,16 +578,18 @@ st30:
 	if ( ++p == pe )
 		goto _test_eof30;
 case 30:
-	if ( 32 <= (*p) && (*p) <= 126 )
+	if ( 33 <= (*p) && (*p) <= 126 )
 		goto st31;
 	goto st0;
 st31:
 	if ( ++p == pe )
 		goto _test_eof31;
 case 31:
-	if ( (*p) == 13 )
-		goto tr48;
-	if ( 32 <= (*p) && (*p) <= 126 )
+	switch( (*p) ) {
+		case 13: goto tr48;
+		case 32: goto st30;
+	}
+	if ( 33 <= (*p) && (*p) <= 126 )
 		goto st31;
 	goto st0;
 tr31:
@@ -600,7 +604,7 @@ st32:
 	if ( ++p == pe )
 		goto _test_eof32;
 case 32:
-#line 604 "smtp_response_parse.c"
+#line 608 "smtp_response_parse.c"
 	if ( (*p) < 11 ) {
 		if ( 0 <= (*p) && (*p) <= 9 )
 			goto tr52;
@@ -618,7 +622,7 @@ st33:
 	if ( ++p == pe )
 		goto _test_eof33;
 case 33:
-#line 622 "smtp_response_parse.c"
+#line 626 "smtp_response_parse.c"
 	if ( (*p) == 13 )
 		goto tr54;
 	if ( (*p) > 9 ) {
@@ -696,7 +700,7 @@ st38:
 	if ( ++p == pe )
 		goto _test_eof38;
 case 38:
-#line 700 "smtp_response_parse.c"
+#line 704 "smtp_response_parse.c"
 	if ( (*p) == 73 )
 		goto st55;
 	if ( 48 <= (*p) && (*p) <= 57 )
@@ -2397,7 +2401,7 @@ st163:
 	if ( ++p == pe )
 		goto _test_eof163;
 case 163:
-#line 2401 "smtp_response_parse.c"
+#line 2405 "smtp_response_parse.c"
 	switch( (*p) ) {
 		case 13: goto tr181;
 		case 32: goto tr182;
@@ -2430,7 +2434,7 @@ st164:
 	if ( ++p == pe )
 		goto _test_eof164;
 case 164:
-#line 2434 "smtp_response_parse.c"
+#line 2438 "smtp_response_parse.c"
 	if ( (*p) < 11 ) {
 		if ( 0 <= (*p) && (*p) <= 9 )
 			goto tr187;
@@ -2448,7 +2452,7 @@ st165:
 	if ( ++p == pe )
 		goto _test_eof165;
 case 165:
-#line 2452 "smtp_response_parse.c"
+#line 2456 "smtp_response_parse.c"
 	if ( (*p) == 13 )
 		goto tr189;
 	if ( (*p) > 9 ) {
@@ -2480,7 +2484,7 @@ st167:
 	if ( ++p == pe )
 		goto _test_eof167;
 case 167:
-#line 2484 "smtp_response_parse.c"
+#line 2488 "smtp_response_parse.c"
 	switch( (*p) ) {
 		case 13: goto tr190;
 		case 32: goto tr191;
@@ -2508,7 +2512,7 @@ st168:
 	if ( ++p == pe )
 		goto _test_eof168;
 case 168:
-#line 2512 "smtp_response_parse.c"
+#line 2516 "smtp_response_parse.c"
 	if ( (*p) < 11 ) {
 		if ( 0 <= (*p) && (*p) <= 9 )
 			goto tr192;
@@ -2526,7 +2530,7 @@ st169:
 	if ( ++p == pe )
 		goto _test_eof169;
 case 169:
-#line 2530 "smtp_response_parse.c"
+#line 2534 "smtp_response_parse.c"
 	if ( (*p) == 13 )
 		goto tr194;
 	if ( (*p) > 9 ) {
@@ -2589,7 +2593,7 @@ st173:
 	if ( ++p == pe )
 		goto _test_eof173;
 case 173:
-#line 2593 "smtp_response_parse.c"
+#line 2597 "smtp_response_parse.c"
 	if ( (*p) == 73 )
 		goto st190;
 	if ( 48 <= (*p) && (*p) <= 57 )
@@ -4294,7 +4298,7 @@ st298:
 	if ( ++p == pe )
 		goto _test_eof298;
 case 298:
-#line 4298 "smtp_response_parse.c"
+#line 4302 "smtp_response_parse.c"
 	if ( (*p) < 11 ) {
 		if ( 0 <= (*p) && (*p) <= 9 )
 			goto tr321;
@@ -4312,7 +4316,7 @@ st299:
 	if ( ++p == pe )
 		goto _test_eof299;
 case 299:
-#line 4316 "smtp_response_parse.c"
+#line 4320 "smtp_response_parse.c"
 	if ( (*p) == 13 )
 		goto tr323;
 	if ( (*p) > 9 ) {
@@ -4390,7 +4394,7 @@ st304:
 	if ( ++p == pe )
 		goto _test_eof304;
 case 304:
-#line 4394 "smtp_response_parse.c"
+#line 4398 "smtp_response_parse.c"
 	if ( (*p) == 73 )
 		goto st321;
 	if ( 48 <= (*p) && (*p) <= 57 )

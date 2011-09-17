@@ -54,8 +54,8 @@ int http_parser_init(http_parser *parser)  {
 
 
 /** exec **/
-size_t http_parser_execute(http_parser *parser, const char *buffer, size_t len, size_t off)  {
-  const char *p, *pe;
+size_t http_parser_execute(http_parser *parser, const char signed *buffer, size_t len, size_t off)  {
+  const signed char *p, *pe;
   int cs = parser->cs;
 
   assert(off <= len && "offset past end of buffer");

@@ -609,8 +609,8 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
 }
 
 
-void http_field(void *data, const char *field, 
-        size_t flen, const char *value, size_t vlen)
+void http_field(void *data, const signed char *field, 
+        size_t flen, const signed char *value, size_t vlen)
 {
 #if (NGX_DEBUG)
     ngx_str_t str_field, str_value;
@@ -627,7 +627,7 @@ void http_field(void *data, const char *field,
 }
 
 
-void http_version(void *data, const char *at, size_t length)
+void http_version(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -641,7 +641,7 @@ void http_version(void *data, const char *at, size_t length)
 }
 
 
-void status_code(void *data, const char *at, size_t length)
+void status_code(void *data, const signed char *at, size_t length)
 {
     int                        code;
     http_parser               *hp;
@@ -681,7 +681,7 @@ void status_code(void *data, const char *at, size_t length)
 }
 
 
-void reason_phrase(void *data, const char *at, size_t length)
+void reason_phrase(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -695,7 +695,7 @@ void reason_phrase(void *data, const char *at, size_t length)
 }
 
 
-void header_done(void *data, const char *at, size_t length)
+void header_done(void *data, const signed char *at, size_t length)
 {
 
 }
@@ -758,7 +758,7 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
         offset = ctx->recv.pos - ctx->recv.start;
         length = ctx->recv.last - ctx->recv.start;
 
-        n = http_parser_execute(hp, (char *)ctx->recv.start, length, offset);
+        n = http_parser_execute(hp, (signed char *)ctx->recv.start, length, offset);
         ctx->recv.pos += n;
 
         if (http_parser_finish(hp) == -1) {
@@ -876,7 +876,7 @@ ngx_tcp_check_ssl_hello_reinit(ngx_tcp_check_peer_conf_t *peer_conf)
 
 
 static void 
-domain(void *data, const char *at, size_t length)
+domain(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -891,7 +891,7 @@ domain(void *data, const char *at, size_t length)
 
 
 static void 
-greeting_text(void *data, const char *at, size_t length)
+greeting_text(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -906,7 +906,7 @@ greeting_text(void *data, const char *at, size_t length)
 
 
 static void 
-reply_code(void *data, const char *at, size_t length)
+reply_code(void *data, const signed char *at, size_t length)
 {
     int                        code;
     smtp_parser               *sp;
@@ -947,7 +947,7 @@ reply_code(void *data, const char *at, size_t length)
 
 
 static void 
-reply_text(void *data, const char *at, size_t length)
+reply_text(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -962,7 +962,7 @@ reply_text(void *data, const char *at, size_t length)
 
 
 static void 
-smtp_done(void *data, const char *at, size_t length)
+smtp_done(void *data, const signed char *at, size_t length)
 {
 
 }
@@ -1032,7 +1032,7 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     offset = ctx->recv.pos - ctx->recv.start;
     length = ctx->recv.last - ctx->recv.start;
 
-    n = smtp_parser_execute(sp, (char *)ctx->recv.start, length, offset);
+    n = smtp_parser_execute(sp, (signed char *)ctx->recv.start, length, offset);
     ctx->recv.pos += n;
 
     if (smtp_parser_finish(sp) == -1) {

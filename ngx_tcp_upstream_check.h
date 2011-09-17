@@ -156,8 +156,8 @@ struct ngx_tcp_check_peers_conf_s {
 
 
 /*HTTP parser*/
-typedef void (*element_cb)(void *data, const char *at, size_t length);
-typedef void (*field_cb)(void *data, const char *field, size_t flen, const char *value, size_t vlen);
+typedef void (*element_cb)(void *data, const signed char *at, size_t length);
+typedef void (*field_cb)(void *data, const signed char *field, size_t flen, const signed char *value, size_t vlen);
 
 
 typedef struct http_parser { 
@@ -183,7 +183,7 @@ typedef struct http_parser {
 
 int http_parser_init(http_parser *parser);
 int http_parser_finish(http_parser *parser);
-size_t http_parser_execute(http_parser *parser, const char *data, size_t len, size_t off);
+size_t http_parser_execute(http_parser *parser, const signed char *data, size_t len, size_t off);
 int http_parser_has_error(http_parser *parser);
 int http_parser_is_finished(http_parser *parser);
 
@@ -209,7 +209,7 @@ typedef struct smtp_parser {
 
 int smtp_parser_init(smtp_parser *parser);
 int smtp_parser_finish(smtp_parser *parser);
-size_t smtp_parser_execute(smtp_parser *parser, const char *data, size_t len, size_t off);
+size_t smtp_parser_execute(smtp_parser *parser, const signed char *data, size_t len, size_t off);
 int smtp_parser_has_error(smtp_parser *parser);
 int smtp_parser_is_finished(smtp_parser *parser);
 
