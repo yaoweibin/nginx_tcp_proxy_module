@@ -1,6 +1,29 @@
 Name
     nginx_tcp_proxy_module - support TCP proxy with Nginx
 
+Installation
+    Download the latest stable version of the release tarball of this module
+    from github (<http://github.com/yaoweibin/nginx_tcp_proxy_module>)
+
+    The development version of this module is here
+    (<https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop>). I
+    have added the features of tcp_ssl_proxy, tcp_upstream_busyness,
+    access_log.
+
+    Grab the nginx source code from nginx.org (<http://nginx.org/>), for
+    example, the version 0.7.65 (see nginx compatibility), and then build
+    the source with this module:
+
+        $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
+        $ tar -xzvf nginx-0.7.65.tar.gz
+        $ cd nginx-0.7.65/
+        $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
+
+        $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
+
+        $ make
+        $ make install
+
 Synopsis
     http {
 
@@ -580,24 +603,6 @@ Directives
     This directive defines the maximum time during which the client can
     re-use the previously negotiated cryptographic parameters of the secure
     session that is stored in the SSL cache.
-
-Installation
-    Download the latest version of the release tarball of this module from
-    github (<http://github.com/yaoweibin/nginx_tcp_proxy_module>)
-
-    Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-    example, the version 0.7.65 (see nginx compatibility), and then build
-    the source with this module:
-
-        $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
-        $ tar -xzvf nginx-0.7.65.tar.gz
-        $ cd nginx-0.7.65/
-        $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
-
-        $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
-
-        $ make
-        $ make install
 
 Compatibility
     *   My test bed is 0.7.65 and 0.8.53

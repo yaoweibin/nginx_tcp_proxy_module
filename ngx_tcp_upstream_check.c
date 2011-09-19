@@ -459,9 +459,6 @@ static void
 ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf) 
 {
     ngx_connection_t            *c;
-    ngx_tcp_upstream_srv_conf_t *uscf;
-
-    uscf = peer_conf->conf;
 
     c = peer_conf->pc.connection;
 
@@ -540,15 +537,9 @@ ngx_tcp_check_need_exit()
 static void 
 ngx_tcp_check_finish_handler(ngx_event_t *event) 
 {
-    ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
-    
     if (ngx_tcp_check_need_exit()) {
         return;
     }
-
-    peer_conf = event->data;
-    uscf = peer_conf->conf;
 }
 
 
@@ -582,14 +573,12 @@ static void
 ngx_tcp_check_timeout_handler(ngx_event_t *event) 
 {
     ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
     
     if (ngx_tcp_check_need_exit()) {
         return;
     }
 
     peer_conf = event->data;
-    uscf = peer_conf->conf;
 
     ngx_log_error(NGX_LOG_ERR, event->log, 0,
             "check time out with peer: %V ", &peer_conf->peer->name);
@@ -607,7 +596,6 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
     ngx_err_t                      err;
     ngx_connection_t              *c;
     ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
 
     if (ngx_tcp_check_need_exit()) {
         return;
@@ -615,7 +603,6 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
 
     c = event->data;
     peer_conf = c->data;
-    uscf = peer_conf->conf;
 
     n = recv(c->fd, buf, 1, MSG_PEEK);
 
@@ -640,9 +627,10 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
 }
 
 
-void http_field(void *data, const char *field, 
-        size_t flen, const char *value, size_t vlen)
+void http_field(void *data, const signed char *field, 
+        size_t flen, const signed char *value, size_t vlen)
 {
+#if (NGX_DEBUG)
     ngx_str_t str_field, str_value;
 
     str_field.data = (u_char *) field;
@@ -653,11 +641,13 @@ void http_field(void *data, const char *field,
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "%V: %V", &str_field, &str_value);
+#endif
 }
 
 
-void http_version(void *data, const char *at, size_t length)
+void http_version(void *data, const signed char *at, size_t length)
 {
+#if (NGX_DEBUG)
     ngx_str_t str;
 
     str.data = (u_char *) at;
@@ -665,22 +655,26 @@ void http_version(void *data, const char *at, size_t length)
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "VERSION: \"%V\"", &str);
+#endif
 }
 
 
-void status_code(void *data, const char *at, size_t length)
+void status_code(void *data, const signed char *at, size_t length)
 {
     int                        code;
-    ngx_str_t                  str;
     http_parser               *hp;
     ngx_tcp_check_ctx         *ctx;
     ngx_tcp_check_peer_conf_t *peer_conf = data;
+
+#if (NGX_DEBUG)
+    ngx_str_t                  str;
 
     str.data = (u_char *) at;
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "STATUS_CODE: \"%V\"", &str);
+#endif
 
     ctx = peer_conf->check_data;
     hp = ctx->parser;
@@ -705,8 +699,9 @@ void status_code(void *data, const char *at, size_t length)
 }
 
 
-void reason_phrase(void *data, const char *at, size_t length)
+void reason_phrase(void *data, const signed char *at, size_t length)
 {
+#if (NGX_DEBUG)
     ngx_str_t str;
 
     str.data = (u_char *) at;
@@ -714,10 +709,11 @@ void reason_phrase(void *data, const char *at, size_t length)
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "REASON_PHRASE: \"%V\"", &str);
+#endif
 }
 
 
-void header_done(void *data, const char *at, size_t length)
+void header_done(void *data, const signed char *at, size_t length)
 {
 
 }
@@ -780,7 +776,7 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
         offset = ctx->recv.pos - ctx->recv.start;
         length = ctx->recv.last - ctx->recv.start;
 
-        n = http_parser_execute(hp, (char *)ctx->recv.start, length, offset);
+        n = http_parser_execute(hp, (signed char *)ctx->recv.start, length, offset);
         ctx->recv.pos += n;
 
         if (http_parser_finish(hp) == -1) {
@@ -898,8 +894,9 @@ ngx_tcp_check_ssl_hello_reinit(ngx_tcp_check_peer_conf_t *peer_conf)
 
 
 static void 
-domain(void *data, const char *at, size_t length)
+domain(void *data, const signed char *at, size_t length)
 {
+#if (NGX_DEBUG)
     ngx_str_t str;
 
     str.data = (u_char *) at;
@@ -907,12 +904,14 @@ domain(void *data, const char *at, size_t length)
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "DOMAIN: \"%V\"", &str);
+#endif
 }
 
 
 static void 
-greeting_text(void *data, const char *at, size_t length)
+greeting_text(void *data, const signed char *at, size_t length)
 {
+#if (NGX_DEBUG)
     ngx_str_t str;
 
     str.data = (u_char *) at;
@@ -920,23 +919,27 @@ greeting_text(void *data, const char *at, size_t length)
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "GREETING_TEXT: \"%V\"", &str);
+#endif
 }
 
 
 static void 
-reply_code(void *data, const char *at, size_t length)
+reply_code(void *data, const signed char *at, size_t length)
 {
     int                        code;
-    ngx_str_t                  str;
     smtp_parser               *sp;
     ngx_tcp_check_ctx         *ctx;
     ngx_tcp_check_peer_conf_t *peer_conf = data;
+
+#if (NGX_DEBUG)
+    ngx_str_t                  str;
 
     str.data = (u_char *) at;
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "REPLY_CODE: \"%V\"", &str);
+#endif
 
     ctx = peer_conf->check_data;
     sp = ctx->parser;
@@ -962,8 +965,9 @@ reply_code(void *data, const char *at, size_t length)
 
 
 static void 
-reply_text(void *data, const char *at, size_t length)
+reply_text(void *data, const signed char *at, size_t length)
 {
+#if (NGX_DEBUG)
     ngx_str_t str;
 
     str.data = (u_char *) at;
@@ -971,11 +975,12 @@ reply_text(void *data, const char *at, size_t length)
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "REPLY_TEXT: \"%V\"", &str);
+#endif
 }
 
 
 static void 
-smtp_done(void *data, const char *at, size_t length)
+smtp_done(void *data, const signed char *at, size_t length)
 {
 
 }
@@ -1045,7 +1050,7 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     offset = ctx->recv.pos - ctx->recv.start;
     length = ctx->recv.last - ctx->recv.start;
 
-    n = smtp_parser_execute(sp, (char *)ctx->recv.start, length, offset);
+    n = smtp_parser_execute(sp, (signed char *)ctx->recv.start, length, offset);
     ctx->recv.pos += n;
 
     if (smtp_parser_finish(sp) == -1) {
@@ -1298,11 +1303,9 @@ static void
 ngx_tcp_check_send_handler(ngx_event_t *event) 
 {
     ssize_t                        size;
-    ngx_err_t                      err;
     ngx_connection_t              *c;
     ngx_tcp_check_ctx             *ctx;
     ngx_tcp_check_peer_conf_t     *peer_conf;
-    ngx_tcp_upstream_srv_conf_t   *uscf;
 
     if (ngx_tcp_check_need_exit()) {
         return;
@@ -1310,7 +1313,6 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
 
     c = event->data;
     peer_conf = c->data;
-    uscf = peer_conf->conf;
 
     if (c->pool == NULL) {
         ngx_log_error(NGX_LOG_ERR, event->log, 0,
@@ -1348,10 +1350,14 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
     while (ctx->send.pos < ctx->send.last) {
 
         size = c->send(c, ctx->send.pos, ctx->send.last - ctx->send.pos);
-        err = (size >=0) ? 0 : ngx_socket_errno;
 
+#if (NGX_DEBUG)
+        ngx_err_t                      err;
+
+        err = (size >=0) ? 0 : ngx_socket_errno;
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
                 "tcp check send size: %d, total: %d", size, ctx->send.last - ctx->send.pos);
+#endif
 
         if (size >= 0) {
             ctx->send.pos += size;
@@ -1383,7 +1389,6 @@ static void
 ngx_tcp_check_recv_handler(ngx_event_t *event) 
 {
     ssize_t                        size, n, rc;
-    ngx_err_t                      err;
     u_char                        *new_buf;
     ngx_connection_t              *c;
     ngx_tcp_check_peer_conf_t     *peer_conf;
@@ -1438,10 +1443,14 @@ ngx_tcp_check_recv_handler(ngx_event_t *event)
         }
 
         size = c->recv(c, ctx->recv.last, n);
-        err = (size >= 0) ? 0 : ngx_socket_errno;
 
+#if (NGX_DEBUG)
+        ngx_err_t                      err;
+
+        err = (size >= 0) ? 0 : ngx_socket_errno;
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
                 "tcp check recv size: %d, peer: %V", size, &peer_conf->peer->name);
+#endif
 
         if (size > 0) {
             ctx->recv.last += size;
@@ -1871,10 +1880,7 @@ static char *
 ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf) 
 {
-    ngx_str_t                               *value;
     ngx_http_core_loc_conf_t                *clcf;
-
-    value = cf->args->elts;
 
     clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
 

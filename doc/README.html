@@ -17,6 +17,7 @@
 <ul>
 
 	<li><a href="#name">Name</a></li>
+	<li><a href="#installation">Installation</a></li>
 	<li><a href="#synopsis">Synopsis</a></li>
 	<li><a href="#description">Description</a></li>
 	<li><a href="#directives">Directives</a></li>
@@ -85,7 +86,6 @@
 
 	</ul>
 
-	<li><a href="#installation">Installation</a></li>
 	<li><a href="#compatibility">Compatibility</a></li>
 	<li><a href="#notes">Notes</a></li>
 	<li><a href="#todo">TODO</a></li>
@@ -110,6 +110,23 @@
 <hr />
 <h1><a name="name">Name</a></h1>
 <p><strong>nginx_tcp_proxy_module</strong> - support TCP proxy with Nginx</p>
+<p>
+</p>
+<hr />
+<h1><a name="installation">Installation</a></h1>
+<p>Download the latest stable version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
+<p>The development version of this module is here (<a href="https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop">https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop</a>). I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.</p>
+<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:</p>
+<pre>
+    $ wget '<a href="http://nginx.org/download/nginx-0.7.65.tar.gz">http://nginx.org/download/nginx-0.7.65.tar.gz</a>'
+    $ tar -xzvf nginx-0.7.65.tar.gz
+    $ cd nginx-0.7.65/
+    $ patch -p1 &lt; /path/to/nginx_tcp_proxy_module/tcp.patch</pre>
+<pre>
+    $ ./configure --add-module=/path/to/nginx_tcp_proxy_module</pre>
+<pre>
+    $ make
+    $ make install</pre>
 <p>
 </p>
 <hr />
@@ -551,22 +568,6 @@ openssl ciphers</p>
 <p><strong>default:</strong> <em>ssl_session_timeout 5m</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
 <p>This directive defines the maximum time during which the client can re-use the previously negotiated cryptographic parameters of the secure session that is stored in the SSL cache.</p>
-<p>
-</p>
-<hr />
-<h1><a name="installation">Installation</a></h1>
-<p>Download the latest version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
-<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:</p>
-<pre>
-    $ wget '<a href="http://nginx.org/download/nginx-0.7.65.tar.gz">http://nginx.org/download/nginx-0.7.65.tar.gz</a>'
-    $ tar -xzvf nginx-0.7.65.tar.gz
-    $ cd nginx-0.7.65/
-    $ patch -p1 &lt; /path/to/nginx_tcp_proxy_module/tcp.patch</pre>
-<pre>
-    $ ./configure --add-module=/path/to/nginx_tcp_proxy_module</pre>
-<pre>
-    $ make
-    $ make install</pre>
 <p>
 </p>
 <hr />

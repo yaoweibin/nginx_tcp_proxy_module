@@ -461,15 +461,11 @@ void
 ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
     ngx_uint_t ft_type) 
 {
-    ngx_uint_t  state;
-
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
                    "tcp next upstream, fail_type: %xi", ft_type);
 
-    state = NGX_PEER_FAILED;
-
     if (ft_type != NGX_TCP_UPSTREAM_FT_NOLIVE) {
-        u->peer.free(&u->peer, u->peer.data, state);
+        u->peer.free(&u->peer, u->peer.data, NGX_PEER_FAILED);
     }
 
     if (ft_type == NGX_TCP_UPSTREAM_FT_TIMEOUT) {

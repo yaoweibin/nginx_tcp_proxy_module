@@ -2,6 +2,27 @@
 
 '''nginx_tcp_proxy_module''' - support TCP proxy with Nginx
 
+= Installation =
+
+Download the latest stable version of the release tarball of this module from [http://github.com/yaoweibin/nginx_tcp_proxy_module github]
+
+The development version of this module is [https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop here]. I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.
+
+Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:
+
+<geshi lang="bash">
+    $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
+    $ tar -xzvf nginx-0.7.65.tar.gz
+    $ cd nginx-0.7.65/
+    $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
+
+    $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
+
+    $ make
+    $ make install
+</geshi>
+    
+
 = Synopsis =
 
 <geshi lang="nginx">
@@ -541,24 +562,6 @@ For Nginx versions below 0.8.34 this directive shouldn't be set to 'none' or 'of
 This directive defines the maximum time during which the client can re-use the previously negotiated cryptographic parameters of the secure session that is stored in the SSL cache.
 
 
-= Installation =
-
-Download the latest version of the release tarball of this module from [http://github.com/yaoweibin/nginx_tcp_proxy_module github]
-
-Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:
-
-<geshi lang="bash">
-    $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
-    $ tar -xzvf nginx-0.7.65.tar.gz
-    $ cd nginx-0.7.65/
-    $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
-
-    $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
-
-    $ make
-    $ make install
-</geshi>
-    
 = Compatibility =
 
 * My test bed is 0.7.65 and 0.8.53
