@@ -21,7 +21,6 @@ typedef struct ngx_tcp_proxy_conf_s {
 } ngx_tcp_proxy_conf_t;
 
 
-static void ngx_tcp_set_session_socket(ngx_tcp_session_t *s);
 static  void ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
@@ -124,8 +123,6 @@ ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s)
 
     /*do something about the proxy related part in the session struct*/
 
-    ngx_tcp_set_session_socket(s);
-
     ngx_tcp_proxy_init(c, s);
 
     return;
@@ -162,41 +159,6 @@ ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev)
 
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
-    }
-}
-
-
-static void 
-ngx_tcp_set_session_socket(ngx_tcp_session_t *s) 
-{
-    int                       keepalive;
-    int                       tcp_nodelay;
-    ngx_tcp_core_srv_conf_t  *cscf;
-
-    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
-
-    if (cscf->so_keepalive) {
-        keepalive = 1;
-
-        if (setsockopt(s->connection->fd, SOL_SOCKET, SO_KEEPALIVE,
-                    (const void *) &keepalive, sizeof(int)) == -1)
-        {
-            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
-                    "setsockopt(SO_KEEPALIVE) failed");
-        }
-    }
-
-    if (cscf->tcp_nodelay) {
-        tcp_nodelay = 1;
-        if (setsockopt(s->connection->fd, IPPROTO_TCP, TCP_NODELAY,
-                       (const void *) &tcp_nodelay, sizeof(int))
-            == -1)
-        {
-            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
-                    "setsockopt(TCP_NODELAY) failed");
-        }
-
-        s->connection->tcp_nodelay = NGX_TCP_NODELAY_SET;
     }
 }
 

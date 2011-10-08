@@ -6,6 +6,7 @@
 
 
 static void ngx_tcp_init_session(ngx_connection_t *c);
+static void ngx_tcp_set_session_socket(ngx_tcp_session_t *s);
 static void ngx_tcp_process_session(ngx_connection_t *c);
 
 #if (NGX_TCP_SSL)
@@ -256,7 +257,44 @@ ngx_tcp_init_session(ngx_connection_t *c)
     s->bytes_read = 0;
     s->bytes_write = 0;
 
+    ngx_tcp_set_session_socket(s);
+
     ngx_tcp_process_session(c);
+}
+
+
+static void 
+ngx_tcp_set_session_socket(ngx_tcp_session_t *s) 
+{
+    int                       keepalive;
+    int                       tcp_nodelay;
+    ngx_tcp_core_srv_conf_t  *cscf;
+
+    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
+
+    if (cscf->so_keepalive) {
+        keepalive = 1;
+
+        if (setsockopt(s->connection->fd, SOL_SOCKET, SO_KEEPALIVE,
+                    (const void *) &keepalive, sizeof(int)) == -1)
+        {
+            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
+                    "setsockopt(SO_KEEPALIVE) failed");
+        }
+    }
+
+    if (cscf->tcp_nodelay) {
+        tcp_nodelay = 1;
+        if (setsockopt(s->connection->fd, IPPROTO_TCP, TCP_NODELAY,
+                       (const void *) &tcp_nodelay, sizeof(int))
+            == -1)
+        {
+            ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
+                    "setsockopt(TCP_NODELAY) failed");
+        }
+
+        s->connection->tcp_nodelay = NGX_TCP_NODELAY_SET;
+    }
 }
 
 

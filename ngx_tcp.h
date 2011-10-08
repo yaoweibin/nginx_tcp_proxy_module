@@ -141,6 +141,9 @@ typedef struct {
     ngx_uint_t                  off;        /* unsigned  off:1 */
 } ngx_tcp_log_srv_conf_t;
 
+#define NGX_TCP_GENERIC_PROTOCOL    0
+#define NGX_TCP_WEBSOCKET_PROTOCOL  1
+
 typedef struct {
     ngx_tcp_protocol_t    *protocol;
 
