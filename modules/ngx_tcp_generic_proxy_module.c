@@ -32,6 +32,21 @@ static void *ngx_tcp_proxy_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent,
         void *child);
 
+
+static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
+    ngx_string("tcp_generic"),
+    { 0, 0, 0, 0 },
+    NGX_TCP_GENERIC_PROTOCOL,
+
+    ngx_tcp_proxy_init_session,
+    NULL,
+    NULL,
+    NULL,
+
+    ngx_string("500 Internal server error" CRLF)
+};
+
+
 static ngx_command_t  ngx_tcp_proxy_commands[] = {
 
     {   ngx_string("proxy_pass"),
@@ -74,7 +89,7 @@ static ngx_command_t  ngx_tcp_proxy_commands[] = {
 
 
 static ngx_tcp_module_t  ngx_tcp_proxy_module_ctx = {
-    NULL,                                  /* protocol */
+    &ngx_tcp_generic_protocol,             /* protocol */
 
     NULL,                                  /* create main configuration */
     NULL,                                  /* init main configuration */
