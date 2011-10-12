@@ -13,6 +13,8 @@ static char *ngx_tcp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
+static char *ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd,
+        void *conf);
 static char *ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -32,6 +34,13 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
     {   ngx_string("listen"),
         NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
         ngx_tcp_core_listen,
+        NGX_TCP_SRV_CONF_OFFSET,
+        0,
+        NULL },
+
+    {   ngx_string("protocol"),
+        NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+        ngx_tcp_core_protocol,
         NGX_TCP_SRV_CONF_OFFSET,
         0,
         NULL },
@@ -206,7 +215,9 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
 static char *
 ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child) 
 {
+    ngx_uint_t               m;
     ngx_tcp_log_t           *log;
+    ngx_tcp_module_t        *module;
     ngx_tcp_core_srv_conf_t *prev = parent;
     ngx_tcp_core_srv_conf_t *conf = child;
     ngx_tcp_log_srv_conf_t  *plscf = prev->access_log;
@@ -222,6 +233,22 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
     if (conf->server_name.len == 0) {
         conf->server_name = cf->cycle->hostname;
+    }
+
+    if (conf->protocol == NULL) {
+        for (m = 0; ngx_modules[m]; m++) {
+            if (ngx_modules[m]->type != NGX_TCP_MODULE) {
+                continue;
+            }
+
+            module = ngx_modules[m]->ctx;
+
+            if (module->protocol 
+                    && ngx_strcmp(module->protocol->name.data, "tcp_generic") == 0)
+            {
+                conf->protocol = module->protocol;
+            }
+        }
     }
 
     ngx_conf_merge_ptr_value(conf->resolver, prev->resolver, NULL);
@@ -515,6 +542,39 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t  *cscf = conf;
+
+    ngx_str_t          *value;
+    ngx_uint_t          m;
+    ngx_tcp_module_t   *module;
+
+    value = cf->args->elts;
+
+    for (m = 0; ngx_modules[m]; m++) {
+        if (ngx_modules[m]->type != NGX_TCP_MODULE) {
+            continue;
+        }
+
+        module = ngx_modules[m]->ctx;
+
+        if (module->protocol
+            && ngx_strcmp(module->protocol->name.data, value[1].data) == 0)
+        {
+            cscf->protocol = module->protocol;
+
+            return NGX_CONF_OK;
+        }
+    }
+
+    ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                       "unknown protocol \"%V\"", &value[1]);
+    return NGX_CONF_ERROR;
 }
 
 

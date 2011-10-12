@@ -176,8 +176,8 @@ typedef struct {
 } ngx_tcp_log_ctx_t;
 
 
-typedef void (*ngx_tcp_init_session_pt)(ngx_tcp_session_t *s,
-    ngx_connection_t *c);
+typedef void (*ngx_tcp_init_session_pt)( ngx_connection_t *c, 
+        ngx_tcp_session_t *s);
 typedef void (*ngx_tcp_init_protocol_pt)(ngx_event_t *rev);
 typedef void (*ngx_tcp_auth_state_pt)(ngx_event_t *rev);
 typedef ngx_int_t (*ngx_tcp_parse_command_pt)(ngx_tcp_session_t *s);

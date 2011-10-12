@@ -301,9 +301,12 @@ ngx_tcp_set_session_socket(ngx_tcp_session_t *s)
 static void
 ngx_tcp_process_session(ngx_connection_t *c)
 {
-    ngx_tcp_session_t        *s;
+    ngx_tcp_session_t         *s;
+    ngx_tcp_core_srv_conf_t   *cscf;
 
     s = c->data;
+
+    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     /*process the acl*/
     if (ngx_tcp_access_handler(s) == NGX_ERROR) {
@@ -311,7 +314,8 @@ ngx_tcp_process_session(ngx_connection_t *c)
         return;
     }
 
-    ngx_tcp_proxy_init_session(c, s);
+    cscf->protocol->init_session(c, s);
+    /*ngx_tcp_proxy_init_session(c, s);*/
 }
 
 
