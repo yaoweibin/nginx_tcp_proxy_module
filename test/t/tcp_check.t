@@ -48,6 +48,7 @@ __DATA__
     server {
         listen 1982;
 
+        protocol tcp_generic;
         proxy_pass test;
     }
 --- request
@@ -70,6 +71,7 @@ GET /
 
     server {
         listen 1982;
+        server_name a.b.c d.e.f;
 
         proxy_pass test;
     }

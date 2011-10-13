@@ -13,6 +13,8 @@ static char *ngx_tcp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
+static char *ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 static char *ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -24,89 +26,96 @@ static char *ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd,
 
 static ngx_command_t  ngx_tcp_core_commands[] = {
 
-    {   ngx_string("server"),
-        NGX_TCP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_MULTI|NGX_CONF_NOARGS,
-        ngx_tcp_core_server,
-        0,
-        0,
-        NULL },
+    { ngx_string("server"),
+      NGX_TCP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_MULTI|NGX_CONF_NOARGS,
+      ngx_tcp_core_server,
+      0,
+      0,
+      NULL },
 
-    {   ngx_string("listen"),
-        NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
-        ngx_tcp_core_listen,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("listen"),
+      NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
+      ngx_tcp_core_listen,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
-    {   ngx_string("protocol"),
-        NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_core_protocol,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("server_name"),
+      NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
+      ngx_tcp_core_server_name,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
-    {   ngx_string("so_keepalive"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
-        ngx_conf_set_flag_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, so_keepalive),
-        NULL },
+    { ngx_string("protocol"),
+      NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_core_protocol,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
-    {   ngx_string("tcp_nodelay"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
-        ngx_conf_set_flag_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, tcp_nodelay),
-        NULL },
+    { ngx_string("so_keepalive"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, so_keepalive),
+      NULL },
 
-    {   ngx_string("timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, timeout),
-        NULL },
+    { ngx_string("tcp_nodelay"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, tcp_nodelay),
+      NULL },
 
-    {   ngx_string("server_name"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, server_name),
-        NULL },
+    { ngx_string("timeout"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, timeout),
+      NULL },
 
-    {   ngx_string("resolver"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_core_resolver,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("server_name"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, server_name),
+      NULL },
 
-    {   ngx_string("resolver_timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, resolver_timeout),
-        NULL },
+    { ngx_string("resolver"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_core_resolver,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
-    {   ngx_string("allow"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_access_rule,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("resolver_timeout"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, resolver_timeout),
+      NULL },
 
-    {   ngx_string("deny"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_access_rule,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("allow"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_access_rule,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
-    {   ngx_string("access_log"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
-        ngx_tcp_log_set_access_log,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("deny"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_access_rule,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("access_log"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
+      ngx_tcp_log_set_access_log,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
     ngx_null_command
 };
@@ -183,6 +192,12 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
      *
      *     cscf->protocol = NULL;
      */
+
+    if (ngx_array_init(&cscf->server_names, cf->pool, 4, sizeof(ngx_tcp_server_name_t))
+        != NGX_OK)
+    {
+        return NULL;
+    }
 
     cscf->timeout = NGX_CONF_UNSET_MSEC;
     cscf->resolver_timeout = NGX_CONF_UNSET_MSEC;
@@ -539,6 +554,36 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                 "the invalid \"%V\" parameter", &value[i]);
         return NGX_CONF_ERROR;
+    }
+
+    return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t *cscf = conf;
+
+    ngx_str_t               *value;
+    ngx_uint_t               i;
+    ngx_tcp_server_name_t   *sn;
+
+    value = cf->args->elts;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+
+        sn = ngx_array_push(&cscf->server_names);
+        if (sn == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
+            sn->name = cf->cycle->hostname;
+
+        } else {
+            sn->name = value[i];
+        }
     }
 
     return NGX_CONF_OK;
