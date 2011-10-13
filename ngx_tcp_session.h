@@ -10,12 +10,6 @@
 #include <ngx_tcp.h>
 
 
-
-typedef struct ngx_tcp_proxy_s {
-    ngx_peer_connection_t  *upstream;
-    ngx_buf_t              *buffer;
-} ngx_tcp_proxy_ctx_t;
-
 typedef struct ngx_tcp_session_s {
     uint32_t                signature;         /* "TCP" */
 
@@ -51,9 +45,9 @@ typedef void (*ngx_tcp_cleanup_pt)(void *data);
 
 
 struct ngx_tcp_cleanup_s {
-    ngx_tcp_cleanup_pt               handler;
+    ngx_tcp_cleanup_pt                handler;
     void                             *data;
-    ngx_tcp_cleanup_t               *next;
+    ngx_tcp_cleanup_t                *next;
 };
 
 void ngx_tcp_init_connection(ngx_connection_t *c);

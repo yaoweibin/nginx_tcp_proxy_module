@@ -9,6 +9,12 @@
 #include <fcntl.h>
 
 
+typedef struct ngx_tcp_proxy_s {
+    ngx_peer_connection_t  *upstream;
+    ngx_buf_t              *buffer;
+} ngx_tcp_proxy_ctx_t;
+
+
 typedef struct ngx_tcp_proxy_conf_s {
     ngx_tcp_upstream_conf_t  upstream;
 

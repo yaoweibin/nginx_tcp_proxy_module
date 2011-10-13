@@ -120,7 +120,7 @@ static u_char *ngx_tcp_log_fill(ngx_tcp_session_t *s, u_char *buf)
     u_char              *last;
     ngx_str_t           *name;
     ngx_connection_t    *c;
-    ngx_tcp_proxy_ctx_t *pctx;
+    ngx_tcp_upstream_t  *u;
 
     c = s->connection;
 
@@ -133,13 +133,13 @@ static u_char *ngx_tcp_log_fill(ngx_tcp_session_t *s, u_char *buf)
     last = ngx_tcp_time(last, s->start_sec);
     
     name = NULL;
-    if (s->ctx) {
-        pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_proxy_module);
-
-        if (pctx && pctx->upstream->connection) {
-            name = pctx->upstream->name;
+    if (s->upstream) {
+        u = s->upstream;
+        if (u->peer.connection) {
+            name = u->peer.name;
         }
     }
+
     if (name) {
         last = ngx_sprintf(last, " %V", name);
     }

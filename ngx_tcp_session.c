@@ -460,7 +460,6 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
     u_char              *p;
     ngx_tcp_session_t   *s;
     ngx_tcp_log_ctx_t   *ctx;
-    ngx_tcp_proxy_ctx_t *pctx;
 
     p = buf;
 
@@ -480,11 +479,9 @@ ngx_tcp_log_error(ngx_log_t *log, u_char *buf, size_t len)
 
     p = ngx_snprintf(p, len + (buf - p), ", server: %V", s->addr_text);
 
-    if (s->ctx) {
-        pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_proxy_module);
-
-        if (pctx && pctx->upstream->connection) {
-            p = ngx_snprintf(p, len + (buf - p), ", upstream: %V", pctx->upstream->name);
+    if (s->upstream) {
+        if (s->upstream->peer.connection) {
+            p = ngx_snprintf(p, len + (buf - p), ", upstream: %V", s->upstream->peer.name);
         }
     }
 

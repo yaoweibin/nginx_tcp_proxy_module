@@ -8,6 +8,7 @@
 #define _GNU_SOURCE
 #include <fcntl.h>
 
+
 typedef struct ngx_tcp_websocket_s {
     ngx_peer_connection_t  *upstream;
     ngx_buf_t              *buffer;
@@ -36,6 +37,19 @@ static void ngx_tcp_websocket_handler(ngx_event_t *ev);
 static void *ngx_tcp_websocket_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_websocket_merge_conf(ngx_conf_t *cf, void *parent,
         void *child);
+
+static ngx_tcp_protocol_t  ngx_tcp_websocket_protocol = {
+    ngx_string("tcp_websocket"),
+    { 80, 443, 0, 0 },
+    NGX_TCP_WEBSOCKET_PROTOCOL,
+    ngx_tcp_proxy_init_session,
+    NULL,
+    NULL,
+    NULL,
+
+    ngx_string("500 Internal server error" CRLF)
+};
+
 
 static ngx_command_t  ngx_tcp_websocket_commands[] = {
 
@@ -79,7 +93,7 @@ static ngx_command_t  ngx_tcp_websocket_commands[] = {
 
 
 static ngx_tcp_module_t  ngx_tcp_websocket_module_ctx = {
-    NULL,                                      /* protocol */
+    &ngx_tcp_websocket_protocol,               /* protocol */
 
     NULL,                                      /* create main configuration */
     NULL,                                      /* init main configuration */
