@@ -66,6 +66,11 @@ typedef struct {
 
 
 typedef struct {
+    ngx_str_t name;
+} ngx_tcp_core_loc_t;
+
+
+typedef struct {
     ngx_tcp_conf_ctx_t    *ctx;
     ngx_str_t              addr_text;
 #if (NGX_TCP_SSL)
@@ -153,6 +158,9 @@ typedef struct {
     /* array of the ngx_tcp_server_name_t, "server_name" directive */
     ngx_array_t             server_names;
 
+    /* array of the ngx_tcp_core_loc_t, "location" directive */
+    ngx_array_t             locations;
+
     ngx_tcp_protocol_t     *protocol;
 
     ngx_msec_t              timeout;
@@ -221,6 +229,7 @@ typedef struct {
 
 #define NGX_TCP_MAIN_CONF      0x02000000
 #define NGX_TCP_SRV_CONF       0x04000000
+#define NGX_TCP_LOC_CONF       0x08000000
 #define NGX_TCP_UPS_CONF       0x10000000
 
 

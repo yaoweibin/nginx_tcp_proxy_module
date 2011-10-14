@@ -15,6 +15,8 @@ static char *ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
+static char *ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 static char *ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd,
         void *conf);
 static char *ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -40,9 +42,16 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
       0,
       NULL },
 
-    { ngx_string("server_name"),
+    { ngx_string("server_names"),
       NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
       ngx_tcp_core_server_name,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("location"),
+      NGX_TCP_SRV_CONF|NGX_TCP_LOC_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
+      ngx_tcp_core_location,
       NGX_TCP_SRV_CONF_OFFSET,
       0,
       NULL },
@@ -194,6 +203,12 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
      */
 
     if (ngx_array_init(&cscf->server_names, cf->pool, 4, sizeof(ngx_tcp_server_name_t))
+        != NGX_OK)
+    {
+        return NULL;
+    }
+
+    if (ngx_array_init(&cscf->locations, cf->pool, 4, sizeof(ngx_tcp_core_loc_t))
         != NGX_OK)
     {
         return NULL;
@@ -587,6 +602,37 @@ ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t *cscf = conf;
+
+    char                      *rv;
+    ngx_str_t                 *value;
+    ngx_conf_t                 save;
+    ngx_tcp_core_loc_t        *clcf;
+
+    clcf = ngx_array_push(&cscf->locations);
+    if (clcf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    value = cf->args->elts;
+
+    clcf->name = value[1];
+
+    save = *cf;
+    /*cf->ctx = ctx;*/
+    cf->cmd_type = NGX_TCP_LOC_CONF;
+
+    rv = ngx_conf_parse(cf, NULL);
+
+    *cf = save;
+
+    return rv;
 }
 
 
