@@ -21,6 +21,7 @@ if [ $ngx_found = yes ]; then
     NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_src"
 
     have=NGX_TCP_SSL . auto/have
+    USE_OPENSSL=YES
     TCP_MODULES="$TCP_MODULES ngx_tcp_ssl_module"
     NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_tcp_ssl_deps"
     NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_ssl_src"
