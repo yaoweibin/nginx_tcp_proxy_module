@@ -71,7 +71,7 @@ GET /
 
     server {
         listen 1982;
-        server_name a.b.c d.e.f;
+        server_names a.b.c d.e.f;
 
         proxy_pass test;
     }

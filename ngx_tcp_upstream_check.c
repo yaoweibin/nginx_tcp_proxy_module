@@ -662,8 +662,8 @@ void http_version(void *data, const signed char *at, size_t length)
 void status_code(void *data, const signed char *at, size_t length)
 {
     int                        code;
-    http_parser               *hp;
     ngx_tcp_check_ctx         *ctx;
+    http_response_parser      *hp;
     ngx_tcp_check_peer_conf_t *peer_conf = data;
 
 #if (NGX_DEBUG)
@@ -719,7 +719,8 @@ void header_done(void *data, const signed char *at, size_t length)
 }
 
 
-static void check_http_parser_init(http_parser *hp, void *data) 
+static void check_http_response_parser_init(http_response_parser *hp, 
+        void *data) 
 {
     hp->data = data;
     hp->http_field = http_field;
@@ -729,7 +730,7 @@ static void check_http_parser_init(http_parser *hp, void *data)
     hp->reason_phrase = reason_phrase;
     hp->header_done = header_done;
     
-    http_parser_init(hp);
+    http_response_parser_init(hp);
 }
 
 
@@ -748,12 +749,12 @@ ngx_tcp_check_http_init(ngx_tcp_check_peer_conf_t *peer_conf)
     ctx->recv.start = ctx->recv.pos = NULL;
     ctx->recv.end = ctx->recv.last = NULL;
 
-    ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(http_parser));
+    ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(http_response_parser));
     if (ctx->parser == NULL) {
         return NGX_ERROR;
     }
 
-    check_http_parser_init(ctx->parser, peer_conf);
+    check_http_response_parser_init(ctx->parser, peer_conf);
 
     return NGX_OK;
 }
@@ -763,8 +764,8 @@ static ngx_int_t
 ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf) 
 {
     ssize_t                       n, offset, length;
-    http_parser                  *hp;
     ngx_tcp_check_ctx            *ctx;
+    http_response_parser         *hp;
     ngx_tcp_upstream_srv_conf_t  *uscf;
 
 
@@ -776,10 +777,10 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
         offset = ctx->recv.pos - ctx->recv.start;
         length = ctx->recv.last - ctx->recv.start;
 
-        n = http_parser_execute(hp, (signed char *)ctx->recv.start, length, offset);
+        n = http_response_parser_execute(hp, (signed char *)ctx->recv.start, length, offset);
         ctx->recv.pos += n;
 
-        if (http_parser_finish(hp) == -1) {
+        if (http_response_parser_finish(hp) == -1) {
             ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
                     "http parse error with peer: %V, recv data: %s", 
                     &peer_conf->peer->name, ctx->recv.start);
@@ -820,7 +821,7 @@ ngx_tcp_check_http_reinit(ngx_tcp_check_peer_conf_t *peer_conf)
 
     ctx->recv.pos = ctx->recv.last = ctx->recv.start;
 
-    check_http_parser_init(ctx->parser, peer_conf);
+    check_http_response_parser_init(ctx->parser, peer_conf);
 }
 
 

@@ -9,6 +9,10 @@
 #include <ngx_event_pipe.h>
 #include <ngx_tcp.h>
 
+#include <http_request_parser.h>
+#include <http_response_parser.h>
+#include <smtp_response_parser.h>
+
 
 typedef struct {
     u_char major;
@@ -31,7 +35,6 @@ typedef struct {
 } __attribute__((packed)) server_ssl_hello_t;
 
 typedef struct {
-
     u_char                 packet_length[3];
     u_char                 packet_number;
 
@@ -88,7 +91,6 @@ typedef void (*ngx_tcp_check_packet_clean_pt)(ngx_tcp_check_peer_conf_t *peer_co
 #define NGX_TCP_CHECK_MYSQL            0x0010
 #define NGX_TCP_CHECK_POP3             0x0020
 #define NGX_TCP_CHECK_IMAP             0x0040
-
 
 #define NGX_CHECK_HTTP_2XX             0x0002
 #define NGX_CHECK_HTTP_3XX             0x0004
@@ -153,67 +155,6 @@ struct ngx_tcp_check_peers_conf_s {
 
     ngx_tcp_check_peers_shm_t       *peers_shm;
 };
-
-
-/*HTTP parser*/
-typedef void (*element_cb)(void *data, const signed char *at, size_t length);
-typedef void (*field_cb)(void *data, const signed char *field, size_t flen, const signed char *value, size_t vlen);
-
-
-typedef struct http_parser { 
-  int cs;
-  size_t body_start;
-  int content_len;
-  int status_code_n;
-  size_t nread;
-  size_t mark;
-  size_t field_start;
-  size_t field_len;
-
-  void *data;
-
-  field_cb http_field;
-
-  element_cb http_version;
-  element_cb status_code;
-  element_cb reason_phrase;
-  element_cb header_done;
-  
-} http_parser;
-
-int http_parser_init(http_parser *parser);
-int http_parser_finish(http_parser *parser);
-size_t http_parser_execute(http_parser *parser, const signed char *data, size_t len, size_t off);
-int http_parser_has_error(http_parser *parser);
-int http_parser_is_finished(http_parser *parser);
-
-#define http_parser_nread(parser) (parser)->nread 
-
-typedef struct smtp_parser {
-
-  int cs;
-  size_t nread;
-  size_t mark;
-
-  int hello_reply_code;
-
-  void *data;
-
-  element_cb domain;
-  element_cb greeting_text;
-  element_cb reply_code;
-  element_cb reply_text;
-  element_cb smtp_done;
-    
-} smtp_parser;
-
-int smtp_parser_init(smtp_parser *parser);
-int smtp_parser_finish(smtp_parser *parser);
-size_t smtp_parser_execute(smtp_parser *parser, const signed char *data, size_t len, size_t off);
-int smtp_parser_has_error(smtp_parser *parser);
-int smtp_parser_is_finished(smtp_parser *parser);
-
-#define http_parser_nread(parser) (parser)->nread 
 
 
 ngx_int_t ngx_tcp_upstream_init_main_check_conf(ngx_conf_t *cf, void*conf);

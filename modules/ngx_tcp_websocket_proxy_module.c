@@ -27,13 +27,14 @@ typedef struct ngx_tcp_websocket_conf_s {
 } ngx_tcp_websocket_conf_t;
 
 
-static  void ngx_tcp_websocket_init(ngx_connection_t *c, ngx_tcp_session_t *s);
-static void ngx_tcp_upstream_websocket_generic_handler(ngx_tcp_session_t *s, 
+static  void ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s);
+static void ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
 static char *ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_websocket_dummy_read_handler(ngx_event_t *ev);
 static void ngx_tcp_websocket_dummy_write_handler(ngx_event_t *ev);
-static void ngx_tcp_websocket_handler(ngx_event_t *ev);
+static void ngx_tcp_websocket_start_handler(ngx_event_t *ev);
+static void ngx_tcp_websocket_proxy_handler(ngx_event_t *ev);
 static void *ngx_tcp_websocket_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_websocket_merge_conf(ngx_conf_t *cf, void *parent,
         void *child);
@@ -122,9 +123,22 @@ ngx_module_t  ngx_tcp_websocket_module = {
 void 
 ngx_tcp_websocket_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) 
 {
+    ngx_tcp_websocket_ctx_t      *pctx;
+    ngx_tcp_core_srv_conf_t      *cscf;
     ngx_tcp_websocket_conf_t     *pcf;
 
+    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
+
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
+
+    pctx = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_websocket_ctx_t));
+    if (pctx == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+    ngx_tcp_set_ctx(s, pctx, ngx_tcp_websocket_module);
+
+    s->out.len = 0;
 
     s->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
     if (s->buffer == NULL) {
@@ -133,18 +147,27 @@ ngx_tcp_websocket_init_session(ngx_connection_t *c, ngx_tcp_session_t *s)
     }
 
     c->write->handler = ngx_tcp_websocket_dummy_write_handler;
+    /*make the complier happy*/
     c->read->handler = ngx_tcp_websocket_dummy_read_handler;
+    c->read->handler = ngx_tcp_websocket_start_handler;
 
-    if (ngx_tcp_upstream_create(s) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    /*do something about the websocket related part in the session struct*/
-
-    ngx_tcp_websocket_init(c, s);
+    ngx_add_timer(s->connection->read, cscf->timeout);
 
     return;
+}
+
+
+/* parse the websocket handshake packet */
+static void
+ngx_tcp_websocket_start_handler(ngx_event_t *ev) 
+{
+    ngx_connection_t    *c;
+    ngx_tcp_session_t   *s;
+
+    c = ev->data;
+    s = c->data;
+
+    ngx_tcp_websocket_init_upstream(c, s);
 }
 
 
@@ -183,40 +206,37 @@ ngx_tcp_websocket_dummy_read_handler(ngx_event_t *rev)
 
 
 static  void
-ngx_tcp_websocket_init(ngx_connection_t *c, ngx_tcp_session_t *s) 
+ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s) 
 {
     ngx_tcp_upstream_t           *u;
-    ngx_tcp_websocket_ctx_t      *p;
+    ngx_tcp_websocket_ctx_t      *pctx;
     ngx_tcp_websocket_conf_t     *pcf;
 
     s->connection->log->action = "ngx_tcp_websocket_init";
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
 
-    p = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_websocket_ctx_t));
-    if (p == NULL) {
+    pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_websocket_module);
+
+    if (ngx_tcp_upstream_create(s) != NGX_OK) {
         ngx_tcp_finalize_session(s);
         return;
     }
-
-    ngx_tcp_set_ctx(s, p, ngx_tcp_websocket_module);
 
     u = s->upstream;
 
     u->conf = &pcf->upstream;
 
-    u->write_event_handler = ngx_tcp_upstream_websocket_generic_handler;
-    u->read_event_handler = ngx_tcp_upstream_websocket_generic_handler;
+    u->write_event_handler = ngx_tcp_upstream_websocket_proxy_init_handler;
+    u->read_event_handler = ngx_tcp_upstream_websocket_proxy_init_handler;
 
-    p->upstream = &u->peer;
+    pctx->upstream = &u->peer;
 
-    p->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
-    if (p->buffer == NULL) {
+    pctx->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
+    if (pctx->buffer == NULL) {
         ngx_tcp_finalize_session(s);
         return;
     }
-
-    s->out.len = 0;
 
     ngx_tcp_upstream_init(s);
 
@@ -225,7 +245,7 @@ ngx_tcp_websocket_init(ngx_connection_t *c, ngx_tcp_session_t *s)
 
 
 static void 
-ngx_tcp_upstream_websocket_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
+ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
 {
     ngx_connection_t             *c;
     ngx_tcp_core_srv_conf_t      *cscf;
@@ -235,7 +255,7 @@ ngx_tcp_upstream_websocket_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstrea
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     c = s->connection;
-    c->log->action = "ngx_tcp_websocket_handler";
+    c->log->action = "ngx_tcp_websocket_init_handler";
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 
             0, "tcp websocket upstream init websocket");
@@ -262,13 +282,11 @@ ngx_tcp_upstream_websocket_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstrea
         return;
     }
 
-    s->connection->read->handler = ngx_tcp_websocket_handler;
-    s->connection->write->handler = ngx_tcp_websocket_handler;
+    s->connection->read->handler = ngx_tcp_websocket_proxy_handler;
+    s->connection->write->handler = ngx_tcp_websocket_proxy_handler;
 
-    c->read->handler = ngx_tcp_websocket_handler;
-    c->write->handler = ngx_tcp_websocket_handler;
-
-    ngx_add_timer(s->connection->read, cscf->timeout);
+    c->read->handler = ngx_tcp_websocket_proxy_handler;
+    c->write->handler = ngx_tcp_websocket_proxy_handler;
 
     ngx_add_timer(c->read, pcf->upstream.read_timeout);
     ngx_add_timer(c->write, pcf->upstream.send_timeout);
@@ -283,7 +301,7 @@ ngx_tcp_upstream_websocket_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstrea
     /* The ssl connection with client may not trigger the read event again, 
      * So I trigger it in this function.  */
     if (s->connection->ssl) {
-        ngx_tcp_websocket_handler(s->connection->read); 
+        ngx_tcp_websocket_proxy_handler(s->connection->read); 
     }
 
 #endif
@@ -293,7 +311,7 @@ ngx_tcp_upstream_websocket_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstrea
 
 
 static void
-ngx_tcp_websocket_handler(ngx_event_t *ev) 
+ngx_tcp_websocket_proxy_handler(ngx_event_t *ev) 
 {
     char                      *action, *recv_action, *send_action;
     off_t                     *read_bytes, *write_bytes;
@@ -314,7 +332,7 @@ ngx_tcp_websocket_handler(ngx_event_t *ev)
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     if (ev->timedout) {
-        c->log->action = "websocketing";
+        c->log->action = "websocket proxying";
 
         ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "websocket timed out");
         c->timedout = 1;
@@ -333,15 +351,15 @@ ngx_tcp_websocket_handler(ngx_event_t *ev)
     read_bytes = write_bytes = NULL;
     if (c == s->connection) {
         if (ev->write) {
-            recv_action = "client write: websocketing and reading from upstream";
-            send_action = "client write: websocketing and sending to client";
+            recv_action = "client write: websocket proxying and reading from upstream";
+            send_action = "client write: websocket proxying and sending to client";
             src = pctx->upstream->connection;
             dst = c;
             b = pctx->buffer;
             write_bytes = &s->bytes_write;
         } else {
-            recv_action = "client read: websocketing and reading from client";
-            send_action = "client read: websocketing and sending to upstream";
+            recv_action = "client read: websocket proxying and reading from client";
+            send_action = "client read: websocket proxying and sending to upstream";
             src = c;
             dst = pctx->upstream->connection;
             b = s->buffer;
@@ -350,15 +368,15 @@ ngx_tcp_websocket_handler(ngx_event_t *ev)
 
     } else {
         if (ev->write) {
-            recv_action = "upstream write: websocketing and reading from client";
-            send_action = "upstream write: websocketing and sending to upstream";
+            recv_action = "upstream write: websocket proxying and reading from client";
+            send_action = "upstream write: websocket proxying and sending to upstream";
             src = s->connection;
             dst = c;
             b = s->buffer;
             read_bytes = &s->bytes_read;
         } else {
-            recv_action = "upstream read: websocketing and reading from upstream";
-            send_action = "upstream read: websocketing and sending to client";
+            recv_action = "upstream read: websocket proxying and reading from upstream";
+            send_action = "upstream read: websocket proxying and sending to client";
             src = c;
             dst = s->connection;
             b = pctx->buffer;
@@ -369,7 +387,7 @@ ngx_tcp_websocket_handler(ngx_event_t *ev)
     do_write = ev->write ? 1 : 0;
 
     ngx_log_debug4(NGX_LOG_DEBUG_TCP, ev->log, 0,
-            "tcp websocket handler: %d, #%d > #%d, time:%ui",
+            "tcp websocket proxy handler: %d, #%d > #%d, time:%ui",
             do_write, src->fd, dst->fd, ngx_current_msec);
 
     for ( ;; ) {
@@ -384,7 +402,8 @@ ngx_tcp_websocket_handler(ngx_event_t *ev)
                 n = dst->send(dst, b->pos, size);
                 err = ngx_socket_errno;
 
-                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp websocket handler send:%d", n);
+                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, 
+                        "tcp websocket proxy handler send:%d", n);
 
                 if (n == NGX_ERROR) {
                     ngx_log_error(NGX_LOG_ERR, c->log, err, "websocket send error");
@@ -416,7 +435,8 @@ ngx_tcp_websocket_handler(ngx_event_t *ev)
             n = src->recv(src, b->last, size);
             err = ngx_socket_errno;
 
-            ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp websocket handler recv:%d", n);
+            ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0,
+                    "tcp websocket proxy handler recv:%d", n);
 
             if (n == NGX_AGAIN || n == 0) {
                 break;
