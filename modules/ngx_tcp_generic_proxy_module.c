@@ -27,6 +27,7 @@ typedef struct ngx_tcp_proxy_conf_s {
 } ngx_tcp_proxy_conf_t;
 
 
+static void ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s); 
 static  void ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
@@ -120,7 +121,7 @@ ngx_module_t  ngx_tcp_proxy_module = {
 };
 
 
-void 
+static void 
 ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) 
 {
     ngx_tcp_proxy_conf_t     *pcf;

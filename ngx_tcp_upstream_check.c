@@ -768,7 +768,6 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     http_response_parser         *hp;
     ngx_tcp_upstream_srv_conf_t  *uscf;
 
-
     uscf = peer_conf->conf;
     ctx = peer_conf->check_data;
     hp = ctx->parser;

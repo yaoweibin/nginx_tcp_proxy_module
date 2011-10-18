@@ -2,11 +2,13 @@ ngx_feature="nginx_tcp_module"
 ngx_feature_name=
 ngx_feature_run=no
 ngx_feature_incs=
-ngx_feature_path="$ngx_addon_dir/modules $ngx_addon_dir"
+ngx_feature_path="$ngx_addon_dir/modules $ngx_addon_dir/parsers $ngx_addon_dir"
 ngx_feature_deps="$ngx_addon_dir/ngx_tcp.h $ngx_addon_dir/ngx_tcp_session.h $ngx_addon_dir/ngx_tcp_upstream.h $ngx_addon_dir/ngx_tcp_upstream_check.h $ngx_addon_dir/ngx_tcp_upstream_round_robin.h"
-ngx_tcp_src="$ngx_addon_dir/ngx_tcp.c $ngx_addon_dir/ngx_tcp_core_module.c $ngx_addon_dir/ngx_tcp_session.c $ngx_addon_dir/ngx_tcp_access.c $ngx_addon_dir/ngx_tcp_log.c $ngx_addon_dir/ngx_tcp_upstream.c $ngx_addon_dir/ngx_tcp_upstream_round_robin.c $ngx_addon_dir/modules/ngx_tcp_generic_proxy_module.c $ngx_addon_dir/modules/ngx_tcp_websocket_proxy_module.c $ngx_addon_dir/modules/ngx_tcp_upstream_ip_hash_module.c $ngx_addon_dir/modules/ngx_tcp_upstream_busyness_module.c $ngx_addon_dir/ngx_tcp_upstream_check.c $ngx_addon_dir/http_response_parse.c $ngx_addon_dir/smtp_response_parse.c"
+ngx_tcp_src="$ngx_addon_dir/ngx_tcp.c $ngx_addon_dir/ngx_tcp_core_module.c $ngx_addon_dir/ngx_tcp_session.c $ngx_addon_dir/ngx_tcp_access.c $ngx_addon_dir/ngx_tcp_log.c $ngx_addon_dir/ngx_tcp_upstream.c $ngx_addon_dir/ngx_tcp_upstream_round_robin.c $ngx_addon_dir/modules/ngx_tcp_generic_proxy_module.c $ngx_addon_dir/modules/ngx_tcp_websocket_proxy_module.c $ngx_addon_dir/modules/ngx_tcp_upstream_ip_hash_module.c $ngx_addon_dir/modules/ngx_tcp_upstream_busyness_module.c $ngx_addon_dir/ngx_tcp_upstream_check.c "
 ngx_tcp_ssl_deps="$ngx_addon_dir/modules/ngx_tcp_ssl_module.h"
 ngx_tcp_ssl_src="$ngx_addon_dir/modules/ngx_tcp_ssl_module.c"
+ngx_tcp_parser_deps="$ngx_addon_dir/parsers/parser.h $ngx_addon_dir/parsers/http_request_parser.h $ngx_addon_dir/parsers/http_response_parser.h $ngx_addon_dir/parsers/smtp_response_parser.h"
+ngx_tcp_parser_src="$ngx_addon_dir/parsers/http_request_parser.c $ngx_addon_dir/parsers/http_response_parser.c $ngx_addon_dir/parsers/smtp_response_parser.c"
 ngx_feature_test="int a;"
 . auto/feature
 
@@ -15,13 +17,13 @@ if [ $ngx_found = yes ]; then
     ngx_addon_name=ngx_tcp_module
 
     TCP_CORE_MODULES="ngx_tcp_module ngx_tcp_core_module ngx_tcp_upstream_module"
-    TCP_MODULES="ngx_tcp_proxy_module ngx_tcp_upstream_ip_hash_module"
     TCP_MODULES="ngx_tcp_proxy_module ngx_tcp_websocket_module ngx_tcp_upstream_ip_hash_module ngx_tcp_upstream_busyness_module"
 
-    NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_feature_deps"
-    NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_src"
+    NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_feature_deps $ngx_tcp_parser_deps"
+    NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_src $ngx_tcp_parser_src"
 
     #have=NGX_TCP_SSL . auto/have
+    #USE_OPENSSL=YES
     #TCP_MODULES="$TCP_MODULES ngx_tcp_ssl_module"
     #NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_tcp_ssl_deps"
     #NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_ssl_src"
