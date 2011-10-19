@@ -116,8 +116,14 @@ ngx_tcp_init_connection(ngx_connection_t *c)
         return;
     }
 
-    s->main_conf = addr_conf->ctx->main_conf;
-    s->srv_conf = addr_conf->ctx->srv_conf;
+    if (addr_conf->default_ctx) {
+        s->main_conf = addr_conf->default_ctx->main_conf;
+        s->srv_conf = addr_conf->default_ctx->srv_conf;
+    }
+    else {
+        s->main_conf = addr_conf->ctx->main_conf;
+        s->srv_conf = addr_conf->ctx->srv_conf;
+    }
 
     s->addr_text = &addr_conf->addr_text;
 

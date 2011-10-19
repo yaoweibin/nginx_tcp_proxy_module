@@ -219,8 +219,7 @@ ngx_tcp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 static ngx_int_t
-ngx_tcp_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
-    ngx_tcp_listen_t *listen)
+ngx_tcp_add_ports(ngx_conf_t *cf, ngx_array_t *ports, ngx_tcp_listen_t *listen)
 {
     in_port_t              p;
     ngx_uint_t             i;
@@ -284,11 +283,16 @@ found:
         return NGX_ERROR;
     }
 
+    ngx_memzero(addr, sizeof(ngx_tcp_conf_addr_t));
+
     addr->sockaddr = (struct sockaddr *) &listen->sockaddr;
     addr->socklen = listen->socklen;
     addr->ctx = listen->ctx;
     addr->bind = listen->bind;
     addr->wildcard = listen->wildcard;
+    if (listen->default_port) {
+        addr->default_ctx = listen->ctx;
+    }
 #if (NGX_TCP_SSL)
     addr->ssl = listen->ssl;
 #endif
@@ -403,9 +407,9 @@ ngx_tcp_add_addrs(ngx_conf_t *cf, ngx_tcp_port_t *mport,
 {
     u_char              *p;
     size_t               len;
-    ngx_uint_t           i;
-    ngx_tcp_in_addr_t  *addrs;
-    struct sockaddr_in  *sin;
+    ngx_uint_t           i, j;
+    ngx_tcp_in_addr_t   *addrs;
+    struct sockaddr_in  *sin, *sin_b;
     u_char               buf[NGX_SOCKADDR_STRLEN];
 
     mport->addrs = ngx_pcalloc(cf->pool,
@@ -422,6 +426,14 @@ ngx_tcp_add_addrs(ngx_conf_t *cf, ngx_tcp_port_t *mport,
         addrs[i].addr = sin->sin_addr.s_addr;
 
         addrs[i].conf.ctx = addr[i].ctx;
+
+        for (j = 0; j < mport->naddrs; j++) {
+            sin_b = (struct sockaddr_in *) addr[j].sockaddr;
+            if ((sin->sin_addr.s_addr == sin_b->sin_addr.s_addr) && addr[j].default_ctx) {
+                addrs[i].conf.default_ctx = addr[j].default_ctx;
+            }
+        }
+
 #if (NGX_TCP_SSL)
         addrs[i].conf.ssl = addr[i].ssl;
 #endif
@@ -451,9 +463,9 @@ ngx_tcp_add_addrs6(ngx_conf_t *cf, ngx_tcp_port_t *mport,
 {
     u_char               *p;
     size_t                len;
-    ngx_uint_t            i;
-    ngx_tcp_in6_addr_t  *addrs6;
-    struct sockaddr_in6  *sin6;
+    ngx_uint_t            i, j;
+    ngx_tcp_in6_addr_t   *addrs6;
+    struct sockaddr_in6  *sin6, *sin6_b;
     u_char                buf[NGX_SOCKADDR_STRLEN];
 
     mport->addrs = ngx_pcalloc(cf->pool,
@@ -470,6 +482,16 @@ ngx_tcp_add_addrs6(ngx_conf_t *cf, ngx_tcp_port_t *mport,
         addrs6[i].addr6 = sin6->sin6_addr;
 
         addrs6[i].conf.ctx = addr[i].ctx;
+
+        for (j = 0; j < mport->naddrs; j++) {
+            sin6_b = (struct sockaddr_in6 *) addr[j].sockaddr;
+
+            if ((ngx_memcmp(&sin6->sin6_addr, &sin6_b->sin6_addr, 16) == 0) && 
+                    addr[j].default_ctx) {
+                addrs6[i].conf.default_ctx = addr[j].default_ctx;
+            }
+        }
+
 #if (NGX_TCP_SSL)
         addrs6[i].conf.ssl = addr[i].ssl;
 #endif

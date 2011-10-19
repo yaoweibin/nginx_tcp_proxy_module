@@ -36,7 +36,7 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
       NULL },
 
     { ngx_string("listen"),
-      NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
+      NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
       ngx_tcp_core_listen,
       NGX_TCP_SRV_CONF_OFFSET,
       0,
@@ -510,6 +510,11 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
         if (ngx_strcmp(value[i].data, "bind") == 0) {
             ls->bind = 1;
+            continue;
+        }
+
+        if (ngx_strcmp(value[i].data, "default") == 0) {
+            ls->default_port = 1;
             continue;
         }
 

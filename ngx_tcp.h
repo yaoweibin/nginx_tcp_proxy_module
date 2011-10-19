@@ -49,6 +49,7 @@ typedef struct {
     /* server ctx */
     ngx_tcp_conf_ctx_t     *ctx;
 
+    unsigned                default_port:1;
     unsigned                bind:1;
     unsigned                wildcard:1;
 #if (NGX_TCP_SSL)
@@ -72,6 +73,7 @@ typedef struct {
 
 typedef struct {
     ngx_tcp_conf_ctx_t    *ctx;
+    ngx_tcp_conf_ctx_t    *default_ctx;
     ngx_str_t              addr_text;
 #if (NGX_TCP_SSL)
     ngx_uint_t              ssl;    /* unsigned   ssl:1; */
@@ -113,6 +115,7 @@ typedef struct {
     socklen_t               socklen;
 
     ngx_tcp_conf_ctx_t     *ctx;
+    ngx_tcp_conf_ctx_t     *default_ctx;
 
     unsigned                bind:1;
     unsigned                wildcard:1;
