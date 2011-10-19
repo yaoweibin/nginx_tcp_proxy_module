@@ -314,8 +314,7 @@ ngx_tcp_process_session(ngx_connection_t *c)
         return;
     }
 
-    cscf->protocol->init_session(c, s);
-    /*ngx_tcp_proxy_init_session(c, s);*/
+    cscf->protocol->init_session(s);
 }
 
 

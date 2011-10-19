@@ -192,11 +192,9 @@ typedef struct {
 } ngx_tcp_log_ctx_t;
 
 
-typedef void (*ngx_tcp_init_session_pt)( ngx_connection_t *c, 
-        ngx_tcp_session_t *s);
+typedef void (*ngx_tcp_init_session_pt)(ngx_tcp_session_t *s);
 typedef void (*ngx_tcp_init_protocol_pt)(ngx_event_t *rev);
-typedef void (*ngx_tcp_auth_state_pt)(ngx_event_t *rev);
-typedef ngx_int_t (*ngx_tcp_parse_command_pt)(ngx_tcp_session_t *s);
+typedef void (*ngx_tcp_parse_protocol_pt)(ngx_event_t *rev);
 
 
 struct ngx_tcp_protocol_s {
@@ -206,8 +204,7 @@ struct ngx_tcp_protocol_s {
 
     ngx_tcp_init_session_pt     init_session;
     ngx_tcp_init_protocol_pt    init_protocol;
-    ngx_tcp_parse_command_pt    parse_command;
-    ngx_tcp_auth_state_pt       auth_state;
+    ngx_tcp_parse_protocol_pt   parse_protocol;
 
     ngx_str_t                   internal_server_error;
 };

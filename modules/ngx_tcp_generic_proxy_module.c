@@ -27,7 +27,7 @@ typedef struct ngx_tcp_proxy_conf_s {
 } ngx_tcp_proxy_conf_t;
 
 
-static void ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s); 
+static void ngx_tcp_proxy_init_session(ngx_tcp_session_t *s); 
 static  void ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
@@ -47,7 +47,6 @@ static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
     ngx_tcp_proxy_init_session,
     NULL,
     NULL,
-    NULL,
 
     ngx_string("500 Internal server error" CRLF)
 };
@@ -55,40 +54,40 @@ static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
 
 static ngx_command_t  ngx_tcp_proxy_commands[] = {
 
-    {   ngx_string("proxy_pass"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_proxy_pass,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+    { ngx_string("proxy_pass"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_proxy_pass,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
-    {   ngx_string("proxy_buffer"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_size_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_proxy_conf_t, buffer_size),
-        NULL },
+    { ngx_string("proxy_buffer"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_size_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_proxy_conf_t, buffer_size),
+      NULL },
 
-    {   ngx_string("proxy_connect_timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_proxy_conf_t, upstream.connect_timeout),
-        NULL },
+    { ngx_string("proxy_connect_timeout"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_proxy_conf_t, upstream.connect_timeout),
+      NULL },
 
-    {   ngx_string("proxy_read_timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_proxy_conf_t, upstream.read_timeout),
-        NULL },
+    { ngx_string("proxy_read_timeout"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_proxy_conf_t, upstream.read_timeout),
+      NULL },
 
-    {   ngx_string("proxy_send_timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_proxy_conf_t, upstream.send_timeout),
-        NULL },
+    { ngx_string("proxy_send_timeout"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_proxy_conf_t, upstream.send_timeout),
+      NULL },
 
     ngx_null_command
 };
@@ -122,9 +121,12 @@ ngx_module_t  ngx_tcp_proxy_module = {
 
 
 static void 
-ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s) 
+ngx_tcp_proxy_init_session(ngx_tcp_session_t *s) 
 {
+    ngx_connection_t         *c;
     ngx_tcp_proxy_conf_t     *pcf;
+
+    c = s->connection;
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
