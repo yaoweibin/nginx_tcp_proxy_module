@@ -70,7 +70,7 @@ GET /
     }
 
     server {
-        listen l984;
+        listen 1984;
         #server_names a.b.c d.e.f;
 
         proxy_pass test;
