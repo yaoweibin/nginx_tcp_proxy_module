@@ -67,6 +67,13 @@ typedef struct {
 
 
 typedef struct {
+    ngx_uint_t           hash;
+    ngx_str_t            name;
+    ngx_tcp_conf_ctx_t  *ctx;
+} ngx_tcp_virtual_server_t;
+
+
+typedef struct {
     ngx_str_t name;
 } ngx_tcp_core_loc_t;
 

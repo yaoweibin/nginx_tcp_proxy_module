@@ -14,6 +14,7 @@ static void ngx_tcp_ssl_init_connection(ngx_ssl_t *ssl, ngx_connection_t *c);
 static void ngx_tcp_ssl_handshake_handler(ngx_connection_t *c);
 #endif
 
+
 void
 ngx_tcp_init_connection(ngx_connection_t *c)
 {

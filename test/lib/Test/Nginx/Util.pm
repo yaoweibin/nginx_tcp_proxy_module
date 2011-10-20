@@ -35,9 +35,8 @@ our $WorkerConnections      = 1024;
 our $LogLevel               = 'debug';
 our $MasterProcessEnabled   = 'off';
 our $DaemonEnabled          = 'on';
-our $ServerPort             = 1982;
-our $ServerPortForClient    = 1982;
-#our $ServerPortForClient    = 1984;
+our $ServerPort             = 1984;
+our $ServerPortForClient    = 1984;
 
 
 sub repeat_each (@) {

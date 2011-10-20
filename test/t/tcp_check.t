@@ -46,7 +46,7 @@ __DATA__
     }
 
     server {
-        listen 1982;
+        listen 1984;
 
         protocol tcp_generic;
         proxy_pass test;
@@ -70,8 +70,8 @@ GET /
     }
 
     server {
-        listen 1982;
-        server_names a.b.c d.e.f;
+        listen l984;
+        #server_names a.b.c d.e.f;
 
         proxy_pass test;
     }
@@ -95,7 +95,7 @@ GET /
     }
 
     server {
-        listen 1982;
+        listen 1984;
 
         proxy_pass test;
     }

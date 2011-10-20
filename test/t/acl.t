@@ -38,7 +38,7 @@ __DATA__
     server {
         deny 127.0.0.1;
 
-        listen 1982;
+        listen 1984;
 
         proxy_pass test;
     }

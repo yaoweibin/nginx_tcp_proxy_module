@@ -28,8 +28,8 @@ typedef struct ngx_tcp_proxy_conf_s {
 
 
 static void ngx_tcp_proxy_init_session(ngx_tcp_session_t *s); 
-static  void ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s);
-static void ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, 
+static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s);
+static void ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
@@ -125,8 +125,13 @@ ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
 {
     ngx_connection_t         *c;
     ngx_tcp_proxy_conf_t     *pcf;
+    ngx_tcp_core_srv_conf_t  *cscf;
 
     c = s->connection;
+
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp proxy init session");
+
+    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
@@ -136,17 +141,14 @@ ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
         return;
     }
 
+    s->out.len = 0;
+
     c->write->handler = ngx_tcp_proxy_dummy_write_handler;
     c->read->handler = ngx_tcp_proxy_dummy_read_handler;
 
-    if (ngx_tcp_upstream_create(s) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
+    ngx_add_timer(c->read, cscf->timeout);
 
-    /*do something about the proxy related part in the session struct*/
-
-    ngx_tcp_proxy_init(c, s);
+    ngx_tcp_proxy_init_upstream(c, s);
 
     return;
 }
@@ -187,13 +189,13 @@ ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev)
 
 
 static  void
-ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s) 
+ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s) 
 {
     ngx_tcp_upstream_t       *u;
     ngx_tcp_proxy_ctx_t      *p;
     ngx_tcp_proxy_conf_t     *pcf;
 
-    s->connection->log->action = "ngx_tcp_proxy_init";
+    s->connection->log->action = "ngx_tcp_proxy_init_upstream";
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
@@ -205,12 +207,17 @@ ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s)
 
     ngx_tcp_set_ctx(s, p, ngx_tcp_proxy_module);
 
+    if (ngx_tcp_upstream_create(s) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
     u = s->upstream;
 
     u->conf = &pcf->upstream;
 
-    u->write_event_handler = ngx_tcp_upstream_proxy_generic_handler;
-    u->read_event_handler = ngx_tcp_upstream_proxy_generic_handler;
+    u->write_event_handler = ngx_tcp_upstream_init_proxy_handler;
+    u->read_event_handler = ngx_tcp_upstream_init_proxy_handler;
 
     p->upstream = &u->peer;
 
@@ -220,8 +227,6 @@ ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s)
         return;
     }
 
-    s->out.len = 0;
-
     ngx_tcp_upstream_init(s);
 
     return;
@@ -229,7 +234,7 @@ ngx_tcp_proxy_init(ngx_connection_t *c, ngx_tcp_session_t *s)
 
 
 static void 
-ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
+ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
 {
     ngx_connection_t         *c;
     ngx_tcp_proxy_ctx_t      *pctx;
@@ -239,7 +244,7 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     c = s->connection;
-    c->log->action = "ngx_tcp_proxy_handler";
+    c->log->action = "ngx_tcp_upstream_init_proxy_handler";
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp proxy upstream init proxy");
 
@@ -270,8 +275,6 @@ ngx_tcp_upstream_proxy_generic_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t 
 
     c->read->handler = ngx_tcp_proxy_handler;
     c->write->handler = ngx_tcp_proxy_handler;
-
-    ngx_add_timer(s->connection->read, cscf->timeout);
 
     ngx_add_timer(c->read, pcf->upstream.read_timeout);
     ngx_add_timer(c->write, pcf->upstream.send_timeout);
@@ -454,7 +457,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
     {
         action = c->log->action;
         c->log->action = NULL;
-        ngx_log_error(NGX_LOG_INFO, c->log, 0, "proxied session done");
+        ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "proxied session done");
         c->log->action = action;
 
         ngx_tcp_finalize_session(s);

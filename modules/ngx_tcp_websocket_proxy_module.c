@@ -152,6 +152,8 @@ ngx_tcp_websocket_init_session(ngx_tcp_session_t *s)
 
     c = s->connection;
 
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp websocket init session");
+
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
@@ -866,7 +868,7 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
     {
         action = c->log->action;
         c->log->action = NULL;
-        ngx_log_error(NGX_LOG_INFO, c->log, 0, "proxied session done");
+        ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "proxied session done");
         c->log->action = action;
 
         ngx_tcp_finalize_session(s);

@@ -38,7 +38,7 @@ __DATA__
     }
 
     server {
-        listen 1982;
+        listen 1984;
 
         proxy_pass test;
     }
