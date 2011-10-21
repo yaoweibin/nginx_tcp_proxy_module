@@ -32,15 +32,7 @@ __DATA__
 === TEST 1: the upstream_ip_hash command
 --- config
     upstream test{
-        server 172.19.0.129;
-        server 172.19.0.130;
-        server 172.19.0.131;
-        server 172.19.0.132;
-        server 172.19.0.235;
-        server 172.19.0.236;
-        server 172.19.0.237;
-        server 172.19.0.238;
-        server 172.19.0.239;
+        server blog.163.com;
         ip_hash;
     }
 
@@ -56,17 +48,9 @@ GET /
 === TEST 2: the upstream_ip_hash command with check
 --- config
     upstream test{
-        server 172.19.0.129;
-        server 172.19.0.130;
-        server 172.19.0.131;
-        server 172.19.0.132;
-        server 172.19.0.235;
-        server 172.19.0.236;
-        server 172.19.0.237;
-        server 172.19.0.238;
-        server 172.19.0.239;
+        server blog.163.com;
 
-        check interval=3000;
+        check interval=2000;
         ip_hash;
     }
 

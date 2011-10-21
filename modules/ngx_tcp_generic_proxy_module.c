@@ -28,7 +28,8 @@ typedef struct ngx_tcp_proxy_conf_s {
 
 
 static void ngx_tcp_proxy_init_session(ngx_tcp_session_t *s); 
-static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s);
+static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c, 
+        ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
@@ -510,6 +511,17 @@ ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     u_short                     port = 80;
     ngx_str_t                  *value, *url = &pcf->url;
     ngx_url_t                   u;
+    ngx_tcp_core_srv_conf_t    *cscf;
+
+    cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
+    if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data, 
+                (u_char *)"tcp_generic", sizeof("tcp_generic") - 1) != 0) {
+        return "the protocol should be tcp_generic";
+    }
+
+    if (cscf->protocol == NULL) {
+        cscf->protocol = &ngx_tcp_generic_protocol;
+    }
 
     if (pcf->upstream.upstream) {
         return "is duplicate";

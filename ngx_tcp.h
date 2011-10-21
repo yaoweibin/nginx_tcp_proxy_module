@@ -14,6 +14,8 @@ typedef struct ngx_tcp_protocol_s  ngx_tcp_protocol_t;
 typedef struct ngx_tcp_upstream_s  ngx_tcp_upstream_t;
 typedef struct ngx_tcp_cleanup_s  ngx_tcp_cleanup_t;
 
+typedef struct ngx_tcp_core_srv_conf_s ngx_tcp_core_srv_conf_t;
+
 typedef struct ngx_tcp_upstream_srv_conf_s  ngx_tcp_upstream_srv_conf_t;
 typedef struct ngx_tcp_upstream_resolved_s  ngx_tcp_upstream_resolved_t;
 
@@ -58,6 +60,7 @@ typedef struct {
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
     unsigned                ipv6only:2;
 #endif
+    ngx_tcp_core_srv_conf_t *conf;
 } ngx_tcp_listen_t;
 
 
@@ -69,6 +72,7 @@ typedef struct {
 typedef struct {
     ngx_uint_t           hash;
     ngx_str_t            name;
+    ngx_tcp_listen_t    *listen;
     ngx_tcp_conf_ctx_t  *ctx;
 } ngx_tcp_virtual_server_t;
 
@@ -83,7 +87,7 @@ typedef struct {
     ngx_tcp_conf_ctx_t    *default_ctx;
     ngx_str_t              addr_text;
 #if (NGX_TCP_SSL)
-    ngx_uint_t              ssl;    /* unsigned   ssl:1; */
+    ngx_uint_t             ssl;    /* unsigned   ssl:1; */
 #endif
 } ngx_tcp_addr_conf_t;
 
@@ -141,8 +145,9 @@ typedef struct {
 } ngx_tcp_access_rule_t;
 
 typedef struct {
-    ngx_array_t             servers;     /* ngx_tcp_core_srv_conf_t */
-    ngx_array_t             listen;      /* ngx_tcp_listen_t */
+    ngx_array_t             servers;         /* ngx_tcp_core_srv_conf_t */
+    ngx_array_t             listen;          /* ngx_tcp_listen_t */
+    ngx_array_t             virtual_servers; /* ngx_tcp_virtual_server_t */
 } ngx_tcp_core_main_conf_t;
 
 typedef struct {
@@ -164,7 +169,7 @@ typedef struct {
 #define NGX_TCP_GENERIC_PROTOCOL    0
 #define NGX_TCP_WEBSOCKET_PROTOCOL  1
 
-typedef struct {
+struct ngx_tcp_core_srv_conf_s {
     /* array of the ngx_tcp_server_name_t, "server_name" directive */
     ngx_array_t             server_names;
 
@@ -193,7 +198,7 @@ typedef struct {
 
     /* server ctx */
     ngx_tcp_conf_ctx_t     *ctx;
-} ngx_tcp_core_srv_conf_t;
+};
 
 
 typedef struct {

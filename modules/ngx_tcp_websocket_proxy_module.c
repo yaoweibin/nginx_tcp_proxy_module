@@ -35,14 +35,17 @@ typedef struct ngx_tcp_websocket_conf_s {
 
 
 static void ngx_tcp_websocket_init_session(ngx_tcp_session_t *s);
-static  void ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s);
+static  void ngx_tcp_websocket_init_upstream(ngx_connection_t *c, 
+        ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s, 
         ngx_tcp_upstream_t *u);
-static char *ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+static char *ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, 
+        void *conf);
 static void ngx_tcp_websocket_dummy_read_handler(ngx_event_t *ev);
 static void ngx_tcp_websocket_dummy_write_handler(ngx_event_t *ev);
 static void ngx_tcp_websocket_init_protocol(ngx_event_t *ev);
-static void websocket_http_request_parser_init(http_request_parser *hp, void *data); 
+static void websocket_http_request_parser_init(http_request_parser *hp, 
+        void *data); 
 
 static void request_method(void *data, const signed char *at, size_t length);
 static void request_uri(void *data, const signed char *at, size_t length);
@@ -922,6 +925,17 @@ ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     u_short                     port = 80;
     ngx_str_t                  *value, *url = &wcf->url;
     ngx_url_t                   u;
+    ngx_tcp_core_srv_conf_t    *cscf;
+
+    cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
+    if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data, 
+                (u_char *)"tcp_websocket", sizeof("tcp_websocket") - 1) != 0) {
+        return "the protocol should be tcp_websocket";
+    }
+
+    if (cscf->protocol == NULL) {
+        cscf->protocol = &ngx_tcp_websocket_protocol;
+    }
 
     if (wcf->upstream.upstream) {
         return "is duplicate";

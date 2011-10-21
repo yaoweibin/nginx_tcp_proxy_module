@@ -8,7 +8,10 @@
 static char *ngx_tcp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static ngx_int_t ngx_tcp_add_ports(ngx_conf_t *cf, ngx_array_t *ports,
     ngx_tcp_listen_t *listen);
-static char *ngx_tcp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports);
+static ngx_int_t ngx_tcp_add_virtual_servers(ngx_conf_t *cf, 
+        ngx_tcp_core_main_conf_t *cmcf, ngx_tcp_listen_t *listen);
+static char * ngx_tcp_optimize_servers(ngx_conf_t *cf, 
+        ngx_tcp_core_main_conf_t *cmcf, ngx_array_t *ports);
 static ngx_int_t ngx_tcp_add_addrs(ngx_conf_t *cf, ngx_tcp_port_t *mport,
     ngx_tcp_conf_addr_t *addr);
 #if (NGX_HAVE_INET6)
@@ -212,9 +215,13 @@ ngx_tcp_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         if (ngx_tcp_add_ports(cf, &ports, &listen[i]) != NGX_OK) {
             return NGX_CONF_ERROR;
         }
+
+        if (ngx_tcp_add_virtual_servers(cf, cmcf, &listen[i]) != NGX_OK) {
+            return NGX_CONF_ERROR;
+        }
     }
 
-    return ngx_tcp_optimize_servers(cf, &ports);
+    return ngx_tcp_optimize_servers(cf, cmcf, &ports);
 }
 
 
@@ -304,8 +311,35 @@ found:
 }
 
 
+static ngx_int_t 
+ngx_tcp_add_virtual_servers(ngx_conf_t *cf, ngx_tcp_core_main_conf_t *cmcf,
+        ngx_tcp_listen_t *listen)
+{
+    ngx_tcp_core_srv_conf_t   *cscf;
+    ngx_tcp_virtual_server_t  *vs;
+
+    cscf = listen->conf;
+    if (cscf == NULL || cscf->server_name.len == 0) {
+        return NGX_OK;
+    }
+
+    vs = ngx_array_push(&cmcf->virtual_servers);
+    if (vs == NULL) {
+        return NGX_ERROR;
+    }
+
+    vs->name = cscf->server_name;
+    vs->hash = ngx_hash_key(vs->name.data, vs->name.len);
+    vs->listen = listen;
+    vs->ctx = listen->ctx;
+
+    return NGX_OK;
+}
+
+
 static char *
-ngx_tcp_optimize_servers(ngx_conf_t *cf, ngx_array_t *ports)
+ngx_tcp_optimize_servers(ngx_conf_t *cf, ngx_tcp_core_main_conf_t *cmcf,
+        ngx_array_t *ports)
 {
     ngx_uint_t             i, p, last, bind_wildcard;
     ngx_listening_t       *ls;

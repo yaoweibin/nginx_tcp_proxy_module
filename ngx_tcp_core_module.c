@@ -181,6 +181,13 @@ ngx_tcp_core_create_main_conf(ngx_conf_t *cf)
         return NULL;
     }
 
+    if (ngx_array_init(&cmcf->virtual_servers, cf->pool, 4, 
+             sizeof(ngx_tcp_conf_port_t)) != NGX_OK)
+    {
+        return NULL;
+    }
+
+
     return cmcf;
 }
 
@@ -261,9 +268,11 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_str_value(conf->server_name, prev->server_name, "");
 
+    /*
     if (conf->server_name.len == 0) {
         conf->server_name = cf->cycle->hostname;
     }
+    */
 
     if (conf->protocol == NULL) {
         for (m = 0; ngx_modules[m]; m++) {
@@ -410,10 +419,9 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     in_port_t                   port;
     ngx_str_t                  *value;
     ngx_url_t                   u;
-    ngx_uint_t                  i, m;
+    ngx_uint_t                  i;
     struct sockaddr            *sa;
     ngx_tcp_listen_t           *ls;
-    ngx_tcp_module_t           *module;
     struct sockaddr_in         *sin;
     ngx_tcp_core_main_conf_t   *cmcf;
 #if (NGX_HAVE_INET6)
@@ -493,18 +501,7 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ls->socklen = u.socklen;
     ls->wildcard = u.wildcard;
     ls->ctx = cf->ctx;
-
-    for (m = 0; ngx_modules[m]; m++) {
-        if (ngx_modules[m]->type != NGX_TCP_MODULE) {
-            continue;
-        }
-
-        module = ngx_modules[m]->ctx;
-
-        if (module->protocol == NULL) {
-            continue;
-        }
-    }
+    ls->conf = conf;
 
     for (i = 2; i < cf->args->nelts; i++) {
 
