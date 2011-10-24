@@ -117,7 +117,7 @@ struct ngx_tcp_upstream_srv_conf_s {
     union {
         ngx_uint_t                       return_code;
         ngx_uint_t                       status_alive;
-    };
+    } code;
 };
 
 
