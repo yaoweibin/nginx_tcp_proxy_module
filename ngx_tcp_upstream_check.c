@@ -770,12 +770,12 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
 
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
                 "http_parse: hp->status_code_n: %d, conf: %d",
-                hp->status_code_n, uscf->status_alive);
+                hp->status_code_n, uscf->code.status_alive);
 
         if (hp->status_code_n == 0) {
             return NGX_AGAIN;
         }
-        else if (hp->status_code_n & uscf->status_alive) {
+        else if (hp->status_code_n & uscf->code.status_alive) {
             return NGX_OK;
         }
         else {
@@ -1050,12 +1050,12 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf)
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
             "smtp_parse: sp->hello_reply_code: %d, conf: %d",
-            sp->hello_reply_code, uscf->status_alive);
+            sp->hello_reply_code, uscf->code.status_alive);
 
     if (sp->hello_reply_code == 0) {
         return NGX_AGAIN;
     }
-    else if (sp->hello_reply_code & uscf->status_alive) {
+    else if (sp->hello_reply_code & uscf->code.status_alive) {
         return NGX_OK;
     }
     else {
@@ -1587,8 +1587,8 @@ ngx_tcp_upstream_init_check_conf(ngx_tcp_upstream_srv_conf_t *uscf)
         uscf->send.len = cf->default_send.len;
     }
 
-    if (uscf->status_alive == 0) { 
-        uscf->status_alive = cf->default_status_alive;
+    if (uscf->code.status_alive == 0) { 
+        uscf->code.status_alive = cf->default_status_alive;
     }
 }
 
