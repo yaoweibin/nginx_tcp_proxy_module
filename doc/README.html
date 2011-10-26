@@ -66,6 +66,16 @@
 			<li><a href="#proxy_send_timeout">proxy_send_timeout</a></li>
 		</ul>
 
+		<li><a href="#ngx_tcp_websocket_module">ngx_tcp_websocket_module</a></li>
+		<ul>
+
+			<li><a href="#websocket_pass">websocket_pass</a></li>
+			<li><a href="#websocket_buffer">websocket_buffer</a></li>
+			<li><a href="#websocket_connect_timeout">websocket_connect_timeout</a></li>
+			<li><a href="#websocket_read_timeout">websocket_read_timeout</a></li>
+			<li><a href="#websocket_send_timeout">websocket_send_timeout</a></li>
+		</ul>
+
 		<li><a href="#ngx_tcp_ssl_module">ngx_tcp_ssl_module</a></li>
 		<ul>
 
@@ -167,7 +177,7 @@
 </p>
 <hr />
 <h1><a name="description">Description</a></h1>
-<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
+<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_websocket_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
 <p>The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying.</p>
 <p>You can't use the same listening port with HTTP modules.</p>
 <p>
@@ -195,10 +205,10 @@
 <p>
 </p>
 <h3><a name="listen">listen</a></h3>
-<p><strong>syntax:</strong> <em>listen address:port [ bind | ssl ]</em></p>
+<p><strong>syntax:</strong> <em>listen address:port [ bind | ssl | default]</em></p>
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>server</em></p>
-<p><strong>description:</strong> The same as listen (<a href="http://wiki.nginx.org/NginxMailCoreModule#listen">http://wiki.nginx.org/NginxMailCoreModule#listen</a>).</p>
+<p><strong>description:</strong> The same as listen (<a href="http://wiki.nginx.org/NginxMailCoreModule#listen">http://wiki.nginx.org/NginxMailCoreModule#listen</a>). The parameter of default means the default server if you have several server blocks with the same port.</p>
 <p>
 </p>
 <h3><a name="access_log">access_log</a></h3>
@@ -275,7 +285,7 @@
 <p><strong>syntax:</strong> <em>server_name name fqdn_server_host</em></p>
 <p><strong>default:</strong> <em>The name of the host, obtained through gethostname()</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>).</p>
+<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>). You can specify several server name in different server block with the same port. This can be used in websocket module.</p>
 <p>
 </p>
 <h3><a name="resolver">resolver</a></h3>
@@ -448,6 +458,44 @@
 </p>
 <h3><a name="proxy_send_timeout">proxy_send_timeout</a></h3>
 <p><strong>syntax:</strong> <em>proxy_send_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of sending to backends.</p>
+<p>
+</p>
+<h2><a name="ngx_tcp_websocket_module">ngx_tcp_websocket_module</a></h2>
+<p>
+</p>
+<h3><a name="websocket_pass">websocket_pass</a></h3>
+<p><strong>syntax:</strong> <em>websocket_pass [path] host:port</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>server</em></p>
+<p><strong>description:</strong> proxy the websocket request to the backend server. Default port is 80. You can specify several different pathes in the same server block.</p>
+<p>
+</p>
+<h3><a name="websocket_buffer">websocket_buffer</a></h3>
+<p><strong>syntax:</strong> <em>websocket_buffer size</em></p>
+<p><strong>default:</strong> <em>4k</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the size of proxy buffer.</p>
+<p>
+</p>
+<h3><a name="websocket_connect_timeout">websocket_connect_timeout</a></h3>
+<p><strong>syntax:</strong> <em>websocket_connect_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of connection to backends.</p>
+<p>
+</p>
+<h3><a name="websocket_read_timeout">websocket_read_timeout</a></h3>
+<p><strong>syntax:</strong> <em>websocket_read_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of reading from backends.</p>
+<p>
+</p>
+<h3><a name="websocket_send_timeout">websocket_send_timeout</a></h3>
+<p><strong>syntax:</strong> <em>websocket_send_timeout miliseconds</em></p>
 <p><strong>default:</strong> <em>60000</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
 <p><strong>description:</strong> set the timeout value of sending to backends.</p>

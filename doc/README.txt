@@ -62,9 +62,10 @@ Synopsis
 Description
     This module actually include many modules: ngx_tcp_module,
     ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module,
-    ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules
-    work togther to add the support of TCP proxy with Nginx. I also add
-    other features: ip_hash, upstream server health check, status monitor.
+    ngx_tcp_websocket_module, ngx_tcp_ssl_module,
+    ngx_tcp_upstream_ip_hash_module. All these modules work togther to add
+    the support of TCP proxy with Nginx. I also add other features: ip_hash,
+    upstream server health check, status monitor.
 
     The motivation of writing these modules is Nginx's high performance and
     robustness. At first, I developed this module just for general TCP
@@ -98,14 +99,16 @@ Directives
     server block.
 
    listen
-    syntax: *listen address:port [ bind | ssl ]*
+    syntax: *listen address:port [ bind | ssl | default]*
 
     default: *none*
 
     context: *server*
 
     description: The same as listen
-    (<http://wiki.nginx.org/NginxMailCoreModule#listen>).
+    (<http://wiki.nginx.org/NginxMailCoreModule#listen>). The parameter of
+    default means the default server if you have several server blocks with
+    the same port.
 
    access_log
     syntax: *access_log path [buffer=size] | off*
@@ -196,7 +199,9 @@ Directives
     context: *tcp, server*
 
     description: The same as server_name
-    (<http://wiki.nginx.org/NginxMailCoreModule#server_name>).
+    (<http://wiki.nginx.org/NginxMailCoreModule#server_name>). You can
+    specify several server name in different server block with the same
+    port. This can be used in websocket module.
 
    resolver
     syntax: *resolver address*
@@ -412,6 +417,54 @@ Directives
 
    proxy_send_timeout
     syntax: *proxy_send_timeout miliseconds*
+
+    default: *60000*
+
+    context: *tcp, server*
+
+    description: set the timeout value of sending to backends.
+
+  ngx_tcp_websocket_module
+   websocket_pass
+    syntax: *websocket_pass [path] host:port*
+
+    default: *none*
+
+    context: *server*
+
+    description: proxy the websocket request to the backend server. Default
+    port is 80. You can specify several different pathes in the same server
+    block.
+
+   websocket_buffer
+    syntax: *websocket_buffer size*
+
+    default: *4k*
+
+    context: *tcp, server*
+
+    description: set the size of proxy buffer.
+
+   websocket_connect_timeout
+    syntax: *websocket_connect_timeout miliseconds*
+
+    default: *60000*
+
+    context: *tcp, server*
+
+    description: set the timeout value of connection to backends.
+
+   websocket_read_timeout
+    syntax: *websocket_read_timeout miliseconds*
+
+    default: *60000*
+
+    context: *tcp, server*
+
+    description: set the timeout value of reading from backends.
+
+   websocket_send_timeout
+    syntax: *websocket_send_timeout miliseconds*
 
     default: *60000*
 

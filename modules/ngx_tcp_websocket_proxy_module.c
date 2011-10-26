@@ -1122,8 +1122,10 @@ ngx_tcp_websocket_create_conf(ngx_conf_t *cf)
 static char *
 ngx_tcp_websocket_merge_conf(ngx_conf_t *cf, void *parent, void *child) 
 {
+    ngx_tcp_path_upstream_t  *pu;
     ngx_tcp_websocket_conf_t *prev = parent;
     ngx_tcp_websocket_conf_t *conf = child;
+    ngx_tcp_core_srv_conf_t    *cscf;
 
     ngx_conf_merge_size_value(conf->buffer_size, prev->buffer_size, (size_t) ngx_pagesize);
 
@@ -1135,6 +1137,27 @@ ngx_tcp_websocket_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_msec_value(conf->upstream.read_timeout,
                               prev->upstream.read_timeout, 60000);
+
+    if (conf->upstream.upstream == NULL) {
+
+        if (conf->path_upstreams.nelts) {
+            pu = conf->path_upstreams.elts;
+            conf->upstream.upstream = pu[0].upstream;
+        }
+        else {
+            cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
+
+            if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data, 
+                        (u_char *)"tcp_websocket", sizeof("tcp_websocket") - 1) == 0) {
+
+                ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                        "You must add at least one websocket_pass directive in "\
+                        "the server block.");
+
+                return NGX_CONF_ERROR;
+            }
+        }
+    }
 
     return NGX_CONF_OK;
 }
