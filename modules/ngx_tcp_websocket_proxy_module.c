@@ -16,13 +16,18 @@ typedef struct ngx_tcp_websocket_s {
 
     http_request_parser   *parser;
 
-    ngx_str_t              location;
+    ngx_str_t              path;
     ngx_str_t              host;
 } ngx_tcp_websocket_ctx_t;
 
+typedef struct ngx_tcp_path_upstream_s {
+    ngx_str_t                      path;
+    ngx_tcp_upstream_srv_conf_t   *upstream;
+} ngx_tcp_path_upstream_t;
 
 typedef struct ngx_tcp_websocket_conf_s {
-    ngx_tcp_upstream_conf_t  upstream;
+    ngx_tcp_upstream_conf_t           upstream;       /* Default */
+    ngx_array_t                       path_upstreams; /* ngx_tcp_path_upstream_t */
 
     ngx_str_t   scheme;
     ngx_str_t   url;
@@ -36,6 +41,8 @@ typedef struct ngx_tcp_websocket_conf_s {
 
 static void ngx_tcp_websocket_init_session(ngx_tcp_session_t *s);
 static ngx_tcp_virtual_server_t * ngx_tcp_websocket_find_virtual_server(
+        ngx_tcp_session_t *s, ngx_tcp_websocket_ctx_t *ctx);
+static ngx_tcp_path_upstream_t * ngx_tcp_websocket_find_path_upstream(
         ngx_tcp_session_t *s, ngx_tcp_websocket_ctx_t *ctx);
 static  void ngx_tcp_websocket_init_upstream(ngx_connection_t *c, 
         ngx_tcp_session_t *s);
@@ -82,7 +89,7 @@ static ngx_tcp_protocol_t  ngx_tcp_websocket_protocol = {
 static ngx_command_t  ngx_tcp_websocket_commands[] = {
 
     { ngx_string("websocket_pass"),
-      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
       ngx_tcp_websocket_pass,
       NGX_TCP_SRV_CONF_OFFSET,
       0,
@@ -326,7 +333,7 @@ static void
 request_path(void *data, const signed char *at, size_t length)
 {
     u_char                    *p, *last;
-    ngx_str_t                 *location;
+    ngx_str_t                 *path;
     ngx_tcp_session_t         *s = data;
     ngx_tcp_websocket_ctx_t   *wctx;
 
@@ -358,14 +365,14 @@ request_path(void *data, const signed char *at, size_t length)
         p++;
     }
 
-    location = &wctx->location;
-    location->len = p - (u_char *)at;
-    location->data = ngx_palloc(s->connection->pool, location->len); 
-    if (location->data == NULL) {
+    path = &wctx->path;
+    path->len = p - (u_char *)at;
+    path->data = ngx_palloc(s->connection->pool, path->len); 
+    if (path->data == NULL) {
         return;
     }
 
-    ngx_memcpy(location->data, (u_char *) at, location->len);
+    ngx_memcpy(path->data, (u_char *) at, path->len);
 }
 
 
@@ -589,6 +596,8 @@ static  void
 ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s) 
 {
     ngx_tcp_upstream_t           *u;
+    ngx_tcp_path_upstream_t      *pu;     
+    ngx_tcp_upstream_conf_t      *ucf;
     ngx_tcp_websocket_ctx_t      *wctx;
     ngx_tcp_websocket_conf_t     *wcf;
     ngx_tcp_virtual_server_t     *vs;
@@ -607,8 +616,8 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
 
     ngx_log_debug3(NGX_LOG_DEBUG_TCP, s->connection->log, 0, 
-            "tcp websocket init upstream, scheme: \"%V\" location: \"%V\", host: \"%V\"",
-            &wcf->scheme, &wctx->location, &wctx->host);
+            "tcp websocket init upstream, scheme: \"%V\" path: \"%V\", host: \"%V\"",
+            &wcf->scheme, &wctx->path, &wctx->host);
 
     c->write->handler = ngx_tcp_websocket_dummy_write_handler;
     c->read->handler = ngx_tcp_websocket_dummy_read_handler;
@@ -621,6 +630,23 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     u = s->upstream;
 
     u->conf = &wcf->upstream;
+
+    pu = ngx_tcp_websocket_find_path_upstream(s, wctx);
+
+    if (pu) {
+
+        ucf = ngx_palloc(s->pool, sizeof(ngx_tcp_upstream_conf_t));
+        if (ucf == NULL) {
+            ngx_tcp_finalize_session(s);
+            return;
+        }
+
+        ngx_memcpy(ucf, &wcf->upstream, sizeof(ngx_tcp_upstream_conf_t));
+
+        ucf->upstream = pu->upstream;
+
+        u->conf = ucf;
+    }
 
     u->write_event_handler = ngx_tcp_upstream_websocket_proxy_init_handler;
     u->read_event_handler = ngx_tcp_upstream_websocket_proxy_init_handler;
@@ -678,6 +704,29 @@ ngx_tcp_websocket_find_virtual_server(ngx_tcp_session_t *s,
         }
 
         return &vs[i];
+    }
+
+    return NULL;
+}
+
+
+static ngx_tcp_path_upstream_t *
+ngx_tcp_websocket_find_path_upstream(ngx_tcp_session_t *s, ngx_tcp_websocket_ctx_t *ctx)
+{
+    ngx_uint_t                    i;
+    ngx_tcp_path_upstream_t      *pu;
+    ngx_tcp_websocket_conf_t     *wcf;
+
+    wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
+
+    pu = wcf->path_upstreams.elts;
+    for (i = 0; i < wcf->path_upstreams.nelts; i++) {
+        if (pu[i].path.len != ctx->path.len 
+                || ngx_memcmp(pu[i].path.data, ctx->path.data, ctx->path.len) != 0) {
+            continue;
+        }
+
+        return &pu[i];
     }
 
     return NULL;
@@ -971,6 +1020,7 @@ ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_str_t                  *value, *url = &wcf->url;
     ngx_url_t                   u;
     ngx_tcp_core_srv_conf_t    *cscf;
+    ngx_tcp_path_upstream_t    *pu;
 
     cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
     if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data, 
@@ -982,13 +1032,14 @@ ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         cscf->protocol = &ngx_tcp_websocket_protocol;
     }
 
-    if (wcf->upstream.upstream) {
-        return "is duplicate";
-    }
-
     value = cf->args->elts;
 
-    url = &value[1];
+    if (cf->args->nelts == 3) {
+        url = &value[2];
+    }
+    else {
+        url = &value[1];
+    }
 
     if (ngx_strncasecmp(url->data, (u_char *)"ws://", 5) == 0) {
         add = 5;
@@ -1019,9 +1070,24 @@ ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     u.uri_part = 1;
     u.no_resolve = 1;
 
-    wcf->upstream.upstream = ngx_tcp_upstream_add(cf, &u, 0);
-    if (wcf->upstream.upstream == NULL) {
-        return NGX_CONF_ERROR;
+    if (cf->args->nelts == 3) {
+        pu = ngx_array_push(&wcf->path_upstreams);
+        if (pu == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        pu->path = value[1];
+        pu->upstream = ngx_tcp_upstream_add(cf, &u, 0);
+    }
+    else {
+        if (wcf->upstream.upstream) {
+            return "is duplicate default upstream";
+        }
+
+        wcf->upstream.upstream = ngx_tcp_upstream_add(cf, &u, 0);
+        if (wcf->upstream.upstream == NULL) {
+            return NGX_CONF_ERROR;
+        }
     }
 
     return NGX_CONF_OK;
@@ -1038,6 +1104,11 @@ ngx_tcp_websocket_create_conf(ngx_conf_t *cf)
         return NULL;
     }
 
+    if (ngx_array_init(&wcf->path_upstreams, cf->pool, 
+                4, sizeof(ngx_tcp_path_upstream_t)) != NGX_OK)  {
+        return NULL;
+    }
+ 
     wcf->buffer_size = NGX_CONF_UNSET_SIZE;
 
     wcf->upstream.connect_timeout = NGX_CONF_UNSET_MSEC;
