@@ -35,6 +35,8 @@ typedef struct ngx_tcp_websocket_conf_s {
 
 
 static void ngx_tcp_websocket_init_session(ngx_tcp_session_t *s);
+static ngx_tcp_virtual_server_t * ngx_tcp_websocket_find_virtual_server(
+        ngx_tcp_session_t *s, ngx_tcp_websocket_ctx_t *ctx);
 static  void ngx_tcp_websocket_init_upstream(ngx_connection_t *c, 
         ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s, 
@@ -589,12 +591,20 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     ngx_tcp_upstream_t           *u;
     ngx_tcp_websocket_ctx_t      *wctx;
     ngx_tcp_websocket_conf_t     *wcf;
+    ngx_tcp_virtual_server_t     *vs;
 
     s->connection->log->action = "ngx_tcp_websocket_init_upstream";
 
-    wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
-
     wctx = ngx_tcp_get_module_ctx(s, ngx_tcp_websocket_module);
+
+    vs = ngx_tcp_websocket_find_virtual_server(s, wctx);
+
+    if (vs) {
+        s->main_conf = vs->ctx->main_conf;
+        s->srv_conf = vs->ctx->srv_conf;
+    }
+
+    wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
 
     ngx_log_debug3(NGX_LOG_DEBUG_TCP, s->connection->log, 0, 
             "tcp websocket init upstream, scheme: \"%V\" location: \"%V\", host: \"%V\"",
@@ -636,15 +646,50 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
 }
 
 
+static ngx_tcp_virtual_server_t * 
+ngx_tcp_websocket_find_virtual_server(ngx_tcp_session_t *s, 
+        ngx_tcp_websocket_ctx_t *ctx)
+{
+    ngx_uint_t                 hash, i;
+    ngx_connection_t          *c;
+    ngx_tcp_core_main_conf_t  *cmcf;
+    ngx_tcp_virtual_server_t  *vs;
+
+    cmcf = ngx_tcp_get_module_main_conf(s, ngx_tcp_core_module);
+
+    if (ctx->host.len == 0) {
+        return NULL;
+    }
+
+    hash = ngx_hash_key(ctx->host.data, ctx->host.len);
+
+    c = s->connection;
+
+    vs = cmcf->virtual_servers.elts;
+    for (i = 0; i < cmcf->virtual_servers.nelts; i++) {
+
+        if (vs[i].hash != hash) {
+            continue;
+        }
+
+        if (vs[i].name.len != ctx->host.len
+                || ngx_memcmp(vs[i].name.data, ctx->host.data, ctx->host.len) != 0){
+            continue;
+        }
+
+        return &vs[i];
+    }
+
+    return NULL;
+}
+
+
 static void 
 ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
 {
     ngx_connection_t             *c;
-    ngx_tcp_core_srv_conf_t      *cscf;
     ngx_tcp_websocket_ctx_t      *wctx;
     ngx_tcp_websocket_conf_t     *wcf;
-
-    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     c = s->connection;
     c->log->action = "ngx_tcp_upstream_websocket_proxy_init_handler";

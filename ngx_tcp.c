@@ -328,7 +328,8 @@ ngx_tcp_add_virtual_servers(ngx_conf_t *cf, ngx_tcp_core_main_conf_t *cmcf,
         return NGX_ERROR;
     }
 
-    vs->name = cscf->server_name;
+    vs->name.len = cscf->server_name.len;
+    vs->name.data = cscf->server_name.data;
     vs->hash = ngx_hash_key(vs->name.data, vs->name.len);
     vs->listen = listen;
     vs->ctx = listen->ctx;

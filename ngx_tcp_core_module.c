@@ -182,7 +182,7 @@ ngx_tcp_core_create_main_conf(ngx_conf_t *cf)
     }
 
     if (ngx_array_init(&cmcf->virtual_servers, cf->pool, 4, 
-             sizeof(ngx_tcp_conf_port_t)) != NGX_OK)
+             sizeof(ngx_tcp_virtual_server_t)) != NGX_OK)
     {
         return NULL;
     }
