@@ -5,7 +5,7 @@
 
 
 #define NGX_DEFAULT_CIPHERS  "HIGH:!aNULL:!MD5"
-#if defined(nginx_version) && nginx_version >= 1001000
+#if defined(nginx_version) && nginx_version >= 1000006
 #define NGX_DEFAULT_ECDH_CURVE  "prime256v1" 
 #endif
 
@@ -66,7 +66,7 @@ static ngx_command_t  ngx_tcp_ssl_commands[] = {
       offsetof(ngx_tcp_ssl_srv_conf_t, dhparam),
       NULL },
 
-#if defined(nginx_version) && nginx_version >= 1001000
+#if defined(nginx_version) && nginx_version >= 1000006
     { ngx_string("ssl_ecdh_curve"),
       NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
@@ -235,7 +235,7 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_str_value(conf->dhparam, prev->dhparam, "");
 
-#if defined(nginx_version) && nginx_version >= 1001000
+#if defined(nginx_version) && nginx_version >= 1000006
     ngx_conf_merge_str_value(conf->ecdh_curve, prev->ecdh_curve, 
                          NGX_DEFAULT_ECDH_CURVE); 
 
@@ -335,7 +335,7 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     }
 
     /* a temporary 512-bit RSA key is required for export versions of MSIE */
-#if defined(nginx_version) && nginx_version >= 1001000
+#if defined(nginx_version) && nginx_version >= 1000006
     SSL_CTX_set_tmp_rsa_callback(conf->ssl.ctx, ngx_ssl_rsa512_key_callback); 
 #else
     if (ngx_ssl_generate_rsa512_key(&conf->ssl) != NGX_OK) {

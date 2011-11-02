@@ -27,7 +27,7 @@ typedef struct {
     ngx_str_t                       certificate;
     ngx_str_t                       certificate_key;
     ngx_str_t                       dhparam;
-#if defined(nginx_version) && nginx_version >= 1001000
+#if defined(nginx_version) && nginx_version >= 1000006
     ngx_str_t                       ecdh_curve; 
 #endif
     ngx_str_t                       client_certificate;
