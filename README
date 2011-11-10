@@ -11,12 +11,12 @@ Installation
     access_log.
 
     Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-    example, the version 0.7.65 (see nginx compatibility), and then build
-    the source with this module:
+    example, the version 1.0.9 (see nginx compatibility), and then build the
+    source with this module:
 
-        $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
-        $ tar -xzvf nginx-0.7.65.tar.gz
-        $ cd nginx-0.7.65/
+        $ wget 'http://nginx.org/download/nginx-1.0.9.tar.gz'
+        $ tar -xzvf nginx-1.0.9.tar.gz
+        $ cd nginx-1.0.9/
         $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
 
         $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
@@ -192,7 +192,7 @@ Directives
     description: set the timeout value with clients.
 
    server_name
-    syntax: *server_name name fqdn_server_host*
+    syntax: *server_name name*
 
     default: *The name of the host, obtained through gethostname()*
 
@@ -201,7 +201,7 @@ Directives
     description: The same as server_name
     (<http://wiki.nginx.org/NginxMailCoreModule#server_name>). You can
     specify several server name in different server block with the same
-    port. This can be used in websocket module.
+    port. They can be used in websocket module.
 
    resolver
     syntax: *resolver address*
@@ -658,7 +658,7 @@ Directives
     session that is stored in the SSL cache.
 
 Compatibility
-    *   My test bed is 0.7.65 and 0.8.53
+    *   My test bed is 0.7.65+
 
 Notes
     The http_response_parse.rl and smtp_response_parse.rl are ragel

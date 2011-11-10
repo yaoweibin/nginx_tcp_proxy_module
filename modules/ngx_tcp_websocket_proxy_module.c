@@ -14,10 +14,10 @@ typedef struct ngx_tcp_websocket_s {
     ngx_peer_connection_t  *upstream;
     ngx_buf_t              *buffer;
 
-    http_request_parser   *parser;
+    http_request_parser    *parser;
 
-    ngx_str_t              path;
-    ngx_str_t              host;
+    ngx_str_t               path;
+    ngx_str_t               host;
 } ngx_tcp_websocket_ctx_t;
 
 typedef struct ngx_tcp_path_upstream_s {
@@ -27,15 +27,16 @@ typedef struct ngx_tcp_path_upstream_s {
 
 typedef struct ngx_tcp_websocket_conf_s {
     ngx_tcp_upstream_conf_t           upstream;       /* Default */
+
+    size_t                            buffer_size;
+    ngx_str_t                         scheme;
+    ngx_str_t                         url;
+
     ngx_array_t                       path_upstreams; /* ngx_tcp_path_upstream_t */
 
-    ngx_str_t   scheme;
-    ngx_str_t   url;
-    size_t      buffer_size;
-
     /*TODO: support for the variable in the websocket_pass*/
-    ngx_array_t *websocket_lengths;
-    ngx_array_t *websocket_values;
+    ngx_array_t                      *websocket_lengths;
+    ngx_array_t                      *websocket_values;
 } ngx_tcp_websocket_conf_t;
 
 

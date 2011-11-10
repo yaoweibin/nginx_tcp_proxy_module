@@ -4,7 +4,7 @@
 <head>
 <title>Name</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:ports-i386@jail-3.isc.freebsd.org" />
+<link rev="made" href="mailto:yaoweibin@yaoweibin.freebsd" />
 </head>
 
 <body style="background-color: white">
@@ -126,11 +126,11 @@
 <h1><a name="installation">Installation</a></h1>
 <p>Download the latest stable version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
 <p>The development version of this module is here (<a href="https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop">https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop</a>). I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.</p>
-<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:</p>
+<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 1.0.9 (see nginx compatibility), and then build the source with this module:</p>
 <pre>
-    $ wget '<a href="http://nginx.org/download/nginx-0.7.65.tar.gz">http://nginx.org/download/nginx-0.7.65.tar.gz</a>'
-    $ tar -xzvf nginx-0.7.65.tar.gz
-    $ cd nginx-0.7.65/
+    $ wget '<a href="http://nginx.org/download/nginx-1.0.9.tar.gz">http://nginx.org/download/nginx-1.0.9.tar.gz</a>'
+    $ tar -xzvf nginx-1.0.9.tar.gz
+    $ cd nginx-1.0.9/
     $ patch -p1 &lt; /path/to/nginx_tcp_proxy_module/tcp.patch</pre>
 <pre>
     $ ./configure --add-module=/path/to/nginx_tcp_proxy_module</pre>
@@ -282,10 +282,10 @@
 <p>
 </p>
 <h3><a name="server_name">server_name</a></h3>
-<p><strong>syntax:</strong> <em>server_name name fqdn_server_host</em></p>
+<p><strong>syntax:</strong> <em>server_name name</em></p>
 <p><strong>default:</strong> <em>The name of the host, obtained through gethostname()</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>). You can specify several server name in different server block with the same port. This can be used in websocket module.</p>
+<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>). You can specify several server name in different server block with the same port. They can be used in websocket module.</p>
 <p>
 </p>
 <h3><a name="resolver">resolver</a></h3>
@@ -622,7 +622,7 @@ openssl ciphers</p>
 <h1><a name="compatibility">Compatibility</a></h1>
 <ul>
 <li>
-<p>My test bed is 0.7.65 and 0.8.53</p>
+<p>My test bed is 0.7.65+</p>
 </li>
 </ul>
 <p>
