@@ -413,6 +413,7 @@ static void
 http_field(void *data, const signed char *field, 
         size_t flen, const signed char *value, size_t vlen)
 {
+    u_char                    *last;
     ngx_str_t                 *str;
     ngx_tcp_session_t         *s = data;
     ngx_tcp_websocket_ctx_t   *wctx;
@@ -435,7 +436,14 @@ http_field(void *data, const signed char *field,
     if (flen == (sizeof("Host") - 1) && 
             (ngx_strncasecmp((u_char *)"Host", (u_char *)field, flen) == 0)) {
 
+        /*trim the port part from host string*/
+        last = ngx_strlchr((u_char *)value, (u_char *)value + vlen, (u_char)':');
+        if (last) {
+            vlen = last - (u_char *)value;
+        }
+
         str = &wctx->host;
+
         str->len = vlen;
         str->data = ngx_palloc(s->connection->pool, vlen);
         if (str->data == NULL) {
@@ -443,6 +451,9 @@ http_field(void *data, const signed char *field,
         }
 
         ngx_memcpy(str->data, (u_char *)value, vlen);
+
+        ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0, 
+                "true host: %V", str);
     }
 }
 
