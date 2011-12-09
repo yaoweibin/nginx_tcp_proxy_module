@@ -849,7 +849,9 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
         return;
     }
 
-    read_bytes = write_bytes = NULL;
+    read_bytes = &s->bytes_read;
+    write_bytes = &s->bytes_write;
+
     if (c == s->connection) {
         if (ev->write) {
             recv_action = "client write: websocket proxying and reading from upstream";
@@ -857,14 +859,12 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
             src = wctx->upstream->connection;
             dst = c;
             b = wctx->buffer;
-            write_bytes = &s->bytes_write;
         } else {
             recv_action = "client read: websocket proxying and reading from client";
             send_action = "client read: websocket proxying and sending to upstream";
             src = c;
             dst = wctx->upstream->connection;
             b = s->buffer;
-            read_bytes = &s->bytes_read;
         }
 
     } else {
@@ -874,14 +874,12 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
             src = s->connection;
             dst = c;
             b = s->buffer;
-            read_bytes = &s->bytes_read;
         } else {
             recv_action = "upstream read: websocket proxying and reading from upstream";
             send_action = "upstream read: websocket proxying and sending to client";
             src = c;
             dst = s->connection;
             b = wctx->buffer;
-            write_bytes = &s->bytes_write;
         }
     }
 
