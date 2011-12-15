@@ -46,3 +46,39 @@ __DATA__
 GET /
 --- error_code: 500
 --- response_body_like: ^.*$
+
+=== TEST 2: test ACL without anything
+--- config
+    upstream test{
+        server blog.163.com;
+    }
+
+    server {
+        listen 1984;
+
+        proxy_pass test;
+    }
+--- request
+GET /
+--- response_body_like: ^.*$
+
+=== TEST 3: test ACL witht other ip
+--- config
+    upstream test{
+        server blog.163.com;
+    }
+
+    server {
+        deny 10.231.143.122;
+        listen 1984;
+
+        server_name _;
+
+        tcp_nodelay on;
+        so_keepalive on;
+
+        proxy_pass test;
+    }
+--- request
+GET /
+--- response_body_like: ^.*$

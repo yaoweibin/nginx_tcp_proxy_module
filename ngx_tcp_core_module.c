@@ -3,6 +3,7 @@
 #include <ngx_core.h>
 #include <ngx_event.h>
 #include <ngx_tcp.h>
+#include <nginx.h>
 
 
 static void *ngx_tcp_core_create_main_conf(ngx_conf_t *cf);
@@ -92,7 +93,11 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
       NULL },
 
     { ngx_string("resolver"),
+#if defined(nginx_version) && nginx_version >= 1001007
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
+#else
       NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+#endif
       ngx_tcp_core_resolver,
       NGX_TCP_SRV_CONF_OFFSET,
       0,
@@ -676,7 +681,9 @@ ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_tcp_core_srv_conf_t  *cscf = conf;
 
+#if defined(nginx_version) && nginx_version < 1001007
     ngx_url_t   u;
+#endif
     ngx_str_t  *value;
 
     value = cf->args->elts;
@@ -690,6 +697,7 @@ ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         return NGX_CONF_OK;
     }
 
+#if defined(nginx_version) && nginx_version < 1001007
     ngx_memzero(&u, sizeof(ngx_url_t));
 
     u.host = value[1];
@@ -699,11 +707,18 @@ ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%V: %s", &u.host, u.err);
         return NGX_CONF_ERROR;
     }
-
     cscf->resolver = ngx_resolver_create(cf, &u.addrs[0]);
     if (cscf->resolver == NULL) {
         return NGX_CONF_OK;
     }
+#else
+
+    cscf->resolver = ngx_resolver_create(cf, &value[1], cf->args->nelts - 1);
+    if (cscf->resolver == NULL) {
+        return NGX_CONF_ERROR;
+    }
+#endif
+
 
     return NGX_CONF_OK;
 }
