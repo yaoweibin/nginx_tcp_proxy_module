@@ -44,3 +44,18 @@ __DATA__
 --- request_https
 GET /
 --- response_body_like: ^<(.*)>$
+
+=== TEST 2: the ssl command with websocket
+--- config
+    upstream test{
+        server blog.163.com;
+    }
+
+    server {
+        listen 1984 ssl;
+
+        websocket_pass test;
+    }
+--- request_https
+GET /
+--- response_body_like: ^<(.*)>$
