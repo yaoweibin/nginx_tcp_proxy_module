@@ -407,6 +407,33 @@
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>location</em></p>
 <p><strong>description:</strong> Display the health checking servers' status by HTTP. This directive is set in the http block.</p>
+<p>The table filed meanings are:</p>
+<ul>
+<li>
+<p><em>Index</em>: The server index in the check table</p>
+</li>
+<li>
+<p><em>Name</em> : The upstream server name</p>
+</li>
+<li>
+<p><em>Status</em>: The marked status of the server.</p>
+</li>
+<li>
+<p><em>Busyness</em>: The number of connections which are connecting to the server.</p>
+</li>
+<li>
+<p><em>Rise counts</em>: Count the successful checking</p>
+</li>
+<li>
+<p><em>Fall counts</em>: Count the unsuccessful checking</p>
+</li>
+<li>
+<p><em>Access counts</em>: Count the times accessing to this server</p>
+</li>
+<li>
+<p><em>Check type</em>: The type of the check packet</p>
+</li>
+</ul>
 <p><strong>ngx_tcp_upstream_busyness_module</strong></p>
 <p>
 </p>
