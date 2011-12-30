@@ -61,7 +61,7 @@ typedef struct {
     ngx_uint_t rise_count;
 
     ngx_atomic_t lock;
-    ngx_atomic_t business;
+    ngx_atomic_t busyness;
     ngx_atomic_t down;
 
     ngx_uint_t access_count;

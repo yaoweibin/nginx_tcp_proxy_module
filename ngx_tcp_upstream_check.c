@@ -275,7 +275,7 @@ ngx_tcp_check_peer_down(ngx_uint_t index)
     peer_conf = check_peers_ctx->peers.elts;
 
     return (peer_conf[index].shm->down | 
-            (peer_conf[index].shm->business > peer_conf[index].max_busy));
+            (peer_conf[index].shm->busyness > peer_conf[index].max_busy));
 }
 
 
@@ -292,7 +292,7 @@ ngx_tcp_check_get_peer(ngx_uint_t index)
 
     ngx_spinlock(&peer_conf[index].shm->lock, ngx_pid, 1024);
 
-    peer_conf[index].shm->business++;
+    peer_conf[index].shm->busyness++;
     peer_conf[index].shm->access_count++;
 
     ngx_spinlock_unlock(&peer_conf[index].shm->lock);
@@ -312,8 +312,8 @@ ngx_tcp_check_free_peer(ngx_uint_t index)
 
     ngx_spinlock(&peer_conf[index].shm->lock, ngx_pid, 1024);
 
-    if (peer_conf[index].shm->business > 0) {
-        peer_conf[index].shm->business--;
+    if (peer_conf[index].shm->busyness > 0) {
+        peer_conf[index].shm->busyness--;
     }
 
     ngx_spinlock_unlock(&peer_conf[index].shm->lock);
@@ -366,7 +366,7 @@ ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data)
         peer_shm->fall_count = 0;
         peer_shm->rise_count = 0;
 
-        peer_shm->business = 0;
+        peer_shm->busyness = 0;
         peer_shm->down = 1;
     }
 
@@ -1807,7 +1807,7 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r)
             "    <th>Index</th>\n"
             "    <th>Name</th>\n"
             "    <th>Status</th>\n"
-            "    <th>Business</th>\n"
+            "    <th>Busyness</th>\n"
             "    <th>Rise counts</th>\n"
             "    <th>Fall counts</th>\n"
             "    <th>Access counts</th>\n"
@@ -1831,7 +1831,7 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r)
                 i, 
                 &peer_conf[i].peer->name, 
                 peer_shm[i].down ? "down" : "up",
-                peer_shm[i].business,
+                peer_shm[i].busyness,
                 peer_shm[i].rise_count, 
                 peer_shm[i].fall_count, 
                 peer_shm[i].access_count, 
