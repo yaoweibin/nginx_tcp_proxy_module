@@ -324,7 +324,7 @@ The parameters' meanings are:
 
 '''description:''' Display the health checking servers' status by HTTP. This directive is set in the http block.
 
-The table filed meanings are:
+The table field meanings are:
 
 * ''Index'': The server index in the check table 
 * ''Name'' : The upstream server name
