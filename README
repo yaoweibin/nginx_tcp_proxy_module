@@ -317,6 +317,25 @@ Directives
     description: Display the health checking servers' status by HTTP. This
     directive is set in the http block.
 
+    The table filed meanings are:
+
+    *   *Index*: The server index in the check table
+
+    *   *Name* : The upstream server name
+
+    *   *Status*: The marked status of the server.
+
+    *   *Busyness*: The number of connections which are connecting to the
+        server.
+
+    *   *Rise counts*: Count the successful checking
+
+    *   *Fall counts*: Count the unsuccessful checking
+
+    *   *Access counts*: Count the times accessing to this server
+
+    *   *Check type*: The type of the check packet
+
     ngx_tcp_upstream_ip_hash_module
 
    ip_hash
