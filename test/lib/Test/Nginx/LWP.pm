@@ -34,7 +34,7 @@ use Test::Nginx::Util qw(
     repeat_each
 );
 
-our $UserAgent = LWP::UserAgent->new;
+our $UserAgent = LWP::UserAgent->new(ssl_opts => { verify_hostname => 0 });
 $UserAgent->agent(__PACKAGE__);
 #$UserAgent->default_headers(HTTP::Headers->new);
 
