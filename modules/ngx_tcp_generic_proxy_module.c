@@ -308,7 +308,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
     ssize_t                   n;
     ngx_buf_t                *b;
     ngx_err_t                 err;
-    ngx_uint_t                do_write;
+    ngx_uint_t                do_write, first_read;
     ngx_connection_t         *c, *src, *dst;
     ngx_tcp_session_t        *s;
     ngx_tcp_proxy_conf_t     *pcf;
@@ -372,6 +372,14 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
     }
 
     do_write = ev->write ? 1 : 0;
+    /* SSL Need this */
+#if (NGX_TCP_SSL)
+    if (s->connection->ssl) {
+        first_read = 1;
+    }
+#else
+    first_read = 0;
+#endif
 
     ngx_log_debug4(NGX_LOG_DEBUG_TCP, ev->log, 0,
             "tcp proxy handler: %d, #%d > #%d, time:%ui",
@@ -415,31 +423,35 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
 
         size = b->end - b->last;
 
-        if (size && src->read->ready) {
-            c->log->action = recv_action;
+        if (size) {
+            if (src->read->ready || first_read) { 
 
-            n = src->recv(src, b->last, size);
-            err = ngx_socket_errno;
+                first_read = 0;
+                c->log->action = recv_action;
 
-            ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler recv:%d", n);
+                n = src->recv(src, b->last, size);
+                err = ngx_socket_errno;
 
-            if (n == NGX_AGAIN || n == 0) {
-                break;
-            }
+                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler recv:%d", n);
 
-            if (n > 0) {
-                do_write = 1;
-                b->last += n;
-
-                if (read_bytes) {
-                    *read_bytes += n;
+                if (n == NGX_AGAIN || n == 0) {
+                    break;
                 }
 
-                continue;
-            }
+                if (n > 0) {
+                    do_write = 1;
+                    b->last += n;
 
-            if (n == NGX_ERROR) {
-                src->read->eof = 1;
+                    if (read_bytes) {
+                        *read_bytes += n;
+                    }
+
+                    continue;
+                }
+
+                if (n == NGX_ERROR) {
+                    src->read->eof = 1;
+                }
             }
         }
 
