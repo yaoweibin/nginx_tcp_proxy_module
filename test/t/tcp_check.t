@@ -34,7 +34,7 @@ __DATA__
     upstream test{
         server blog.163.com;
         #ip_hash;
-        check interval=3000 rise=2 fall=5 timeout=1000;
+        check interval=3000 rise=1 fall=5 timeout=1000;
     }
 
     server {

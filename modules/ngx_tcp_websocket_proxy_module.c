@@ -195,6 +195,17 @@ ngx_tcp_websocket_init_session(ngx_tcp_session_t *s)
         ngx_tcp_finalize_session(s);
     }
 
+#if (NGX_TCP_SSL)
+
+    /* The ssl connection with client may not trigger the read event again, 
+     * So I trigger it in this function.  */
+    if (c->ssl) {
+        ngx_tcp_websocket_init_protocol(c->read);
+        return;
+    }
+
+#endif
+
     if (c->read->ready) {
         ngx_tcp_websocket_init_protocol(c->read);
     }

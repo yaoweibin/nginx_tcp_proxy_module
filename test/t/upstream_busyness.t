@@ -45,12 +45,12 @@ __DATA__
 GET /
 --- response_body_like: ^<(.*)>$
 
-=== TEST 2: the upstream_busyness command
+=== TEST 2: the upstream_busyness command with check
 --- config
     upstream test{
         server blog.163.com;
 
-        check interval=3000;
+        check interval=3000 rise=1 fall=5 timeout=1000;
         busyness;
     }
 
