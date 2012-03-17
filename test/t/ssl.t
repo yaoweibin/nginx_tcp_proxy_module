@@ -59,3 +59,21 @@ GET /
 --- request_https
 GET /
 --- response_body_like: ^<(.*)>$
+
+=== TEST 3: the ssl command with websocket
+
+--- config
+    upstream test{
+        server blog.163.com;
+    }
+
+    server {
+        listen 1984 ssl;
+
+        ssl_session_cache builtin:1000 shared:SSL:5m;
+
+        websocket_pass test;
+    }
+--- request_https
+GET /
+--- response_body_like: ^<(.*)>$
