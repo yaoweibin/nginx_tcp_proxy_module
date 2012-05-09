@@ -516,8 +516,10 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
             }
 
             ngx_memcpy(new_buf, s->buffer->start, size);
-
-            s->buffer->pos = s->buffer->start = new_buf;
+            
+            n = s->buffer->pos - s->buffer->start;
+            s->buffer->start = new_buf;
+            s->buffer->pos = new_buf + n;
             s->buffer->last = new_buf + size;
             s->buffer->end = new_buf + size * 2;
 
@@ -552,7 +554,7 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
         }
     }
 
-    rc = websocket_http_request_parser_execute(wctx->parser); 
+    rc = websocket_http_request_parser_execute(wctx->parser);
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, 0, 
             "tcp websocket parse rc: %d, fd: %d", rc, c->fd);
@@ -593,7 +595,7 @@ websocket_http_request_parser_execute(http_request_parser *hp)
         length = s->buffer->last - s->buffer->start;
 
         n = http_request_parser_execute(hp, (signed char *)s->buffer->start, length, offset);
-        s->buffer->pos += n;
+        s->buffer->pos = s->buffer->start + n;
 
         rc = http_request_parser_finish(hp);
 
@@ -605,8 +607,8 @@ websocket_http_request_parser_execute(http_request_parser *hp)
         }
         else {
             ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
-                    "http request parse error with client: %V, recv data: %s", 
-                    &s->connection->addr_text, s->buffer->start);
+                    "http request parse error with client: %V #%d", 
+                    &s->connection->addr_text, s->connection->fd);
             return NGX_ERROR;
         }
     }
@@ -637,6 +639,10 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     }
 
     wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
+    if (wcf->upstream.upstream == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
     ngx_log_debug3(NGX_LOG_DEBUG_TCP, s->connection->log, 0, 
             "tcp websocket init upstream, scheme: \"%V\" path: \"%V\", host: \"%V\"",
@@ -857,8 +863,8 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
         return;
     }
 
-    read_bytes = &s->bytes_read;
-    write_bytes = &s->bytes_write;
+    read_bytes = NULL;
+    write_bytes = NULL;
 
     if (c == s->connection) {
         if (ev->write) {
@@ -867,12 +873,14 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
             src = wctx->upstream->connection;
             dst = c;
             b = wctx->buffer;
+            write_bytes = &s->bytes_write;
         } else {
             recv_action = "client read: websocket proxying and reading from client";
             send_action = "client read: websocket proxying and sending to upstream";
             src = c;
             dst = wctx->upstream->connection;
             b = s->buffer;
+            read_bytes = &s->bytes_read;
         }
 
     } else {
@@ -882,12 +890,14 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
             src = s->connection;
             dst = c;
             b = s->buffer;
+            read_bytes = &s->bytes_read;
         } else {
             recv_action = "upstream read: websocket proxying and reading from upstream";
             send_action = "upstream read: websocket proxying and sending to client";
             src = c;
             dst = s->connection;
             b = wctx->buffer;
+            write_bytes = &s->bytes_write;
         }
     }
 
@@ -895,7 +905,9 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
 
     if (b->pos != b->last) {
         do_write = 1;
-        *read_bytes += b->last - b->pos;
+        if (read_bytes) {
+            *read_bytes += b->last - b->pos;
+        }
     }
 
     ngx_log_debug4(NGX_LOG_DEBUG_TCP, ev->log, 0,
@@ -1164,7 +1176,6 @@ ngx_tcp_websocket_merge_conf(ngx_conf_t *cf, void *parent, void *child)
         }
         else {
             cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
-
             if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data, 
                         (u_char *)"tcp_websocket", sizeof("tcp_websocket") - 1) == 0) {
 
