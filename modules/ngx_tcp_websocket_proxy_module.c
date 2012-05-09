@@ -700,7 +700,6 @@ ngx_tcp_websocket_find_virtual_server(ngx_tcp_session_t *s,
         ngx_tcp_websocket_ctx_t *ctx)
 {
     ngx_uint_t                 hash, i;
-    ngx_connection_t          *c;
     ngx_tcp_core_main_conf_t  *cmcf;
     ngx_tcp_virtual_server_t  *vs;
 
@@ -711,8 +710,6 @@ ngx_tcp_websocket_find_virtual_server(ngx_tcp_session_t *s,
     }
 
     hash = ngx_hash_key(ctx->host.data, ctx->host.len);
-
-    c = s->connection;
 
     vs = cmcf->virtual_servers.elts;
     for (i = 0; i < cmcf->virtual_servers.nelts; i++) {
