@@ -199,6 +199,10 @@ ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     s->connection->log->action = "ngx_tcp_proxy_init_upstream";
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
+    if (pcf->upstream.upstream == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
     p = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_proxy_ctx_t));
     if (p == NULL) {
@@ -334,8 +338,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
         return;
     }
 
-    read_bytes = &s->bytes_read;
-    write_bytes = &s->bytes_write;
+    read_bytes = NULL;
+    write_bytes = NULL;
 
     if (c == s->connection) {
         if (ev->write) {
@@ -344,12 +348,14 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             src = pctx->upstream->connection;
             dst = c;
             b = pctx->buffer;
+            write_bytes = &s->bytes_write;
         } else {
             recv_action = "client read: proxying and reading from client";
             send_action = "client read: proxying and sending to upstream";
             src = c;
             dst = pctx->upstream->connection;
             b = s->buffer;
+            read_bytes = &s->bytes_read;
         }
 
     } else {
@@ -359,12 +365,14 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             src = s->connection;
             dst = c;
             b = s->buffer;
+            read_bytes = &s->bytes_read;
         } else {
             recv_action = "upstream read: proxying and reading from upstream";
             send_action = "upstream read: proxying and sending to client";
             src = c;
             dst = s->connection;
             b = pctx->buffer;
+            write_bytes = &s->bytes_write;
         }
     }
 

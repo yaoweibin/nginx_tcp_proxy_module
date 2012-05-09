@@ -237,7 +237,7 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
     cscf->line = cf->conf_file->line;
 
     lscf = cscf->access_log = ngx_pcalloc(cf->pool, 
-            sizeof(ngx_tcp_core_srv_conf_t));
+            sizeof(ngx_tcp_log_srv_conf_t));
     if (lscf == NULL) {
         return NULL;
     }

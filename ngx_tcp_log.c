@@ -106,7 +106,7 @@ ngx_tcp_time(u_char *buf, time_t t)
 {
     ngx_tm_t    tm;
 
-    ngx_gmtime(t, &tm);
+    ngx_localtime(t, &tm);
 
     return ngx_sprintf(buf, "%4d/%02d/%02d %02d:%02d:%02d",
                        tm.ngx_tm_year, tm.ngx_tm_mon,
@@ -164,6 +164,8 @@ ngx_tcp_log_write(ngx_tcp_session_t *s, ngx_tcp_log_t *log, u_char *buf,
     time_t      now;
     ssize_t     n;
     ngx_err_t   err;
+
+    if(len == 0) return;
 
     name = log->file->name.data;
     n = ngx_write_fd(log->file->fd, buf, len);
