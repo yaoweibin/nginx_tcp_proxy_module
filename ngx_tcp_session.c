@@ -215,11 +215,7 @@ ngx_tcp_ssl_init_connection(ngx_ssl_t *ssl, ngx_connection_t *c)
 static void
 ngx_tcp_ssl_handshake_handler(ngx_connection_t *c)
 {
-    ngx_tcp_session_t        *s;
-
     if (c->ssl->handshaked) {
-
-        s = c->data;
 
         c->read->ready = 0;
 
