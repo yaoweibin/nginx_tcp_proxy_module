@@ -240,9 +240,6 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     ngx_connection_t         *c;
     ngx_tcp_proxy_ctx_t      *pctx;
     ngx_tcp_proxy_conf_t     *pcf;
-    ngx_tcp_core_srv_conf_t  *cscf;
-
-    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     c = s->connection;
     c->log->action = "ngx_tcp_upstream_init_proxy_handler";
