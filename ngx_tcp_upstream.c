@@ -4,8 +4,6 @@
 #include <ngx_tcp.h>
 #include <ngx_tcp_upstream.h>
 
-/* ngx_spinlock is defined without a matching unlock primitive */
-#define ngx_spinlock_unlock(lock)       (void) ngx_atomic_cmp_set(lock, ngx_pid, 0)
 
 static void ngx_tcp_upstream_cleanup(void *data);
 

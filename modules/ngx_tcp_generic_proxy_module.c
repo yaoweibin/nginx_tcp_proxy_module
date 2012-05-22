@@ -1,29 +1,21 @@
 
+
 #include <ngx_config.h>
 #include <ngx_core.h>
-#include <ngx_event.h>
-#include <ngx_event_connect.h>
 #include <ngx_tcp.h>
-
-#define _GNU_SOURCE
-#include <fcntl.h>
 
 
 typedef struct ngx_tcp_proxy_s {
-    ngx_peer_connection_t  *upstream;
-    ngx_buf_t              *buffer;
+    ngx_peer_connection_t    *upstream;
+    ngx_buf_t                *buffer;
 } ngx_tcp_proxy_ctx_t;
 
 
 typedef struct ngx_tcp_proxy_conf_s {
-    ngx_tcp_upstream_conf_t  upstream;
+    ngx_tcp_upstream_conf_t   upstream;
 
-    ngx_str_t   url;
-    size_t      buffer_size;
-
-    /*TODO: support for the variable in the proxy_pass*/
-    ngx_array_t *proxy_lengths;
-    ngx_array_t *proxy_values;
+    ngx_str_t                 url;
+    size_t                    buffer_size;
 } ngx_tcp_proxy_conf_t;
 
 
@@ -48,7 +40,6 @@ static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
     ngx_tcp_proxy_init_session,
     NULL,
     NULL,
-
     ngx_string("500 Internal server error" CRLF)
 };
 
@@ -164,7 +155,8 @@ ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev)
     c = wev->data;
     s = c->data;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0, "tcp proxy dummy write handler: %d", c->fd);
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
+                   "tcp proxy dummy write handler: %d", c->fd);
 
     if (ngx_handle_write_event(wev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
@@ -181,7 +173,8 @@ ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev)
     c = rev->data;
     s = c->data;
 
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0, "tcp proxy dummy read handler: %d", c->fd);
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
+                   "tcp proxy dummy read handler: %d", c->fd);
 
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
@@ -289,7 +282,7 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 #if (NGX_TCP_SSL)
 
     /* The ssl connection with client may not trigger the read event again, 
-     * So I trigger it in this function.  */
+     * So I trigger it in this function. */
     if (s->connection->ssl) {
         ngx_tcp_proxy_handler(s->connection->read); 
     }
@@ -377,8 +370,9 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
     }
 
     do_write = ev->write ? 1 : 0;
-    /* SSL Need this */
+
 #if (NGX_TCP_SSL)
+    /* SSL Need this */
     if (s->connection->ssl) {
         first_read = 1;
     }
@@ -437,7 +431,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
                 n = src->recv(src, b->last, size);
                 err = ngx_socket_errno;
 
-                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler recv:%d", n);
+                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0,
+                               "tcp proxy handler recv:%d", n);
 
                 if (n == NGX_AGAIN || n == 0) {
                     break;
@@ -529,7 +524,7 @@ ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_tcp_core_srv_conf_t    *cscf;
 
     cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
-    if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data, 
+    if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data,
                 (u_char *)"tcp_generic", sizeof("tcp_generic") - 1) != 0) {
         return "the protocol should be tcp_generic";
     }
@@ -589,7 +584,8 @@ ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_tcp_proxy_conf_t *prev = parent;
     ngx_tcp_proxy_conf_t *conf = child;
 
-    ngx_conf_merge_size_value(conf->buffer_size, prev->buffer_size, (size_t) ngx_pagesize);
+    ngx_conf_merge_size_value(conf->buffer_size, prev->buffer_size,
+                              (size_t) ngx_pagesize);
 
     ngx_conf_merge_msec_value(conf->upstream.connect_timeout,
                               prev->upstream.connect_timeout, 60000);

@@ -1,13 +1,7 @@
 
 #include <ngx_config.h>
 #include <ngx_core.h>
-#include <ngx_event.h>
-#include <ngx_event_connect.h>
 #include <ngx_tcp.h>
-
-#define _GNU_SOURCE
-#include <fcntl.h>
-
 #include <http_request_parser.h>
 
 typedef struct ngx_tcp_websocket_s {
