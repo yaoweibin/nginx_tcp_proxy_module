@@ -4,6 +4,7 @@
 #include <ngx_tcp.h>
 #include <ngx_http.h>
 
+
 /* ngx_spinlock is defined without a matching unlock primitive */
 #define ngx_spinlock_unlock(lock)       (void) ngx_atomic_cmp_set(lock, ngx_pid, 0)
 
@@ -42,6 +43,7 @@ static void ngx_tcp_check_imap_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
 
 static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf);
+
 
 #define RANDOM "NGX_TCP_CHECK_SSL_HELLO\n\n\n\n\n"
 
@@ -82,91 +84,84 @@ const char sslv3_client_hello_pkt[] = {
 #define SERVER_HELLO 0x02
 
 static check_conf_t  ngx_check_types[] = {
-    {
-        NGX_TCP_CHECK_TCP,
-        "tcp",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_peek_handler,
-        ngx_tcp_check_peek_handler,
-        NULL,
-        NULL,
-        NULL,
-        0
-    },
-    {
-        NGX_TCP_CHECK_HTTP,
-        "http",
-        ngx_string("GET / HTTP/1.0\r\n\r\n"),
-        NGX_CONF_BITMASK_SET | NGX_CHECK_HTTP_2XX | NGX_CHECK_HTTP_3XX,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_http_init,
-        ngx_tcp_check_http_parse,
-        ngx_tcp_check_http_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_SSL_HELLO,
-        "ssl_hello",
-        ngx_string(sslv3_client_hello_pkt),
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_ssl_hello_init,
-        ngx_tcp_check_ssl_hello_parse,
-        ngx_tcp_check_ssl_hello_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_SMTP,
-        "smtp",
-        ngx_string("HELO smtp.localdomain\r\n"),
-        NGX_CONF_BITMASK_SET | NGX_CHECK_SMTP_2XX,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_smtp_init,
-        ngx_tcp_check_smtp_parse,
-        ngx_tcp_check_smtp_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_MYSQL,
-        "mysql",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_mysql_init,
-        ngx_tcp_check_mysql_parse,
-        ngx_tcp_check_mysql_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_POP3,
-        "pop3",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_pop3_init,
-        ngx_tcp_check_pop3_parse,
-        ngx_tcp_check_pop3_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_IMAP,
-        "imap",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_imap_init,
-        ngx_tcp_check_imap_parse,
-        ngx_tcp_check_imap_reinit,
-        1
+    { NGX_TCP_CHECK_TCP,
+      "tcp",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_peek_handler,
+      ngx_tcp_check_peek_handler,
+      NULL,
+      NULL,
+      NULL,
+      0 },
+
+    { NGX_TCP_CHECK_HTTP,
+      "http",
+      ngx_string("GET / HTTP/1.0\r\n\r\n"),
+      NGX_CONF_BITMASK_SET | NGX_CHECK_HTTP_2XX | NGX_CHECK_HTTP_3XX,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_http_init,
+      ngx_tcp_check_http_parse,
+      ngx_tcp_check_http_reinit,
+      1
     },
 
+    { NGX_TCP_CHECK_SSL_HELLO,
+      "ssl_hello",
+      ngx_string(sslv3_client_hello_pkt),
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_ssl_hello_init,
+      ngx_tcp_check_ssl_hello_parse,
+      ngx_tcp_check_ssl_hello_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_SMTP,
+      "smtp",
+      ngx_string("HELO smtp.localdomain\r\n"),
+      NGX_CONF_BITMASK_SET | NGX_CHECK_SMTP_2XX,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_smtp_init,
+      ngx_tcp_check_smtp_parse,
+      ngx_tcp_check_smtp_reinit,
+      1
+    },
+
+    { NGX_TCP_CHECK_MYSQL,
+      "mysql",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_mysql_init,
+      ngx_tcp_check_mysql_parse,
+      ngx_tcp_check_mysql_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_POP3,
+      "pop3",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_pop3_init,
+      ngx_tcp_check_pop3_parse,
+      ngx_tcp_check_pop3_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_IMAP,
+      "imap",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_imap_init,
+      ngx_tcp_check_imap_parse,
+      ngx_tcp_check_imap_reinit,
+      1 },
 
     {0, "", ngx_null_string, 0, NULL, NULL, NULL, NULL, NULL, 0}
 };
@@ -183,6 +178,7 @@ static ngx_command_t  ngx_tcp_upstream_check_status_commands[] = {
       ngx_null_command
 };
 
+
 static ngx_http_module_t  ngx_tcp_upstream_check_status_module_ctx = {
     NULL,                                  /* preconfiguration */
     NULL,                                  /* postconfiguration */
@@ -196,6 +192,7 @@ static ngx_http_module_t  ngx_tcp_upstream_check_status_module_ctx = {
     NULL,                                  /* create location configuration */
     NULL                                   /* merge location configuration */
 };
+
 
 ngx_module_t  ngx_tcp_upstream_check_status_module = {
     NGX_MODULE_V1,
@@ -366,7 +363,8 @@ ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data)
 
         if (peers_shm == NULL) {
             ngx_log_error(NGX_LOG_EMERG, shm_zone->shm.log, 0,
-                    "tcp upstream check_shm_size is too small, you should set a larger size.");
+                    "tcp upstream check_shm_size is too small, "
+                    "you should set a larger size.");
             return NGX_ERROR;
         }
     }
@@ -405,7 +403,7 @@ ngx_tcp_check_get_shm_name(ngx_str_t *shm_name, ngx_pool_t *pool)
     }
 
     last = ngx_snprintf(shm_name->data, SHM_NAME_LEN, "%s#%ui", "ngx_tcp_upstream", 
-            ngx_tcp_check_shm_generation);
+                        ngx_tcp_check_shm_generation);
 
     shm_name->len = last - shm_name->data;
 
@@ -486,12 +484,11 @@ ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf)
 }
 
 
-static ngx_flag_t has_cleared = 0;
-
 static void 
 ngx_tcp_check_clear_all_events() 
 {
     ngx_uint_t                     i;
+    static ngx_flag_t              has_cleared = 0;
     ngx_tcp_check_peer_shm_t      *peer_shm;
     ngx_tcp_check_peers_shm_t     *peers_shm;
     ngx_tcp_check_peer_conf_t     *peer_conf;
@@ -777,7 +774,7 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
         length = ctx->recv.last - ctx->recv.start;
 
         n = http_response_parser_execute(hp, (signed char *)ctx->recv.start, length, offset);
-        ctx->recv.pos += n;
+        ctx->recv.pos = ctx->recv.start + n;
 
         if (http_response_parser_finish(hp) == -1) {
             ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
@@ -1051,7 +1048,7 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     length = ctx->recv.last - ctx->recv.start;
 
     n = smtp_parser_execute(sp, (signed char *)ctx->recv.start, length, offset);
-    ctx->recv.pos += n;
+    ctx->recv.pos = ctx->recv.start + n;
 
     if (smtp_parser_finish(sp) == -1) {
         ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,

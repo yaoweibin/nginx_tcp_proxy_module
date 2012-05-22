@@ -77,7 +77,7 @@ typedef struct {
     ngx_atomic_t lock;
 
     /*store the ngx_tcp_check_status_peer_t*/
-    ngx_tcp_check_peer_shm_t peers[0];
+    ngx_tcp_check_peer_shm_t peers[1];
 } ngx_tcp_check_peers_shm_t;
 
 typedef ngx_int_t (*ngx_tcp_check_packet_init_pt)(ngx_tcp_check_peer_conf_t *peer_conf); 
