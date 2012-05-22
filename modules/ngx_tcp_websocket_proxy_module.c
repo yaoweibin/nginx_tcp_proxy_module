@@ -4,19 +4,20 @@
 #include <ngx_tcp.h>
 #include <http_request_parser.h>
 
+
 typedef struct ngx_tcp_websocket_s {
-    ngx_peer_connection_t  *upstream;
-    ngx_buf_t              *buffer;
+    ngx_peer_connection_t            *upstream;
+    ngx_buf_t                        *buffer;
 
-    http_request_parser    *parser;
+    http_request_parser              *parser;
 
-    ngx_str_t               path;
-    ngx_str_t               host;
+    ngx_str_t                         path;
+    ngx_str_t                         host;
 } ngx_tcp_websocket_ctx_t;
 
 typedef struct ngx_tcp_path_upstream_s {
-    ngx_str_t                      path;
-    ngx_tcp_upstream_srv_conf_t   *upstream;
+    ngx_str_t                         path;
+    ngx_tcp_upstream_srv_conf_t      *upstream;
 } ngx_tcp_path_upstream_t;
 
 typedef struct ngx_tcp_websocket_conf_s {
@@ -62,7 +63,7 @@ static void http_field(void *data, const signed char *field, size_t flen,
         const signed char *value, size_t vlen);
 
 static void ngx_tcp_websocket_parse_protocol(ngx_event_t *ev);
-static ngx_int_t websocket_http_request_parser_execute(http_request_parser *hp); 
+static ngx_int_t websocket_http_request_parser_execute(http_request_parser *hp);
 
 static void ngx_tcp_websocket_proxy_handler(ngx_event_t *ev);
 static void *ngx_tcp_websocket_create_conf(ngx_conf_t *cf);
@@ -76,7 +77,6 @@ static ngx_tcp_protocol_t  ngx_tcp_websocket_protocol = {
     ngx_tcp_websocket_init_session,
     ngx_tcp_websocket_init_protocol,
     ngx_tcp_websocket_parse_protocol,
-
     ngx_string("500 Internal server error" CRLF)
 };
 
@@ -123,13 +123,13 @@ static ngx_command_t  ngx_tcp_websocket_commands[] = {
 
 
 static ngx_tcp_module_t  ngx_tcp_websocket_module_ctx = {
-    &ngx_tcp_websocket_protocol,               /* protocol */
+    &ngx_tcp_websocket_protocol,           /* protocol */
 
-    NULL,                                      /* create main configuration */
-    NULL,                                      /* init main configuration */
+    NULL,                                  /* create main configuration */
+    NULL,                                  /* init main configuration */
 
-    ngx_tcp_websocket_create_conf,             /* create server configuration */
-    ngx_tcp_websocket_merge_conf               /* merge server configuration */
+    ngx_tcp_websocket_create_conf,         /* create server configuration */
+    ngx_tcp_websocket_merge_conf           /* merge server configuration */
 };
 
 
@@ -192,7 +192,7 @@ ngx_tcp_websocket_init_session(ngx_tcp_session_t *s)
 #if (NGX_TCP_SSL)
 
     /* The ssl connection with client may not trigger the read event again, 
-     * So I trigger it in this function.  */
+     * So I trigger it in this function. */
     if (c->ssl) {
         ngx_tcp_websocket_init_protocol(c->read);
         return;
@@ -497,7 +497,8 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
             if ((size_t)size > wcf->buffer_size << 3) {
 
                 ngx_log_error(NGX_LOG_ERR, ev->log, 0,
-                        "too large websocket handshake packet error with client: %V #%d",
+                        "too large websocket handshake packet "
+                        "error with client: %V #%d",
                         &c->addr_text, c->fd);
 
                 ngx_tcp_finalize_session(s);
@@ -532,8 +533,9 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
             err = ngx_socket_errno;
         }
 
-        ngx_log_debug3(NGX_LOG_DEBUG_TCP, ev->log, err, 
-                "tcp websocket recv size: %d, client: %V #%d", size, &c->addr_text, c->fd);
+        ngx_log_debug3(NGX_LOG_DEBUG_TCP, ev->log, err,
+                "tcp websocket recv size: %d, client: %V #%d",
+                size, &c->addr_text, c->fd);
 #endif
 
         if (size > 0) {
@@ -559,6 +561,7 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
         case NGX_ERROR:
             goto websocket_recv_fail;
         case NGX_OK:
+            /* pass through */
         default:
             ngx_tcp_websocket_init_upstream(c, s);
     }
@@ -568,7 +571,7 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
 websocket_recv_fail:
 
     ngx_log_error(NGX_LOG_ERR, ev->log, 0,
-            "recv websocket handshake packet error with client: %V #%d", 
+            "recv websocket handshake packet error with client: %V #%d",
             &c->addr_text, c->fd);
 
     ngx_tcp_finalize_session(s);
@@ -588,7 +591,8 @@ websocket_http_request_parser_execute(http_request_parser *hp)
         offset = s->buffer->pos - s->buffer->start;
         length = s->buffer->last - s->buffer->start;
 
-        n = http_request_parser_execute(hp, (signed char *)s->buffer->start, length, offset);
+        n = http_request_parser_execute(hp,
+                (signed char *)s->buffer->start, length, offset);
         s->buffer->pos = s->buffer->start + n;
 
         rc = http_request_parser_finish(hp);
@@ -639,7 +643,8 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     }
 
     ngx_log_debug3(NGX_LOG_DEBUG_TCP, s->connection->log, 0, 
-            "tcp websocket init upstream, scheme: \"%V\" path: \"%V\", host: \"%V\"",
+            "tcp websocket init upstream, scheme: \"%V\" "
+            "path: \"%V\", host: \"%V\"",
             &wcf->scheme, &wctx->path, &wctx->host);
 
     c->write->handler = ngx_tcp_websocket_dummy_write_handler;
@@ -657,7 +662,6 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     pu = ngx_tcp_websocket_find_path_upstream(s, wctx);
 
     if (pu) {
-
         ucf = ngx_palloc(s->pool, sizeof(ngx_tcp_upstream_conf_t));
         if (ucf == NULL) {
             ngx_tcp_finalize_session(s);
@@ -677,14 +681,13 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     wctx->upstream = &u->peer;
 
     wctx->buffer = ngx_create_temp_buf(s->connection->pool, 
-            (s->buffer->end - s->buffer->start));
+                                       (s->buffer->end - s->buffer->start));
     if (wctx->buffer == NULL) {
         ngx_tcp_finalize_session(s);
         return;
     }
 
-    /* 
-     * move back to the start position, send the handshake 
+    /* move back to the start position, send the handshake 
      * packet to backend server */
     s->buffer->pos = s->buffer->start;
     s->connection->read->ready = 1;
@@ -719,7 +722,8 @@ ngx_tcp_websocket_find_virtual_server(ngx_tcp_session_t *s,
         }
 
         if (vs[i].name.len != ctx->host.len
-                || ngx_memcmp(vs[i].name.data, ctx->host.data, ctx->host.len) != 0){
+                || ngx_memcmp(vs[i].name.data, ctx->host.data,
+                              ctx->host.len) != 0){
             continue;
         }
 
@@ -731,7 +735,8 @@ ngx_tcp_websocket_find_virtual_server(ngx_tcp_session_t *s,
 
 
 static ngx_tcp_path_upstream_t *
-ngx_tcp_websocket_find_path_upstream(ngx_tcp_session_t *s, ngx_tcp_websocket_ctx_t *ctx)
+ngx_tcp_websocket_find_path_upstream(ngx_tcp_session_t *s,
+        ngx_tcp_websocket_ctx_t *ctx)
 {
     ngx_uint_t                    i;
     ngx_tcp_path_upstream_t      *pu;
@@ -742,7 +747,8 @@ ngx_tcp_websocket_find_path_upstream(ngx_tcp_session_t *s, ngx_tcp_websocket_ctx
     pu = wcf->path_upstreams.elts;
     for (i = 0; i < wcf->path_upstreams.nelts; i++) {
         if (pu[i].path.len != ctx->path.len 
-                || ngx_memcmp(pu[i].path.data, ctx->path.data, ctx->path.len) != 0) {
+                || ngx_memcmp(pu[i].path.data, ctx->path.data,
+                              ctx->path.len) != 0) {
             continue;
         }
 
@@ -754,7 +760,8 @@ ngx_tcp_websocket_find_path_upstream(ngx_tcp_session_t *s, ngx_tcp_websocket_ctx
 
 
 static void 
-ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
+ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s,
+        ngx_tcp_upstream_t *u)
 {
     ngx_connection_t             *c;
     ngx_tcp_websocket_ctx_t      *wctx;
@@ -843,7 +850,8 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
     if (ev->timedout) {
         c->log->action = "websocket proxying";
 
-        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "websocket timed out");
+        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT,
+                      "websocket timed out");
         c->timedout = 1;
 
         ngx_tcp_finalize_session(s);
