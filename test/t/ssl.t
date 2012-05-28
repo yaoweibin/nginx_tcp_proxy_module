@@ -77,3 +77,41 @@ GET /
 --- request_https
 GET /
 --- response_body_like: ^<(.*)>$
+
+=== TEST 4: the ssl command with ssl on
+
+--- config
+    upstream test{
+        server blog.163.com;
+    }
+
+    server {
+        listen 1984;
+
+        ssl on;
+        ssl_session_cache builtin:1000 shared:SSL:5m;
+
+        websocket_pass test;
+    }
+--- request_https
+GET /
+--- response_body_like: ^<(.*)>$
+
+=== TEST 5: the ssl command with ssl on and listen ssl
+
+--- config
+    upstream test{
+        server blog.163.com;
+    }
+
+    server {
+        listen 1984 ssl;
+
+        ssl on;
+        ssl_session_cache builtin:1000 shared:SSL:5m;
+
+        websocket_pass test;
+    }
+--- request_https
+GET /
+--- response_body_like: ^<(.*)>$
