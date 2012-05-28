@@ -7,16 +7,16 @@ Installation
 
     The development version of this module is here
     (<https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop>). I
-    have added the features of tcp_ssl_proxy, tcp_upstream_busyness,
+    have added these features include tcp_ssl_proxy, tcp_upstream_busyness,
     access_log.
 
     Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-    example, the version 1.0.9 (see nginx compatibility), and then build the
+    example, the version 1.2.0 (see nginx compatibility), and then build the
     source with this module:
 
-        $ wget 'http://nginx.org/download/nginx-1.0.9.tar.gz'
-        $ tar -xzvf nginx-1.0.9.tar.gz
-        $ cd nginx-1.0.9/
+        $ wget 'http://nginx.org/download/nginx-1.2.0.tar.gz'
+        $ tar -xzvf nginx-1.2.0.tar.gz
+        $ cd nginx-1.2.0/
         $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
 
         $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
@@ -40,8 +40,8 @@ Synopsis
 
         upstream cluster {
             # simple round-robin
-            server 127.0.0.1:3306;
-            server 127.0.0.1:1234;
+            server 192.168.0.1:80;
+            server 192.168.0.2:80;
 
             check interval=3000 rise=2 fall=5 timeout=1000;
 
@@ -63,8 +63,8 @@ Description
     This module actually include many modules: ngx_tcp_module,
     ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module,
     ngx_tcp_websocket_module, ngx_tcp_ssl_module,
-    ngx_tcp_upstream_ip_hash_module. All these modules work togther to add
-    the support of TCP proxy with Nginx. I also add other features: ip_hash,
+    ngx_tcp_upstream_ip_hash_module. All these modules work together to
+    support TCP proxy with Nginx. I also added other features: ip_hash,
     upstream server health check, status monitor.
 
     The motivation of writing these modules is Nginx's high performance and
@@ -72,7 +72,7 @@ Description
     proxy. And now, this module is frequently used in websocket reverse
     proxying.
 
-    You can't use the same listening port with HTTP modules.
+    Note, You can't use the same listening port with HTTP modules.
 
 Directives
   ngx_tcp_moodule
@@ -274,21 +274,21 @@ Directives
         2.  *ssl_hello* sends a client ssl hello packet and receives the
             server ssl hello packet.
 
-        3.  *http* sends a http requst packet, recvives and parses the http
+        3.  *http* sends a http request packet, receives and parses the http
             response to diagnose if the upstream server is alive.
 
-        4.  *smtp* sends a smtp requst packet, recvives and parses the smtp
+        4.  *smtp* sends a smtp request packet, receives and parses the smtp
             response to diagnose if the upstream server is alive. The
             response begins with '2' should be an OK response.
 
-        5.  *mysql* connects to the mysql server, recvives the greeting
+        5.  *mysql* connects to the mysql server, receives the greeting
             response to diagnose if the upstream server is alive.
 
-        6.  *pop3* recvives and parses the pop3 response to diagnose if the
+        6.  *pop3* receives and parses the pop3 response to diagnose if the
             upstream server is alive. The response begins with '+' should be
             an OK response.
 
-        7.  *imap* connects to the imap server, recvives the greeting
+        7.  *imap* connects to the imap server, receives the greeting
             response to diagnose if the upstream server is alive.
 
    check_http_send
@@ -310,7 +310,7 @@ Directives
     context: *upstream*
 
     description: These status codes indicate the upstream server's http
-    response is ok, the backend is alive.
+    response is OK, the backend is alive.
 
    check_smtp_send
     syntax: *check_smtp_send smtp_packet*
@@ -331,7 +331,7 @@ Directives
     context: *upstream*
 
     description: These status codes indicate the upstream server's smtp
-    response is ok, the backend is alive.
+    response is OK, the backend is alive.
 
    check_shm_size
     syntax: *check_shm_size size*
@@ -340,9 +340,9 @@ Directives
 
     context: *tcp*
 
-    description: If you store hundreds of serveres in one upstream block,
-    the shared memory for health check may be not enough, you can enlarged
-    it by this directive.
+    description: If you store hundreds of servers in one upstream block, the
+    shared memory for health check may be not enough, you can enlarged it by
+    this directive.
 
    check_status
     syntax: *check_status*
@@ -452,7 +452,7 @@ Directives
     context: *server*
 
     description: proxy the websocket request to the backend server. Default
-    port is 80. You can specify several different pathes in the same server
+    port is 80. You can specify several different paths in the same server
     block.
 
    websocket_buffer
@@ -496,7 +496,7 @@ Directives
 
   ngx_tcp_ssl_module
     The default config file includes this ngx_tcp_ssl_module. If you want to
-    compile nginx without ngx_tcp_ssl_module, copy the
+    just compile nginx without ngx_tcp_ssl_module, copy the
     ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config,
     reconfigrure and compile nginx.
 
@@ -517,10 +517,8 @@ Directives
     context: *tcp, server*
 
     This directive specifies the file containing the certificate, in PEM
-    format, for this virtual host. This file can contain also other
-    certificates and the server private key. Since version 0.6.7 the file
-    path is relative to the directory where nginx main configuration file,
-    nginx.conf, resides.
+    format. This file can contain also other certificates and the server
+    private key.
 
    ssl_certificate_key
     syntax: *ssl_certificate_key file*
@@ -530,9 +528,7 @@ Directives
     context: *tcp, server*
 
     This directive specifies the file containing the private key, in PEM
-    format, for this virtual host. Since version 0.6.7 the file path is
-    relative to the directory where nginx main configuration file,
-    nginx.conf, resides.
+    format.
 
    ssl_client_certificate
     syntax: *ssl_client_certificate file*
@@ -558,7 +554,7 @@ Directives
    ssl_ciphers
     syntax: *ssl_ciphers openssl_cipherlist_spec*
 
-    default: *ssl_ciphers ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP*
+    default: *ssl_ciphers HIGH:!aNULL:!MD5*
 
     context: *tcp, server*
 
@@ -580,9 +576,9 @@ Directives
 
     context: *tcp, server*
 
-    This directive, introduced in Nginx version 0.8.7, specifies the
-    filename of a Certificate Revocation List, in PEM format, which is used
-    to check the revocation status of certificates.
+    This directive specifies the filename of a Certificate Revocation List,
+    in PEM format, which is used to check the revocation status of
+    certificates.
 
    ssl_prefer_server_ciphers
     syntax: *ssl_prefer_server_ciphers [on|off] *
@@ -595,9 +591,9 @@ Directives
     TLSv1 are to be preferred over the client supported cipher suite list.
 
    ssl_protocols
-    syntax: *ssl_protocols [SSLv2] [SSLv3] [TLSv1] *
+    syntax: *ssl_protocols [SSLv2] [SSLv3] [TLSv1] [TLSv1.1] [TLSv1.2]*
 
-    default: *ssl_protocols SSLv2 SSLv3 TLSv1*
+    default: *ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2*
 
     context: *tcp, server*
 
@@ -612,8 +608,7 @@ Directives
 
     This directive enables the verification of the client identity.
     Parameter 'optional' checks the client identity using its certificate in
-    case it was made available to the server. (Was 'ask' before 0.8.7 and
-    0.7.63)
+    case it was made available to the server.
 
    ssl_verify_depth
     syntax: *ssl_verify_depth number*
@@ -664,9 +659,6 @@ Directives
 
     Bear in mind however, that using only shared cache, i.e., without
     builtin, should be more effective.
-
-    For Nginx versions below 0.8.34 this directive shouldn't be set to
-    'none' or 'off' if ssl_verify_client is set to 'on' or 'optional'.
 
    ssl_session_timeout
     syntax: *ssl_session_timeout time*

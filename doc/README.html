@@ -4,15 +4,13 @@
 <head>
 <title>Name</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:yaoweibin@yaoweibin.freebsd" />
+<link rev="made" href="mailto:root@localhost" />
 </head>
 
 <body style="background-color: white">
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -110,11 +108,9 @@
 	<li><a href="#authors">Authors</a></li>
 	<li><a href="#copyright___license">Copyright &amp; License</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <hr />
@@ -125,12 +121,12 @@
 <hr />
 <h1><a name="installation">Installation</a></h1>
 <p>Download the latest stable version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
-<p>The development version of this module is here (<a href="https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop">https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop</a>). I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.</p>
-<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 1.0.9 (see nginx compatibility), and then build the source with this module:</p>
+<p>The development version of this module is here (<a href="https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop">https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop</a>). I have added these features include tcp_ssl_proxy, tcp_upstream_busyness, access_log.</p>
+<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 1.2.0 (see nginx compatibility), and then build the source with this module:</p>
 <pre>
-    $ wget '<a href="http://nginx.org/download/nginx-1.0.9.tar.gz">http://nginx.org/download/nginx-1.0.9.tar.gz</a>'
-    $ tar -xzvf nginx-1.0.9.tar.gz
-    $ cd nginx-1.0.9/
+    $ wget '<a href="http://nginx.org/download/nginx-1.2.0.tar.gz">http://nginx.org/download/nginx-1.2.0.tar.gz</a>'
+    $ tar -xzvf nginx-1.2.0.tar.gz
+    $ cd nginx-1.2.0/
     $ patch -p1 &lt; /path/to/nginx_tcp_proxy_module/tcp.patch</pre>
 <pre>
     $ ./configure --add-module=/path/to/nginx_tcp_proxy_module</pre>
@@ -155,8 +151,8 @@
 <pre>
     upstream cluster {
         # simple round-robin
-        server 127.0.0.1:3306;
-        server 127.0.0.1:1234;</pre>
+        server 192.168.0.1:80;
+        server 192.168.0.2:80;</pre>
 <pre>
         check interval=3000 rise=2 fall=5 timeout=1000;</pre>
 <pre>
@@ -177,9 +173,9 @@
 </p>
 <hr />
 <h1><a name="description">Description</a></h1>
-<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_websocket_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
+<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_websocket_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work together to support TCP proxy with Nginx. I also added other features: ip_hash, upstream server health check, status monitor.</p>
 <p>The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying.</p>
-<p>You can't use the same listening port with HTTP modules.</p>
+<p>Note, You can't use the same listening port with HTTP modules.</p>
 <p>
 </p>
 <hr />
@@ -348,28 +344,27 @@
 <p><em>ssl_hello</em> sends a client ssl hello packet and receives the server ssl hello packet.</p>
 </li>
 <li>
-<p><em>http</em> sends a http requst packet, recvives and parses the http response to diagnose if the upstream server is alive.</p>
+<p><em>http</em> sends a http request packet, receives and parses the http response to diagnose if the upstream server is alive.</p>
 </li>
 <li>
-<p><em>smtp</em> sends a smtp requst packet, recvives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.</p>
+<p><em>smtp</em> sends a smtp request packet, receives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.</p>
 </li>
 <li>
-<p><em>mysql</em> connects to the mysql server, recvives the greeting response to diagnose if the upstream server is alive.</p>
+<p><em>mysql</em> connects to the mysql server, receives the greeting response to diagnose if the upstream server is alive.</p>
 </li>
 <li>
-<p><em>pop3</em> recvives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should be an OK response.</p>
+<p><em>pop3</em> receives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should be an OK response.</p>
 </li>
 <li>
-<p><em>imap</em> connects to the imap server, recvives the greeting response to diagnose if the upstream server is alive.</p>
+<p><em>imap</em> connects to the imap server, receives the greeting response to diagnose if the upstream server is alive.</p>
 </li>
 </ol>
-</li>
 </ul>
 <p>
 </p>
 <h3><a name="check_http_send">check_http_send</a></h3>
 <p><strong>syntax:</strong> <em>check_http_send http_packet</em></p>
-<p><strong>default:</strong> <em>&quot;GET / HTTP/1.0\r\n\r\n&quot;</em></p>
+<p><strong>default:</strong> <em>``GET / HTTP/1.0\r\n\r\n''</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
 <p><strong>description:</strong> If you set the check type is http, then the check function will sends this http packet to check the upstream server.</p>
 <p>
@@ -378,12 +373,12 @@
 <p><strong>syntax:</strong> <em>check_http_expect_alive [ http_2xx | http_3xx | http_4xx | http_5xx ]</em></p>
 <p><strong>default:</strong> <em>http_2xx | http_3xx</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
-<p><strong>description:</strong> These status codes indicate the upstream server's http response is ok, the backend is alive.</p>
+<p><strong>description:</strong> These status codes indicate the upstream server's http response is OK, the backend is alive.</p>
 <p>
 </p>
 <h3><a name="check_smtp_send">check_smtp_send</a></h3>
 <p><strong>syntax:</strong> <em>check_smtp_send smtp_packet</em></p>
-<p><strong>default:</strong> <em>&quot;HELO smtp.localdomain\r\n&quot;</em></p>
+<p><strong>default:</strong> <em>``HELO smtp.localdomain\r\n''</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
 <p><strong>description:</strong> If you set the check type is smtp, then the check function will sends this smtp packet to check the upstream server.</p>
 <p>
@@ -392,14 +387,14 @@
 <p><strong>syntax:</strong> <em>check_smtp_expect_alive [smtp_2xx | smtp_3xx | smtp_4xx | smtp_5xx]</em></p>
 <p><strong>default:</strong> <em>smtp_2xx</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
-<p><strong>description:</strong> These status codes indicate the upstream server's smtp response is ok, the backend is alive.</p>
+<p><strong>description:</strong> These status codes indicate the upstream server's smtp response is OK, the backend is alive.</p>
 <p>
 </p>
 <h3><a name="check_shm_size">check_shm_size</a></h3>
 <p><strong>syntax:</strong> <em>check_shm_size size</em></p>
 <p><strong>default:</strong> <em>(number_of_checked_upstream_blocks + 1) * pagesize</em></p>
 <p><strong>context:</strong> <em>tcp</em></p>
-<p><strong>description:</strong> If you store hundreds of serveres in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.</p>
+<p><strong>description:</strong> If you store hundreds of servers in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.</p>
 <p>
 </p>
 <h3><a name="check_status">check_status</a></h3>
@@ -497,7 +492,7 @@
 <p><strong>syntax:</strong> <em>websocket_pass [path] host:port</em></p>
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>server</em></p>
-<p><strong>description:</strong> proxy the websocket request to the backend server. Default port is 80. You can specify several different pathes in the same server block.</p>
+<p><strong>description:</strong> proxy the websocket request to the backend server. Default port is 80. You can specify several different paths in the same server block.</p>
 <p>
 </p>
 <h3><a name="websocket_buffer">websocket_buffer</a></h3>
@@ -529,7 +524,7 @@
 <p>
 </p>
 <h2><a name="ngx_tcp_ssl_module">ngx_tcp_ssl_module</a></h2>
-<p>The default config file includes this ngx_tcp_ssl_module. If you want to compile nginx without ngx_tcp_ssl_module, copy the ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config,  reconfigrure and compile nginx.</p>
+<p>The default config file includes this ngx_tcp_ssl_module. If you want to just compile nginx without ngx_tcp_ssl_module, copy the ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config,  reconfigrure and compile nginx.</p>
 <p>
 </p>
 <h3><a name="ssl">ssl</a></h3>
@@ -543,14 +538,14 @@
 <p><strong>syntax:</strong> <em>ssl_certificate file</em></p>
 <p><strong>default:</strong> <em>ssl_certificate cert.pem</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p>This directive specifies the file containing the certificate, in PEM format, for this virtual host. This file can contain also other certificates and the server private key. Since version 0.6.7 the file path is relative to the directory where nginx main configuration file, nginx.conf, resides.</p>
+<p>This directive specifies the file containing the certificate, in PEM format. This file can contain also other certificates and the server private key.</p>
 <p>
 </p>
 <h3><a name="ssl_certificate_key">ssl_certificate_key</a></h3>
 <p><strong>syntax:</strong> <em>ssl_certificate_key file</em></p>
 <p><strong>default:</strong> <em>ssl_certificate_key cert.pem</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p>This directive specifies the file containing the private key, in PEM format, for this virtual host. Since version 0.6.7 the file path is relative to the directory where nginx main configuration file, nginx.conf, resides.</p>
+<p>This directive specifies the file containing the private key, in PEM format.</p>
 <p>
 </p>
 <h3><a name="ssl_client_certificate">ssl_client_certificate</a></h3>
@@ -569,7 +564,7 @@
 </p>
 <h3><a name="ssl_ciphers">ssl_ciphers</a></h3>
 <p><strong>syntax:</strong> <em>ssl_ciphers openssl_cipherlist_spec</em></p>
-<p><strong>default:</strong> <em>ssl_ciphers ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP</em></p>
+<p><strong>default:</strong> <em>ssl_ciphers HIGH:!aNULL:!MD5</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
 <p>This directive describes the list of cipher suites the server supports for establishing a secure connection. Cipher suites are specified in the OpenSSL (<a href="http://openssl.org/docs/apps/ciphers.html">http://openssl.org/docs/apps/ciphers.html</a>) cipherlist format, for example:</p>
 <p>ssl_ciphers  ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;</p>
@@ -581,7 +576,7 @@ openssl ciphers</p>
 <p><strong>syntax:</strong> <em>ssl_crl file</em></p>
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p>This directive, introduced in Nginx version 0.8.7, specifies the filename of a Certificate Revocation List, in PEM format, which is used to check the revocation status of certificates.</p>
+<p>This directive specifies the filename of a Certificate Revocation List, in PEM format, which is used to check the revocation status of certificates.</p>
 <p>
 </p>
 <h3><a name="ssl_prefer_server_ciphers">ssl_prefer_server_ciphers</a></h3>
@@ -592,8 +587,8 @@ openssl ciphers</p>
 <p>
 </p>
 <h3><a name="ssl_protocols">ssl_protocols</a></h3>
-<p><strong>syntax:</strong> <em>ssl_protocols [SSLv2]  [SSLv3]  [TLSv1] </em></p>
-<p><strong>default:</strong> <em>ssl_protocols SSLv2 SSLv3 TLSv1</em></p>
+<p><strong>syntax:</strong> <em>ssl_protocols [SSLv2] [SSLv3] [TLSv1] [TLSv1.1] [TLSv1.2]</em></p>
+<p><strong>default:</strong> <em>ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
 <p>This directive enables the protocol versions specified.</p>
 <p>
@@ -602,7 +597,7 @@ openssl ciphers</p>
 <p><strong>syntax:</strong> <em>ssl_verify_client on|off|optional</em></p>
 <p><strong>default:</strong> <em>ssl_verify_client off</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p>This directive enables the verification of the client identity. Parameter 'optional' checks the client identity using its certificate in case it was made available to the server. (Was 'ask' before 0.8.7 and 0.7.63)</p>
+<p>This directive enables the verification of the client identity. Parameter 'optional' checks the client identity using its certificate in case it was made available to the server.</p>
 <p>
 </p>
 <h3><a name="ssl_verify_depth">ssl_verify_depth</a></h3>
@@ -626,7 +621,7 @@ openssl ciphers</p>
 <p>none -- Soft off: nginx says to a client that session can be resued, but nginx actually never reuses them. This is workaround for some mail clients as ssl_session_cache may be used in mail proxy as well as in HTTP server.</p>
 </li>
 <li>
-<p>builtin -- the OpenSSL builtin cache, is used inside one worker process only. The cache size is assigned in the number of the sessions. Note: there appears to be a memory fragmentation issue using this method, please take that into consideration when using this. See &quot;References&quot; below.</p>
+<p>builtin -- the OpenSSL builtin cache, is used inside one worker process only. The cache size is assigned in the number of the sessions. Note: there appears to be a memory fragmentation issue using this method, please take that into consideration when using this. See ``References'' below.</p>
 </li>
 <li>
 <p>shared -- the cache is shared between all worker processes. The size of the cache is assigned in bytes: 1 MB cache can contain roughly 4000 sessions. Each shared cache must be given an arbitrary name. A shared cache with a given name can be used in several virtual hosts.</p>
@@ -635,7 +630,6 @@ openssl ciphers</p>
 <p>It's possible to use both types of cache &amp;mdash; builtin and shared &amp;mdash; simultaneously, for example:</p>
 <p>ssl_session_cache  builtin:1000  shared:SSL:10m;</p>
 <p>Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.</p>
-<p>For Nginx versions below 0.8.34 this directive shouldn't be set to 'none' or 'off' if ssl_verify_client is set to 'on' or 'optional'.</p>
 <p>
 </p>
 <h3><a name="ssl_session_timeout">ssl_session_timeout</a></h3>
@@ -698,7 +692,7 @@ openssl ciphers</p>
 </p>
 <hr />
 <h1><a name="authors">Authors</a></h1>
-<p>Weibin Yao(姚伟斌) <em>yaoweibin at gmail dot com</em></p>
+<p>Weibin <code>Yao(姚伟斌)</code> <em>yaoweibin at gmail dot com</em></p>
 <p>
 </p>
 <hr />
@@ -717,7 +711,7 @@ openssl ciphers</p>
 <p>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</p>
 </li>
 </ul>
-<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
 </body>
 
