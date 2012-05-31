@@ -484,8 +484,9 @@ ngx_tcp_ssl_session_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 return NGX_CONF_ERROR;
             }
 
+#if defined(nginx_version) && nginx_version >= 1000007
             sscf->shm_zone->init = ngx_ssl_session_cache_init;
-
+#endif
             continue;
         }
 
