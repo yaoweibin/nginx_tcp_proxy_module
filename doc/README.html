@@ -4,15 +4,13 @@
 <head>
 <title>Name</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:yaoweibin@yaoweibin.freebsd" />
+<link rev="made" href="mailto:root@localhost" />
 </head>
 
 <body style="background-color: white">
 
-
-<!-- INDEX BEGIN -->
-<div name="index">
 <p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
 
 <ul>
 
@@ -80,11 +78,9 @@
 	<li><a href="#authors">Authors</a></li>
 	<li><a href="#copyright___license">Copyright &amp; License</a></li>
 </ul>
-
-<hr name="index" />
-</div>
 <!-- INDEX END -->
 
+<hr />
 <p>
 </p>
 <hr />
@@ -96,11 +92,11 @@
 <h1><a name="installation">Installation</a></h1>
 <p>Download the latest stable version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
 <p>The development version of this module is here (<a href="https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop">https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop</a>). I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.</p>
-<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:</p>
+<p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 1.2.1 (see nginx compatibility), and then build the source with this module:</p>
 <pre>
-    $ wget '<a href="http://nginx.org/download/nginx-0.7.65.tar.gz">http://nginx.org/download/nginx-0.7.65.tar.gz</a>'
-    $ tar -xzvf nginx-0.7.65.tar.gz
-    $ cd nginx-0.7.65/
+    $ wget '<a href="http://nginx.org/download/nginx-1.2.1.tar.gz">http://nginx.org/download/nginx-1.2.1.tar.gz</a>'
+    $ tar -xzvf nginx-1.2.1.tar.gz
+    $ cd nginx-1.2.1/
     $ patch -p1 &lt; /path/to/nginx_tcp_proxy_module/tcp.patch</pre>
 <pre>
     $ ./configure --add-module=/path/to/nginx_tcp_proxy_module</pre>
@@ -298,13 +294,12 @@
 <p><em>imap</em> connects to the imap server, recvives the greeting response to diagnose if the upstream server is alive.</p>
 </li>
 </ol>
-</li>
 </ul>
 <p>
 </p>
 <h3><a name="check_http_send">check_http_send</a></h3>
 <p><strong>syntax:</strong> <em>check_http_send http_packet</em></p>
-<p><strong>default:</strong> <em>&quot;GET / HTTP/1.0\r\n\r\n&quot;</em></p>
+<p><strong>default:</strong> <em>``GET / HTTP/1.0\r\n\r\n''</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
 <p><strong>description:</strong> If you set the check type is http, then the check function will sends this http packet to check the upstream server.</p>
 <p>
@@ -318,7 +313,7 @@
 </p>
 <h3><a name="check_smtp_send">check_smtp_send</a></h3>
 <p><strong>syntax:</strong> <em>check_smtp_send smtp_packet</em></p>
-<p><strong>default:</strong> <em>&quot;HELO smtp.localdomain\r\n&quot;</em></p>
+<p><strong>default:</strong> <em>``HELO smtp.localdomain\r\n''</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
 <p><strong>description:</strong> If you set the check type is smtp, then the check function will sends this smtp packet to check the upstream server.</p>
 <p>
@@ -421,7 +416,7 @@
 <h1><a name="compatibility">Compatibility</a></h1>
 <ul>
 <li>
-<p>My test bed is 0.7.65 and 0.8.53</p>
+<p>Nginx 0.7.65+</p>
 </li>
 </ul>
 <p>
@@ -469,7 +464,7 @@
 </p>
 <hr />
 <h1><a name="authors">Authors</a></h1>
-<p>Weibin Yao(姚伟斌) <em>yaoweibin at gmail dot com</em></p>
+<p>Weibin <code>Yao(姚伟斌)</code> <em>yaoweibin at gmail dot com</em></p>
 <p>
 </p>
 <hr />
@@ -488,7 +483,7 @@
 <p>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</p>
 </li>
 </ul>
-<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
 </body>
 

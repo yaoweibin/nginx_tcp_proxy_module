@@ -8,12 +8,12 @@ Download the latest stable version of the release tarball of this module from [h
 
 The development version of this module is [https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop here]. I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.
 
-Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 0.7.65 (see nginx compatibility), and then build the source with this module:
+Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.2.1 (see nginx compatibility), and then build the source with this module:
 
 <geshi lang="bash">
-    $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
-    $ tar -xzvf nginx-0.7.65.tar.gz
-    $ cd nginx-0.7.65/
+    $ wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
+    $ tar -xzvf nginx-1.2.1.tar.gz
+    $ cd nginx-1.2.1/
     $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
 
     $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
@@ -377,7 +377,7 @@ The table field meanings are:
 
 = Compatibility =
 
-* My test bed is 0.7.65 and 0.8.53
+* Nginx 0.7.65+
 
 = Notes =
 

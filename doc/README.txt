@@ -11,12 +11,12 @@ Installation
     access_log.
 
     Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-    example, the version 0.7.65 (see nginx compatibility), and then build
-    the source with this module:
+    example, the version 1.2.1 (see nginx compatibility), and then build the
+    source with this module:
 
-        $ wget 'http://nginx.org/download/nginx-0.7.65.tar.gz'
-        $ tar -xzvf nginx-0.7.65.tar.gz
-        $ cd nginx-0.7.65/
+        $ wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
+        $ tar -xzvf nginx-1.2.1.tar.gz
+        $ cd nginx-1.2.1/
         $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
 
         $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
@@ -395,7 +395,7 @@ Directives
     description: set the timeout value of sending to backends.
 
 Compatibility
-    *   My test bed is 0.7.65 and 0.8.53
+    *   Nginx 0.7.65+
 
 Notes
     The http_response_parse.rl and smtp_response_parse.rl are ragel
