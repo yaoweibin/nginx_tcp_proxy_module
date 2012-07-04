@@ -65,43 +65,43 @@ typedef struct {
 
 
 typedef struct {
-    ngx_str_t name;
+    ngx_str_t                name;
 } ngx_tcp_server_name_t;
 
 
 typedef struct {
-    ngx_uint_t           hash;
-    ngx_str_t            name;
-    ngx_tcp_listen_t    *listen;
-    ngx_tcp_conf_ctx_t  *ctx;
+    ngx_uint_t               hash;
+    ngx_str_t                name;
+    ngx_tcp_listen_t        *listen;
+    ngx_tcp_conf_ctx_t      *ctx;
 } ngx_tcp_virtual_server_t;
 
 
 typedef struct {
-    ngx_str_t name;
+    ngx_str_t                name;
 } ngx_tcp_core_loc_t;
 
 
 typedef struct {
-    ngx_tcp_conf_ctx_t    *ctx;
-    ngx_tcp_conf_ctx_t    *default_ctx;
-    ngx_str_t              addr_text;
+    ngx_tcp_conf_ctx_t      *ctx;
+    ngx_tcp_conf_ctx_t      *default_ctx;
+    ngx_str_t                addr_text;
 #if (NGX_TCP_SSL)
-    ngx_uint_t             ssl;    /* unsigned   ssl:1; */
+    ngx_uint_t               ssl;    /* unsigned   ssl:1; */
 #endif
 } ngx_tcp_addr_conf_t;
 
 typedef struct {
-    in_addr_t              addr;
-    ngx_tcp_addr_conf_t    conf;
+    in_addr_t                addr;
+    ngx_tcp_addr_conf_t      conf;
 } ngx_tcp_in_addr_t;
 
 
 #if (NGX_HAVE_INET6)
 
 typedef struct {
-    struct in6_addr        addr6;
-    ngx_tcp_addr_conf_t    conf;
+    struct in6_addr          addr6;
+    ngx_tcp_addr_conf_t      conf;
 } ngx_tcp_in6_addr_t;
 
 #endif
@@ -109,95 +109,97 @@ typedef struct {
 
 typedef struct {
     /* ngx_tcp_in_addr_t or ngx_tcp_in6_addr_t */
-    void                   *addrs;
-    ngx_uint_t              naddrs;
+    void                    *addrs;
+    ngx_uint_t               naddrs;
 } ngx_tcp_port_t;
 
 
 typedef struct {
-    int                     family;
-    in_port_t               port;
-    ngx_array_t             addrs;       /* array of ngx_tcp_conf_addr_t */
+    int                      family;
+    in_port_t                port;
+    ngx_array_t              addrs;       /* array of ngx_tcp_conf_addr_t */
 } ngx_tcp_conf_port_t;
 
 
 typedef struct {
-    struct sockaddr        *sockaddr;
-    socklen_t               socklen;
+    struct sockaddr         *sockaddr;
+    socklen_t                socklen;
 
-    ngx_tcp_conf_ctx_t     *ctx;
-    ngx_tcp_conf_ctx_t     *default_ctx;
+    ngx_tcp_conf_ctx_t      *ctx;
+    ngx_tcp_conf_ctx_t      *default_ctx;
 
-    unsigned                bind:1;
-    unsigned                wildcard:1;
+    unsigned                 bind:1;
+    unsigned                 wildcard:1;
 #if (NGX_TCP_SSL)
-    unsigned                ssl:1;
+    unsigned                 ssl:1;
 #endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
-    unsigned                ipv6only:2;
+    unsigned                 ipv6only:2;
 #endif
 } ngx_tcp_conf_addr_t;
 
 typedef struct {
-    in_addr_t     mask;
-    in_addr_t     addr;
-    ngx_uint_t    deny;      /* unsigned  deny:1; */
+    in_addr_t                mask;
+    in_addr_t                addr;
+    ngx_uint_t               deny;      /* unsigned  deny:1; */
 } ngx_tcp_access_rule_t;
 
 typedef struct {
-    ngx_array_t             servers;         /* ngx_tcp_core_srv_conf_t */
-    ngx_array_t             listen;          /* ngx_tcp_listen_t */
-    ngx_array_t             virtual_servers; /* ngx_tcp_virtual_server_t */
+    ngx_array_t              servers;         /* ngx_tcp_core_srv_conf_t */
+    ngx_array_t              listen;          /* ngx_tcp_listen_t */
+    ngx_array_t              virtual_servers; /* ngx_tcp_virtual_server_t */
 } ngx_tcp_core_main_conf_t;
 
 typedef struct {
-    ngx_open_file_t            *file;
-    time_t                      disk_full_time;
-    time_t                      error_log_time;
+    ngx_open_file_t         *file;
+    time_t                   disk_full_time;
+    time_t                   error_log_time;
 } ngx_tcp_log_t;
 
 typedef struct {
-    ngx_array_t                *logs;       /* array of ngx_tcp_log_t */
+    ngx_array_t             *logs;       /* array of ngx_tcp_log_t */
 
-    ngx_open_file_cache_t      *open_file_cache;
-    time_t                      open_file_cache_valid;
-    ngx_uint_t                  open_file_cache_min_uses;
+    ngx_open_file_cache_t   *open_file_cache;
+    time_t                   open_file_cache_valid;
+    ngx_uint_t               open_file_cache_min_uses;
 
-    ngx_uint_t                  off;        /* unsigned  off:1 */
+    ngx_uint_t               off;        /* unsigned  off:1 */
 } ngx_tcp_log_srv_conf_t;
+
 
 #define NGX_TCP_GENERIC_PROTOCOL    0
 #define NGX_TCP_WEBSOCKET_PROTOCOL  1
 
+
 struct ngx_tcp_core_srv_conf_s {
     /* array of the ngx_tcp_server_name_t, "server_name" directive */
-    ngx_array_t             server_names;
+    ngx_array_t              server_names;
 
     /* array of the ngx_tcp_core_loc_t, "location" directive */
-    ngx_array_t             locations;
+    ngx_array_t              locations;
 
-    ngx_tcp_protocol_t     *protocol;
+    ngx_tcp_protocol_t      *protocol;
 
-    ngx_msec_t              timeout;
-    ngx_msec_t              resolver_timeout;
+    ngx_msec_t               timeout;
+    ngx_msec_t               resolver_timeout;
 
-    ngx_flag_t              so_keepalive;
-    ngx_flag_t              tcp_nodelay;
+    ngx_flag_t               so_keepalive;
+    ngx_flag_t               tcp_nodelay;
 
-    ngx_str_t               server_name;
+    ngx_str_t                server_name;
 
-    u_char                 *file_name;
-    ngx_int_t               line;
+    u_char                  *file_name;
+    ngx_int_t                line;
 
-    ngx_resolver_t         *resolver;
+    ngx_resolver_t          *resolver;
 
     /*ACL rules*/
-    ngx_array_t            *rules;
+    ngx_array_t             *rules;
 
-    ngx_tcp_log_srv_conf_t *access_log;
+    ngx_tcp_log_srv_conf_t  *access_log;
 
     /* server ctx */
-    ngx_tcp_conf_ctx_t     *ctx;
+    ngx_tcp_conf_ctx_t      *ctx;
 };
 
 

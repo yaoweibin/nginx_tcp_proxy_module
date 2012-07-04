@@ -313,7 +313,7 @@ found:
 
 static ngx_int_t 
 ngx_tcp_add_virtual_servers(ngx_conf_t *cf, ngx_tcp_core_main_conf_t *cmcf,
-        ngx_tcp_listen_t *listen)
+    ngx_tcp_listen_t *listen)
 {
     ngx_tcp_core_srv_conf_t   *cscf;
     ngx_tcp_virtual_server_t  *vs;
@@ -340,7 +340,7 @@ ngx_tcp_add_virtual_servers(ngx_conf_t *cf, ngx_tcp_core_main_conf_t *cmcf,
 
 static char *
 ngx_tcp_optimize_servers(ngx_conf_t *cf, ngx_tcp_core_main_conf_t *cmcf,
-        ngx_array_t *ports)
+    ngx_array_t *ports)
 {
     ngx_uint_t             i, p, last, bind_wildcard;
     ngx_listening_t       *ls;
