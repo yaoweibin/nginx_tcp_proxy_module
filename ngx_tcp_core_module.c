@@ -9,19 +9,19 @@
 static void *ngx_tcp_core_create_main_conf(ngx_conf_t *cf);
 static void *ngx_tcp_core_create_srv_conf(ngx_conf_t *cf);
 static char *ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent,
-        void *child);
+    void *child);
 static char *ngx_tcp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char *ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char *ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char *ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char *ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd,
@@ -161,7 +161,9 @@ ngx_module_t  ngx_tcp_core_module = {
     NGX_MODULE_V1_PADDING
 };
 
+
 static ngx_str_t  ngx_tcp_access_log = ngx_string("logs/tcp_access.log");
+
 
 static void *
 ngx_tcp_core_create_main_conf(ngx_conf_t *cf) 
@@ -174,20 +176,20 @@ ngx_tcp_core_create_main_conf(ngx_conf_t *cf)
     }
 
     if (ngx_array_init(&cmcf->servers, cf->pool, 4,
-                sizeof(ngx_tcp_core_srv_conf_t *))
-            != NGX_OK)
+                       sizeof(ngx_tcp_core_srv_conf_t *))
+        != NGX_OK)
     {
         return NULL;
     }
 
     if (ngx_array_init(&cmcf->listen, cf->pool, 4, sizeof(ngx_tcp_listen_t))
-            != NGX_OK)
+        != NGX_OK)
     {
         return NULL;
     }
 
     if (ngx_array_init(&cmcf->virtual_servers, cf->pool, 4, 
-             sizeof(ngx_tcp_virtual_server_t)) != NGX_OK)
+                       sizeof(ngx_tcp_virtual_server_t)) != NGX_OK)
     {
         return NULL;
     }
@@ -214,13 +216,15 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
      *     cscf->protocol = NULL;
      */
 
-    if (ngx_array_init(&cscf->server_names, cf->pool, 4, sizeof(ngx_tcp_server_name_t))
+    if (ngx_array_init(&cscf->server_names, cf->pool, 4,
+                       sizeof(ngx_tcp_server_name_t))
         != NGX_OK)
     {
         return NULL;
     }
 
-    if (ngx_array_init(&cscf->locations, cf->pool, 4, sizeof(ngx_tcp_core_loc_t))
+    if (ngx_array_init(&cscf->locations, cf->pool, 4,
+                       sizeof(ngx_tcp_core_loc_t))
         != NGX_OK)
     {
         return NULL;
@@ -237,7 +241,7 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
     cscf->line = cf->conf_file->line;
 
     lscf = cscf->access_log = ngx_pcalloc(cf->pool, 
-            sizeof(ngx_tcp_log_srv_conf_t));
+                                          sizeof(ngx_tcp_log_srv_conf_t));
     if (lscf == NULL) {
         return NULL;
     }
@@ -266,18 +270,13 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_tcp_log_srv_conf_t  *lscf = conf->access_log;
 
     ngx_conf_merge_msec_value(conf->timeout, prev->timeout, 60000);
-    ngx_conf_merge_msec_value(conf->resolver_timeout, prev->resolver_timeout, 30000);
+    ngx_conf_merge_msec_value(conf->resolver_timeout,
+                              prev->resolver_timeout, 30000);
 
     ngx_conf_merge_value(conf->so_keepalive, prev->so_keepalive, 0);
     ngx_conf_merge_value(conf->tcp_nodelay, prev->tcp_nodelay, 1);
 
     ngx_conf_merge_str_value(conf->server_name, prev->server_name, "");
-
-    /*
-    if (conf->server_name.len == 0) {
-        conf->server_name = cf->cycle->hostname;
-    }
-    */
 
     if (conf->protocol == NULL) {
         for (m = 0; ngx_modules[m]; m++) {
@@ -287,8 +286,9 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
             module = ngx_modules[m]->ctx;
 
+            /* TODO: use a function */
             if (module->protocol 
-                    && ngx_strcmp(module->protocol->name.data, "tcp_generic") == 0)
+                    && (ngx_strcmp(module->protocol->name.data, "tcp_generic")) == 0)
             {
                 conf->protocol = module->protocol;
             }
@@ -443,8 +443,8 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
         if (u.err) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "%s in \"%V\" of the \"listen\" directive",
-                    u.err, &u.url);
+                               "%s in \"%V\" of the \"listen\" directive",
+                               u.err, &u.url);
         }
 
         return NGX_CONF_ERROR;
@@ -615,7 +615,7 @@ ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static char *
 ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
-    ngx_tcp_core_srv_conf_t *cscf = conf;
+    ngx_tcp_core_srv_conf_t   *cscf = conf;
 
     char                      *rv;
     ngx_str_t                 *value;
@@ -632,7 +632,6 @@ ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     clcf->name = value[1];
 
     save = *cf;
-    /*cf->ctx = ctx;*/
     cf->cmd_type = NGX_TCP_LOC_CONF;
 
     rv = ngx_conf_parse(cf, NULL);
@@ -672,6 +671,7 @@ ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                        "unknown protocol \"%V\"", &value[1]);
+
     return NGX_CONF_ERROR;
 }
 
