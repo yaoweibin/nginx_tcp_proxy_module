@@ -1,20 +1,3 @@
-#
-#===============================================================================
-#
-#         FILE:  tcp_check.t
-#
-#  DESCRIPTION: test 
-#
-#        FILES:  ---
-#         BUGS:  ---
-#        NOTES:  ---
-#       AUTHOR:  Weibin Yao (http://yaoweibin.cn/), yaoweibin@gmail.com
-#      COMPANY:  
-#      VERSION:  1.0
-#      CREATED:  03/02/2010 03:18:28 PM
-#     REVISION:  ---
-#===============================================================================
-
 
 # vi:filetype=perl
 
@@ -227,7 +210,7 @@ GET /bad
 --- request_headers
 Host: blog.163.com
 --- request
-GET /public
+GET /public/theme
 --- error_code: 200
 --- response_body_like: ^.*$
 
