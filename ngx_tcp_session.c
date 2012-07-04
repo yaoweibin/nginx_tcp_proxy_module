@@ -279,10 +279,10 @@ ngx_tcp_set_session_socket(ngx_tcp_session_t *s)
         keepalive = 1;
 
         if (setsockopt(s->connection->fd, SOL_SOCKET, SO_KEEPALIVE,
-                    (const void *) &keepalive, sizeof(int)) == -1)
+                       (const void *) &keepalive, sizeof(int)) == -1)
         {
             ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
-                    "setsockopt(SO_KEEPALIVE) failed");
+                          "setsockopt(SO_KEEPALIVE) failed");
         }
     }
 
@@ -293,7 +293,7 @@ ngx_tcp_set_session_socket(ngx_tcp_session_t *s)
             == -1)
         {
             ngx_log_error(NGX_LOG_ALERT, s->connection->log, ngx_socket_errno,
-                    "setsockopt(TCP_NODELAY) failed");
+                          "setsockopt(TCP_NODELAY) failed");
         }
 
         s->connection->tcp_nodelay = NGX_TCP_NODELAY_SET;
@@ -311,7 +311,7 @@ ngx_tcp_process_session(ngx_connection_t *c)
 
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
-    /*process the acl*/
+    /* process the ACL */
     if (ngx_tcp_access_handler(s) == NGX_ERROR) {
         ngx_tcp_finalize_session(s);
         return;

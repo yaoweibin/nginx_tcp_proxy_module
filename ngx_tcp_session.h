@@ -46,9 +46,9 @@ typedef void (*ngx_tcp_cleanup_pt)(void *data);
 
 
 struct ngx_tcp_cleanup_s {
-    ngx_tcp_cleanup_pt                handler;
-    void                             *data;
-    ngx_tcp_cleanup_t                *next;
+    ngx_tcp_cleanup_pt      handler;
+    void                   *data;
+    ngx_tcp_cleanup_t      *next;
 };
 
 void ngx_tcp_init_connection(ngx_connection_t *c);
@@ -67,7 +67,5 @@ ngx_tcp_cleanup_t * ngx_tcp_cleanup_add(ngx_tcp_session_t *s, size_t size);
 
 ngx_int_t ngx_tcp_access_handler(ngx_tcp_session_t *s);
 ngx_int_t ngx_tcp_log_handler(ngx_tcp_session_t *s);
-
-extern ngx_module_t  ngx_tcp_proxy_module;
 
 #endif
