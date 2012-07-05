@@ -1,12 +1,10 @@
-﻿﻿= Name =
+﻿= Name =
 
 '''nginx_tcp_proxy_module''' - support TCP proxy with Nginx
 
 = Installation =
 
 Download the latest stable version of the release tarball of this module from [http://github.com/yaoweibin/nginx_tcp_proxy_module github]
-
-The development version of this module is [https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop here]. I have added these features include tcp_ssl_proxy, tcp_upstream_busyness, access_log.
 
 Grab the nginx source code from [http://nginx.org/ nginx.org], for example, the version 1.2.0 (see nginx compatibility), and then build the source with this module:
 
@@ -454,7 +452,7 @@ The table field meanings are:
 
 '''context:''' ''tcp, server''
 
-'''description:''' set the timeout value of reading from backends.  Your timeout will be the minimum of this and the *timeout* parameter, so if you want a long timeout for your websockets, make sure to set both paramaters.
+'''description:''' set the timeout value of reading from backends. Your timeout will be the minimum of this and the *timeout* parameter, so if you want a long timeout for your websockets, make sure to set both paramaters.
 
 === websocket_send_timeout ===
 
@@ -637,15 +635,18 @@ The http_response_parse.rl and smtp_response_parse.rl are [http://www.complang.o
     $ ragel -G2 smtp_response_parse.rl
 </geshi>
 
-= TODO =
-
-*
-
 = Known Issues =
 
 * This module can't use the same listening port with the HTTP module.
 
 = Changelogs =
+
+== v0.2.0 ==
+
+* add ssl proxy module
+* add websocket proxy module
+* add upstream busyness module
+* add tcp access log module
 
 == v0.19 ==
 
@@ -667,7 +668,7 @@ I borrowed a lot of code from upstream and mail module from the nginx 0.7.* core
 
 This module is licensed under the BSD license.
 
-Copyright (C) 2011 by Weibin Yao <yaoweibin@gmail.com>.
+Copyright (C) 2012 by Weibin Yao <yaoweibin@gmail.com>.
 
 All rights reserved.
 
@@ -677,4 +678,3 @@ Redistribution and use in source and binary forms, with or without modification,
 * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-

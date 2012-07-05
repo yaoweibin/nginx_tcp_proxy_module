@@ -5,11 +5,6 @@ Installation
     Download the latest stable version of the release tarball of this module
     from github (<http://github.com/yaoweibin/nginx_tcp_proxy_module>)
 
-    The development version of this module is here
-    (<https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop>). I
-    have added these features include tcp_ssl_proxy, tcp_upstream_busyness,
-    access_log.
-
     Grab the nginx source code from nginx.org (<http://nginx.org/>), for
     example, the version 1.2.0 (see nginx compatibility), and then build the
     source with this module:
@@ -682,13 +677,19 @@ Notes
         $ ragel -G2 http_response_parse.rl
         $ ragel -G2 smtp_response_parse.rl
 
-TODO
-    *
-
 Known Issues
     *   This module can't use the same listening port with the HTTP module.
 
 Changelogs
+  v0.2.0
+    *   add ssl proxy module
+
+    *   add websocket proxy module
+
+    *   add upstream busyness module
+
+    *   add tcp access log module
+
   v0.19
     *   add many check methods
 
@@ -709,7 +710,7 @@ Copyright & License
 
     This module is licensed under the BSD license.
 
-    Copyright (C) 2011 by Weibin Yao <yaoweibin@gmail.com>.
+    Copyright (C) 2012 by Weibin Yao <yaoweibin@gmail.com>.
 
     All rights reserved.
 
