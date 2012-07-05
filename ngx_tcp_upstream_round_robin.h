@@ -44,14 +44,14 @@ struct ngx_tcp_upstream_rr_peers_s {
 
     ngx_str_t                      *name;
 
-    ngx_tcp_upstream_rr_peers_t   *next;
+    ngx_tcp_upstream_rr_peers_t    *next;
 
     ngx_tcp_upstream_rr_peer_t     peer[1];
 };
 
 
 typedef struct {
-    ngx_tcp_upstream_rr_peers_t   *peers;
+    ngx_tcp_upstream_rr_peers_t    *peers;
     ngx_uint_t                      current;
     uintptr_t                      *tried;
     uintptr_t                       data;
@@ -71,9 +71,9 @@ void ngx_tcp_upstream_free_round_robin_peer(ngx_peer_connection_t *pc,
 
 #if (NGX_TCP_SSL)
 ngx_int_t ngx_tcp_upstream_set_round_robin_peer_session(
-        ngx_peer_connection_t *pc, void *data);
+    ngx_peer_connection_t *pc, void *data);
 void ngx_tcp_upstream_save_round_robin_peer_session(ngx_peer_connection_t *pc,
-        void *data);
+     void *data);
 #endif
 
 
