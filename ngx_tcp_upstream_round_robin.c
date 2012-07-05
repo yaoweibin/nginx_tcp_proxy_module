@@ -3,6 +3,7 @@
 #include <ngx_core.h>
 #include <ngx_tcp.h>
 
+
 static ngx_int_t ngx_tcp_upstream_cmp_servers(const void *one, const void *two);
 static ngx_uint_t ngx_tcp_upstream_get_peer(ngx_tcp_upstream_rr_peers_t *peers);
 
@@ -60,14 +61,17 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
 
                 if (!server[i].down && us->check_interval) {
                     peers->peer[n].check_index = 
-                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j], server[i].max_busy);
+                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j],
+                                               server[i].max_busy);
 
-                    if (peers->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
+                    if (peers->peer[n].check_index
+                                     == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
                         return NGX_ERROR;
                     }
                 }
                 else {
-                    peers->peer[n].check_index = (ngx_uint_t) NGX_ERROR;
+                    peers->peer[n].check_index
+                                       = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
                 }
 
                 n++;
@@ -125,14 +129,17 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
                 backup->peer[n].down = server[i].down;
                 if (!server[i].down && us->check_interval) {
                     backup->peer[n].check_index = 
-                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j], server[i].max_busy);
+                        ngx_tcp_check_add_peer(cf, us, &server[i].addrs[j],
+                                               server[i].max_busy);
 
-                    if (backup->peer[n].check_index == (ngx_uint_t) NGX_ERROR) {
+                    if (backup->peer[n].check_index
+                                     == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
                         return NGX_ERROR;
                     }
                 }
                 else {
-                    backup->peer[n].check_index = (ngx_uint_t) NGX_ERROR;
+                    backup->peer[n].check_index
+                                     = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
                 }
 
                 n++;
@@ -193,7 +200,7 @@ ngx_tcp_upstream_init_round_robin(ngx_conf_t *cf,
         peers->peer[i].current_weight = 1;
         peers->peer[i].max_fails = 1;
         peers->peer[i].fail_timeout = 10;
-        peers->peer[i].check_index = (ngx_uint_t) NGX_ERROR;
+        peers->peer[i].check_index = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
     }
 
     us->peer.data = peers;
@@ -254,6 +261,8 @@ ngx_tcp_upstream_init_round_robin_peer(ngx_tcp_session_t *s,
     s->upstream->peer.get = ngx_tcp_upstream_get_round_robin_peer;
     s->upstream->peer.free = ngx_tcp_upstream_free_round_robin_peer;
     s->upstream->peer.tries = rrp->peers->number;
+    s->upstream->peer.check_index = NGX_INVALID_CHECK_INDEX;
+    s->upstream->peer.name = NULL;
 #if (NGX_TCP_SSL)
     s->upstream->peer.set_session =
                                ngx_tcp_upstream_set_round_robin_peer_session;
@@ -305,6 +314,7 @@ ngx_tcp_upstream_create_round_robin_peer(ngx_tcp_session_t *s,
         peers->peer[0].current_weight = 1;
         peers->peer[0].max_fails = 1;
         peers->peer[0].fail_timeout = 10;
+        peers->peer[0].check_index = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
 
     } else {
 
@@ -337,6 +347,7 @@ ngx_tcp_upstream_create_round_robin_peer(ngx_tcp_session_t *s,
             peers->peer[i].current_weight = 1;
             peers->peer[i].max_fails = 1;
             peers->peer[i].fail_timeout = 10;
+            peers->peer[i].check_index = (ngx_uint_t) NGX_INVALID_CHECK_INDEX;
         }
     }
 
@@ -445,6 +456,10 @@ ngx_tcp_upstream_get_round_robin_peer(ngx_peer_connection_t *pc, void *data)
                     peer = &rrp->peers->peer[rrp->current];
 
                     if (!peer->down) {
+
+                        ngx_log_debug1(NGX_LOG_DEBUG_TCP, pc->log, 0,
+                                "get rr peer, down: %ui", 
+                                ngx_tcp_check_peer_down(peer->check_index));
 
                         if (!ngx_tcp_check_peer_down(peer->check_index)) {
                             if (peer->max_fails == 0
@@ -597,6 +612,7 @@ failed:
     }
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, pc->log, 0, "backup servers2");
+
     /* ngx_unlock_mutex(peers->mutex); */
 
     pc->name = peers->name;

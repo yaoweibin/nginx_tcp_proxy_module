@@ -1,5 +1,5 @@
 
-#include "ngx_tcp_upstream_check.h"
+#include <http_response_parser.h>
 
 #include <stdio.h>
 #include <assert.h>
@@ -16,7 +16,7 @@
 
 %%{
   
-  machine http_parser;
+  machine http_response_parser;
 
   action mark {MARK(mark, fpc); }
 
@@ -90,7 +90,7 @@ main := Response;
 /** Data **/
 %% write data;
 
-int http_parser_init(http_parser *parser)  {
+int http_response_parser_init(http_response_parser *parser)  {
   int cs = 0;
   %% write init;
   parser->cs = cs;
@@ -106,7 +106,7 @@ int http_parser_init(http_parser *parser)  {
 
 
 /** exec **/
-size_t http_parser_execute(http_parser *parser, const char signed *buffer, size_t len, size_t off)  {
+size_t http_response_parser_execute(http_response_parser *parser, const signed char *buffer, size_t len, size_t off)  {
   const signed char *p, *pe;
   int cs = parser->cs;
 
@@ -117,7 +117,7 @@ size_t http_parser_execute(http_parser *parser, const char signed *buffer, size_
 
   %% write exec;
 
-  if (!http_parser_has_error(parser))
+  if (!http_response_parser_has_error(parser))
     parser->cs = cs;
   parser->nread += p - (buffer + off);
 
@@ -131,21 +131,21 @@ size_t http_parser_execute(http_parser *parser, const char signed *buffer, size_
   return(parser->nread);
 }
 
-int http_parser_finish(http_parser *parser)
+int http_response_parser_finish(http_response_parser *parser)
 {
-  if (http_parser_has_error(parser) ) {
+  if (http_response_parser_has_error(parser) ) {
     return -1;
-  } else if (http_parser_is_finished(parser) ) {
+  } else if (http_response_parser_is_finished(parser) ) {
     return 1;
   } else {
     return 0;
   }
 }
 
-int http_parser_has_error(http_parser *parser) {
-  return parser->cs == http_parser_error;
+int http_response_parser_has_error(http_response_parser *parser) {
+  return parser->cs == http_response_parser_error;
 }
 
-int http_parser_is_finished(http_parser *parser) {
-  return parser->cs >= http_parser_first_final;
+int http_response_parser_is_finished(http_response_parser *parser) {
+  return parser->cs >= http_response_parser_first_final;
 }

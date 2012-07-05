@@ -1,7 +1,7 @@
 #
 #===============================================================================
 #
-#         FILE:  pop3_check.t
+#         FILE:  sample.t
 #
 #  DESCRIPTION: test 
 #
@@ -29,13 +29,11 @@ run_tests();
 
 __DATA__
 
-=== TEST 1: the pop3_check
+=== TEST 1: the upstream_busyness command
 --- config
     upstream test{
-        server pop3.163.com:110;
-
-        #ip_hash;
-        check interval=3000 rise=1 fall=5 timeout=1000 type=pop3;
+        server blog.163.com;
+        busyness;
     }
 
     server {
@@ -45,4 +43,22 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^(.*)$
+--- response_body_like: ^<(.*)>$
+
+=== TEST 2: the upstream_busyness command with check
+--- config
+    upstream test{
+        server blog.163.com;
+
+        check interval=3000 rise=1 fall=5 timeout=1000;
+        busyness;
+    }
+
+    server {
+        listen 1984;
+
+        proxy_pass test;
+    }
+--- request
+GET /
+--- response_body_like: ^<(.*)>$

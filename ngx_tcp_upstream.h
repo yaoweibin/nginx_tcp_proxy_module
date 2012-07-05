@@ -64,9 +64,9 @@ typedef ngx_int_t (*ngx_tcp_upstream_init_peer_pt)(ngx_tcp_session_t *s,
         ngx_tcp_upstream_srv_conf_t *us);
 
 typedef struct {
-    ngx_tcp_upstream_init_pt        init_upstream;
-    ngx_tcp_upstream_init_peer_pt   init;
-    void                           *data;
+    ngx_tcp_upstream_init_pt         init_upstream;
+    ngx_tcp_upstream_init_peer_pt    init;
+    void                            *data;
 } ngx_tcp_upstream_peer_t;
 
 typedef struct {
@@ -115,8 +115,8 @@ struct ngx_tcp_upstream_srv_conf_s {
     ngx_str_t                        send;
 
     union {
-        ngx_uint_t                       return_code;
-        ngx_uint_t                       status_alive;
+        ngx_uint_t                   return_code;
+        ngx_uint_t                   status_alive;
     } code;
 };
 
@@ -150,30 +150,31 @@ typedef void (*ngx_tcp_upstream_handler_pt)(ngx_tcp_session_t *s,
         ngx_tcp_upstream_t *u);
 
 struct ngx_tcp_upstream_s {
-    ngx_tcp_upstream_handler_pt     read_event_handler;
-    ngx_tcp_upstream_handler_pt     write_event_handler;
+    ngx_tcp_upstream_handler_pt      read_event_handler;
+    ngx_tcp_upstream_handler_pt      write_event_handler;
 
     ngx_peer_connection_t            peer;
     ngx_tcp_upstream_conf_t         *conf;
     ngx_tcp_upstream_resolved_t     *resolved;
     ngx_tcp_upstream_state_t        *state;
-    ngx_tcp_cleanup_pt             *cleanup;
+    ngx_tcp_cleanup_pt              *cleanup;
 };
 
 
 typedef struct {
-    ngx_uint_t                      status;
-    ngx_uint_t                      mask;
+    ngx_uint_t                       status;
+    ngx_uint_t                       mask;
 } ngx_tcp_upstream_next_t;
 
 
 ngx_int_t ngx_tcp_upstream_create(ngx_tcp_session_t *s);
 void ngx_tcp_upstream_init(ngx_tcp_session_t *s);
 ngx_tcp_upstream_srv_conf_t *ngx_tcp_upstream_add(ngx_conf_t *cf,
-        ngx_url_t *u, ngx_uint_t flags);
+    ngx_url_t *u, ngx_uint_t flags);
 
 ngx_int_t ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s);
-void ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u, ngx_uint_t ft_type);
+void ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
+     ngx_uint_t ft_type);
 
 #define ngx_tcp_conf_upstream_srv_conf(uscf, module)                         \
     uscf->srv_conf[module.ctx_index]

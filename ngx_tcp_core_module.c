@@ -9,92 +9,127 @@
 static void *ngx_tcp_core_create_main_conf(ngx_conf_t *cf);
 static void *ngx_tcp_core_create_srv_conf(ngx_conf_t *cf);
 static char *ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent,
-        void *child);
+    void *child);
 static char *ngx_tcp_core_server(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char *ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
+static char *ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+static char *ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+static char *ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
 static char *ngx_tcp_core_resolver(ngx_conf_t *cf, ngx_command_t *cmd,
-        void *conf);
+    void *conf);
 static char *ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+static char *ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 
 static ngx_command_t  ngx_tcp_core_commands[] = {
 
     { ngx_string("server"),
-        NGX_TCP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_MULTI|NGX_CONF_NOARGS,
-        ngx_tcp_core_server,
-        0,
-        0,
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_MULTI|NGX_CONF_NOARGS,
+      ngx_tcp_core_server,
+      0,
+      0,
+      NULL },
 
     { ngx_string("listen"),
-        NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
-        ngx_tcp_core_listen,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+      NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
+      ngx_tcp_core_listen,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("server_names"),
+      NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
+      ngx_tcp_core_server_name,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("location"),
+      NGX_TCP_SRV_CONF|NGX_TCP_LOC_CONF|NGX_CONF_BLOCK|NGX_CONF_TAKE1,
+      ngx_tcp_core_location,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("protocol"),
+      NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_core_protocol,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
     { ngx_string("so_keepalive"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
-        ngx_conf_set_flag_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, so_keepalive),
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, so_keepalive),
+      NULL },
 
     { ngx_string("tcp_nodelay"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
-        ngx_conf_set_flag_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, tcp_nodelay),
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, tcp_nodelay),
+      NULL },
 
     { ngx_string("timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, timeout),
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, timeout),
+      NULL },
 
     { ngx_string("server_name"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_str_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, server_name),
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, server_name),
+      NULL },
 
     { ngx_string("resolver"),
 #if defined(nginx_version) && nginx_version >= 1001007
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_1MORE,
 #else
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
 #endif
-        ngx_tcp_core_resolver,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+      ngx_tcp_core_resolver,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
     { ngx_string("resolver_timeout"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_conf_set_msec_slot,
-        NGX_TCP_SRV_CONF_OFFSET,
-        offsetof(ngx_tcp_core_srv_conf_t, resolver_timeout),
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_msec_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_core_srv_conf_t, resolver_timeout),
+      NULL },
 
     { ngx_string("allow"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_access_rule,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_access_rule,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
     { ngx_string("deny"),
-        NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-        ngx_tcp_access_rule,
-        NGX_TCP_SRV_CONF_OFFSET,
-        0,
-        NULL },
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_access_rule,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
+    { ngx_string("access_log"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE12,
+      ngx_tcp_log_set_access_log,
+      NGX_TCP_SRV_CONF_OFFSET,
+      0,
+      NULL },
 
     ngx_null_command
 };
@@ -103,19 +138,19 @@ static ngx_command_t  ngx_tcp_core_commands[] = {
 static ngx_tcp_module_t  ngx_tcp_core_module_ctx = {
     NULL,                                  /* protocol */
 
-    ngx_tcp_core_create_main_conf,        /* create main configuration */
+    ngx_tcp_core_create_main_conf,         /* create main configuration */
     NULL,                                  /* init main configuration */
 
-    ngx_tcp_core_create_srv_conf,         /* create server configuration */
-    ngx_tcp_core_merge_srv_conf           /* merge server configuration */
+    ngx_tcp_core_create_srv_conf,          /* create server configuration */
+    ngx_tcp_core_merge_srv_conf            /* merge server configuration */
 };
 
 
 ngx_module_t  ngx_tcp_core_module = {
     NGX_MODULE_V1,
-    &ngx_tcp_core_module_ctx,             /* module context */
-    ngx_tcp_core_commands,                /* module directives */
-    NGX_TCP_MODULE,                       /* module type */
+    &ngx_tcp_core_module_ctx,              /* module context */
+    ngx_tcp_core_commands,                 /* module directives */
+    NGX_TCP_MODULE,                        /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
     NULL,                                  /* init process */
@@ -125,6 +160,9 @@ ngx_module_t  ngx_tcp_core_module = {
     NULL,                                  /* exit master */
     NGX_MODULE_V1_PADDING
 };
+
+
+static ngx_str_t  ngx_tcp_access_log = ngx_string("logs/tcp_access.log");
 
 
 static void *
@@ -138,17 +176,24 @@ ngx_tcp_core_create_main_conf(ngx_conf_t *cf)
     }
 
     if (ngx_array_init(&cmcf->servers, cf->pool, 4,
-                sizeof(ngx_tcp_core_srv_conf_t *))
-            != NGX_OK)
+                       sizeof(ngx_tcp_core_srv_conf_t *))
+        != NGX_OK)
     {
         return NULL;
     }
 
     if (ngx_array_init(&cmcf->listen, cf->pool, 4, sizeof(ngx_tcp_listen_t))
-            != NGX_OK)
+        != NGX_OK)
     {
         return NULL;
     }
+
+    if (ngx_array_init(&cmcf->virtual_servers, cf->pool, 4, 
+                       sizeof(ngx_tcp_virtual_server_t)) != NGX_OK)
+    {
+        return NULL;
+    }
+
 
     return cmcf;
 }
@@ -158,6 +203,7 @@ static void *
 ngx_tcp_core_create_srv_conf(ngx_conf_t *cf) 
 {
     ngx_tcp_core_srv_conf_t  *cscf;
+    ngx_tcp_log_srv_conf_t   *lscf;
 
     cscf = ngx_pcalloc(cf->pool, sizeof(ngx_tcp_core_srv_conf_t));
     if (cscf == NULL) {
@@ -170,6 +216,20 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
      *     cscf->protocol = NULL;
      */
 
+    if (ngx_array_init(&cscf->server_names, cf->pool, 4,
+                       sizeof(ngx_tcp_server_name_t))
+        != NGX_OK)
+    {
+        return NULL;
+    }
+
+    if (ngx_array_init(&cscf->locations, cf->pool, 4,
+                       sizeof(ngx_tcp_core_loc_t))
+        != NGX_OK)
+    {
+        return NULL;
+    }
+
     cscf->timeout = NGX_CONF_UNSET_MSEC;
     cscf->resolver_timeout = NGX_CONF_UNSET_MSEC;
     cscf->so_keepalive = NGX_CONF_UNSET;
@@ -180,6 +240,20 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
     cscf->file_name = cf->conf_file->file.name.data;
     cscf->line = cf->conf_file->line;
 
+    lscf = cscf->access_log = ngx_pcalloc(cf->pool, 
+                                          sizeof(ngx_tcp_log_srv_conf_t));
+    if (lscf == NULL) {
+        return NULL;
+    }
+
+    /*
+     * set by ngx_pcalloc():
+     *
+     *     lscf->logs = NULL;
+     */
+
+    lscf->open_file_cache = NGX_CONF_UNSET_PTR;
+
     return cscf;
 }
 
@@ -187,19 +261,38 @@ ngx_tcp_core_create_srv_conf(ngx_conf_t *cf)
 static char *
 ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child) 
 {
+    ngx_uint_t               m;
+    ngx_tcp_log_t           *log;
+    ngx_tcp_module_t        *module;
     ngx_tcp_core_srv_conf_t *prev = parent;
     ngx_tcp_core_srv_conf_t *conf = child;
+    ngx_tcp_log_srv_conf_t  *plscf = prev->access_log;
+    ngx_tcp_log_srv_conf_t  *lscf = conf->access_log;
 
     ngx_conf_merge_msec_value(conf->timeout, prev->timeout, 60000);
-    ngx_conf_merge_msec_value(conf->resolver_timeout, prev->resolver_timeout, 30000);
+    ngx_conf_merge_msec_value(conf->resolver_timeout,
+                              prev->resolver_timeout, 30000);
 
     ngx_conf_merge_value(conf->so_keepalive, prev->so_keepalive, 0);
     ngx_conf_merge_value(conf->tcp_nodelay, prev->tcp_nodelay, 1);
 
     ngx_conf_merge_str_value(conf->server_name, prev->server_name, "");
 
-    if (conf->server_name.len == 0) {
-        conf->server_name = cf->cycle->hostname;
+    if (conf->protocol == NULL) {
+        for (m = 0; ngx_modules[m]; m++) {
+            if (ngx_modules[m]->type != NGX_TCP_MODULE) {
+                continue;
+            }
+
+            module = ngx_modules[m]->ctx;
+
+            /* TODO: use a function */
+            if (module->protocol 
+                    && (ngx_strcmp(module->protocol->name.data, "tcp_generic")) == 0)
+            {
+                conf->protocol = module->protocol;
+            }
+        }
     }
 
     ngx_conf_merge_ptr_value(conf->resolver, prev->resolver, NULL);
@@ -207,6 +300,46 @@ ngx_tcp_core_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     if (conf->rules == NULL) {
         conf->rules = prev->rules;
     }
+
+    if (lscf->open_file_cache == NGX_CONF_UNSET_PTR) {
+
+        lscf->open_file_cache = plscf->open_file_cache;
+        lscf->open_file_cache_valid = plscf->open_file_cache_valid;
+        lscf->open_file_cache_min_uses = plscf->open_file_cache_min_uses;
+
+        if (lscf->open_file_cache == NGX_CONF_UNSET_PTR) {
+            lscf->open_file_cache = NULL;
+        }
+    }
+
+    if (lscf->logs || lscf->off) {
+        return NGX_CONF_OK;
+    }
+
+    lscf->logs = plscf->logs;
+    lscf->off = plscf->off;
+
+    if (lscf->logs || lscf->off) {
+        return NGX_CONF_OK;
+    }
+
+    lscf->logs = ngx_array_create(cf->pool, 2, sizeof(ngx_tcp_log_t));
+    if (lscf->logs == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    log = ngx_array_push(lscf->logs);
+    if (log == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    log->file = ngx_conf_open_file(cf->cycle, &ngx_tcp_access_log);
+    if (log->file == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    log->disk_full_time = 0;
+    log->error_log_time = 0;
 
     return NGX_CONF_OK;
 }
@@ -291,12 +424,11 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     in_port_t                   port;
     ngx_str_t                  *value;
     ngx_url_t                   u;
-    ngx_uint_t                  i, m;
+    ngx_uint_t                  i;
     struct sockaddr            *sa;
-    ngx_tcp_listen_t          *ls;
-    ngx_tcp_module_t          *module;
+    ngx_tcp_listen_t           *ls;
     struct sockaddr_in         *sin;
-    ngx_tcp_core_main_conf_t  *cmcf;
+    ngx_tcp_core_main_conf_t   *cmcf;
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6        *sin6;
 #endif
@@ -311,8 +443,8 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     if (ngx_parse_url(cf->pool, &u) != NGX_OK) {
         if (u.err) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                    "%s in \"%V\" of the \"listen\" directive",
-                    u.err, &u.url);
+                               "%s in \"%V\" of the \"listen\" directive",
+                               u.err, &u.url);
         }
 
         return NGX_CONF_ERROR;
@@ -374,23 +506,17 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ls->socklen = u.socklen;
     ls->wildcard = u.wildcard;
     ls->ctx = cf->ctx;
-
-    for (m = 0; ngx_modules[m]; m++) {
-        if (ngx_modules[m]->type != NGX_TCP_MODULE) {
-            continue;
-        }
-
-        module = ngx_modules[m]->ctx;
-
-        if (module->protocol == NULL) {
-            continue;
-        }
-    }
+    ls->conf = conf;
 
     for (i = 2; i < cf->args->nelts; i++) {
 
         if (ngx_strcmp(value[i].data, "bind") == 0) {
             ls->bind = 1;
+            continue;
+        }
+
+        if (ngx_strcmp(value[i].data, "default") == 0) {
+            ls->default_port = 1;
             continue;
         }
 
@@ -435,12 +561,118 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 #endif
         }
 
+        if (ngx_strcmp(value[i].data, "ssl") == 0) {
+#if (NGX_TCP_SSL)
+            ls->ssl = 1;
+            continue;
+#else
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "the \"ssl\" parameter requires "
+                               "ngx_tcp_ssl_module");
+            return NGX_CONF_ERROR;
+#endif
+        }
+
         ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
                 "the invalid \"%V\" parameter", &value[i]);
         return NGX_CONF_ERROR;
     }
 
     return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_core_server_name(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t *cscf = conf;
+
+    ngx_str_t               *value;
+    ngx_uint_t               i;
+    ngx_tcp_server_name_t   *sn;
+
+    value = cf->args->elts;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+
+        sn = ngx_array_push(&cscf->server_names);
+        if (sn == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        if (ngx_strcasecmp(value[i].data, (u_char *) "$hostname") == 0) {
+            sn->name = cf->cycle->hostname;
+
+        } else {
+            sn->name = value[i];
+        }
+    }
+
+    return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_core_location(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t   *cscf = conf;
+
+    char                      *rv;
+    ngx_str_t                 *value;
+    ngx_conf_t                 save;
+    ngx_tcp_core_loc_t        *clcf;
+
+    clcf = ngx_array_push(&cscf->locations);
+    if (clcf == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    value = cf->args->elts;
+
+    clcf->name = value[1];
+
+    save = *cf;
+    cf->cmd_type = NGX_TCP_LOC_CONF;
+
+    rv = ngx_conf_parse(cf, NULL);
+
+    *cf = save;
+
+    return rv;
+}
+
+
+static char *
+ngx_tcp_core_protocol(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t  *cscf = conf;
+
+    ngx_str_t          *value;
+    ngx_uint_t          m;
+    ngx_tcp_module_t   *module;
+
+    value = cf->args->elts;
+
+    for (m = 0; ngx_modules[m]; m++) {
+        if (ngx_modules[m]->type != NGX_TCP_MODULE) {
+            continue;
+        }
+
+        module = ngx_modules[m]->ctx;
+
+        if (module->protocol
+            && ngx_strcmp(module->protocol->name.data, value[1].data) == 0)
+        {
+            cscf->protocol = module->protocol;
+
+            return NGX_CONF_OK;
+        }
+    }
+
+    ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                       "unknown protocol \"%V\"", &value[1]);
+
+    return NGX_CONF_ERROR;
 }
 
 
@@ -551,3 +783,82 @@ ngx_tcp_access_rule(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     return NGX_CONF_OK;
 }
 
+
+static char *
+ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_tcp_core_srv_conf_t *cscf = conf;
+    ngx_tcp_log_srv_conf_t  *lscf = cscf->access_log;
+
+    ssize_t                     buf;
+    ngx_str_t                  *value, name;
+    ngx_tcp_log_t              *log;
+
+    value = cf->args->elts;
+
+    if (ngx_strcmp(value[1].data, "off") == 0) {
+        lscf->off = 1;
+        if (cf->args->nelts == 2) {
+            return NGX_CONF_OK;
+        }
+
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                           "invalid parameter \"%V\"", &value[2]);
+        return NGX_CONF_ERROR;
+    }
+
+    if (lscf->logs == NULL) {
+        lscf->logs = ngx_array_create(cf->pool, 2, sizeof(ngx_tcp_log_t));
+        if (lscf->logs == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    log = ngx_array_push(lscf->logs);
+    if (log == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    ngx_memzero(log, sizeof(ngx_tcp_log_t));
+
+    log->file = ngx_conf_open_file(cf->cycle, &value[1]);
+    if (log->file == NULL) {
+        return NGX_CONF_ERROR;
+    }
+
+    if (cf->args->nelts == 3) {
+        if (ngx_strncmp(value[2].data, "buffer=", 7) != 0) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "invalid parameter \"%V\"", &value[2]);
+            return NGX_CONF_ERROR;
+        }
+
+        name.len = value[2].len - 7;
+        name.data = value[2].data + 7;
+
+        buf = ngx_parse_size(&name);
+
+        if (buf == NGX_ERROR) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "invalid parameter \"%V\"", &value[2]);
+            return NGX_CONF_ERROR;
+        }
+
+        if (log->file->buffer && log->file->last - log->file->pos != buf) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                               "access_log \"%V\" already defined "
+                               "with different buffer size", &value[1]);
+            return NGX_CONF_ERROR;
+        }
+
+        log->file->buffer = ngx_palloc(cf->pool, buf);
+        if (log->file->buffer == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        log->file->pos = log->file->buffer;
+        log->file->last = log->file->buffer + buf;
+    }
+
+    return NGX_CONF_OK;
+}

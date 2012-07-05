@@ -36,7 +36,7 @@ ngx_tcp_access_handler(ngx_tcp_session_t *s)
         if ((sin->sin_addr.s_addr & rule[i].mask) == rule[i].addr) {
             if (rule[i].deny) {
                 ngx_log_error(NGX_LOG_NOTICE, s->connection->log, 0,
-                        "access forbidden by rule");
+                              "access forbidden by rule");
 
                 return NGX_ERROR;
             }

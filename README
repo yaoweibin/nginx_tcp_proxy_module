@@ -5,11 +5,6 @@ Installation
     Download the latest stable version of the release tarball of this module
     from github (<http://github.com/yaoweibin/nginx_tcp_proxy_module>)
 
-    The development version of this module is here
-    (<https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop>). I
-    have added the features of tcp_ssl_proxy, tcp_upstream_busyness,
-    access_log.
-
     Grab the nginx source code from nginx.org (<http://nginx.org/>), for
     example, the version 1.2.1 (see nginx compatibility), and then build the
     source with this module:
@@ -40,8 +35,8 @@ Synopsis
 
         upstream cluster {
             # simple round-robin
-            server 127.0.0.1:3306;
-            server 127.0.0.1:1234;
+            server 192.168.0.1:80;
+            server 192.168.0.2:80;
 
             check interval=3000 rise=2 fall=5 timeout=1000;
 
@@ -62,8 +57,9 @@ Synopsis
 Description
     This module actually include many modules: ngx_tcp_module,
     ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module,
-    ngx_tcp_upstream_ip_hash_module. All these modules work togther to add
-    the support of TCP proxy with Nginx. I also add other features: ip_hash,
+    ngx_tcp_websocket_module, ngx_tcp_ssl_module,
+    ngx_tcp_upstream_ip_hash_module. All these modules work together to
+    support TCP proxy with Nginx. I also added other features: ip_hash,
     upstream server health check, status monitor.
 
     The motivation of writing these modules is Nginx's high performance and
@@ -71,7 +67,7 @@ Description
     proxy. And now, this module is frequently used in websocket reverse
     proxying.
 
-    You can't use the same listening port with HTTP modules.
+    Note, You can't use the same listening port with HTTP modules.
 
 Directives
   ngx_tcp_moodule
@@ -98,14 +94,48 @@ Directives
     server block.
 
    listen
-    syntax: *listen address:port [ bind ]*
+    syntax: *listen address:port [ bind | ssl | default]*
 
     default: *none*
 
     context: *server*
 
     description: The same as listen
-    (<http://wiki.nginx.org/NginxMailCoreModule#listen>).
+    (<http://wiki.nginx.org/NginxMailCoreModule#listen>). The parameter of
+    default means the default server if you have several server blocks with
+    the same port.
+
+   access_log
+    syntax: *access_log path [buffer=size] | off*
+
+    default: *access_log logs/tcp_access.log*
+
+    context: *tcp, server*
+
+    description: Set the access.log. Each record's format is like this:
+
+    log_time worker_process_pid client_ip host_ip accept_time upstream_ip
+    bytes_read bytes_write
+
+    2011/08/02 06:19:07 [5972] 127.0.0.1 0.0.0.0:1982 2011/08/02 06:18:19
+    172.19.0.129:80 80 236305
+
+    *   *log_time*: The current time when writing this log. The log action
+        is called when the proxy session is closed.
+
+    *   *worker_process_pid*: the pid of worker process
+
+    *   *client_ip*: the client ip
+
+    *   *host_ip*: the server ip and port
+
+    *   *accept_time*: the time when the server accepts client's connection
+
+    *   *upstream_ip*: the upstream server's ip
+
+    *   *bytes_read*: the bytes read from client
+
+    *   *bytes_write*: the bytes written to client
 
    allow
     syntax: *allow [ address | CIDR | all ]*
@@ -157,14 +187,16 @@ Directives
     description: set the timeout value with clients.
 
    server_name
-    syntax: *server_name name fqdn_server_host*
+    syntax: *server_name name*
 
     default: *The name of the host, obtained through gethostname()*
 
     context: *tcp, server*
 
     description: The same as server_name
-    (<http://wiki.nginx.org/NginxMailCoreModule#server_name>).
+    (<http://wiki.nginx.org/NginxMailCoreModule#server_name>). You can
+    specify several server name in different server block with the same
+    port. They can be used in websocket module.
 
    resolver
     syntax: *resolver address*
@@ -237,21 +269,21 @@ Directives
         2.  *ssl_hello* sends a client ssl hello packet and receives the
             server ssl hello packet.
 
-        3.  *http* sends a http requst packet, recvives and parses the http
+        3.  *http* sends a http request packet, receives and parses the http
             response to diagnose if the upstream server is alive.
 
-        4.  *smtp* sends a smtp requst packet, recvives and parses the smtp
+        4.  *smtp* sends a smtp request packet, receives and parses the smtp
             response to diagnose if the upstream server is alive. The
             response begins with '2' should be an OK response.
 
-        5.  *mysql* connects to the mysql server, recvives the greeting
+        5.  *mysql* connects to the mysql server, receives the greeting
             response to diagnose if the upstream server is alive.
 
-        6.  *pop3* recvives and parses the pop3 response to diagnose if the
+        6.  *pop3* receives and parses the pop3 response to diagnose if the
             upstream server is alive. The response begins with '+' should be
             an OK response.
 
-        7.  *imap* connects to the imap server, recvives the greeting
+        7.  *imap* connects to the imap server, receives the greeting
             response to diagnose if the upstream server is alive.
 
    check_http_send
@@ -273,7 +305,7 @@ Directives
     context: *upstream*
 
     description: These status codes indicate the upstream server's http
-    response is ok, the backend is alive.
+    response is OK, the backend is alive.
 
    check_smtp_send
     syntax: *check_smtp_send smtp_packet*
@@ -294,7 +326,7 @@ Directives
     context: *upstream*
 
     description: These status codes indicate the upstream server's smtp
-    response is ok, the backend is alive.
+    response is OK, the backend is alive.
 
    check_shm_size
     syntax: *check_shm_size size*
@@ -303,9 +335,9 @@ Directives
 
     context: *tcp*
 
-    description: If you store hundreds of serveres in one upstream block,
-    the shared memory for health check may be not enough, you can enlarged
-    it by this directive.
+    description: If you store hundreds of servers in one upstream block, the
+    shared memory for health check may be not enough, you can enlarged it by
+    this directive.
 
    check_status
     syntax: *check_status*
@@ -335,6 +367,18 @@ Directives
     *   *Access counts*: Count the times accessing to this server
 
     *   *Check type*: The type of the check packet
+
+    ngx_tcp_upstream_busyness_module
+
+   busyness
+    syntax: *busyness*
+
+    default: *none*
+
+    context: *upstream*
+
+    description: the upstream server will be dispatched by backend servers'
+    busyness.
 
     ngx_tcp_upstream_ip_hash_module
 
@@ -394,8 +438,236 @@ Directives
 
     description: set the timeout value of sending to backends.
 
+  ngx_tcp_websocket_module
+   websocket_pass
+    syntax: *websocket_pass [path] host:port*
+
+    default: *none*
+
+    context: *server*
+
+    description: proxy the websocket request to the backend server. Default
+    port is 80. You can specify several different paths in the same server
+    block.
+
+   websocket_buffer
+    syntax: *websocket_buffer size*
+
+    default: *4k*
+
+    context: *tcp, server*
+
+    description: set the size of proxy buffer.
+
+   websocket_connect_timeout
+    syntax: *websocket_connect_timeout miliseconds*
+
+    default: *60000*
+
+    context: *tcp, server*
+
+    description: set the timeout value of connection to backends.
+
+   websocket_read_timeout
+    syntax: *websocket_read_timeout miliseconds*
+
+    default: *60000*
+
+    context: *tcp, server*
+
+    description: set the timeout value of reading from backends. Your
+    timeout will be the minimum of this and the *timeout* parameter, so if
+    you want a long timeout for your websockets, make sure to set both
+    paramaters.
+
+   websocket_send_timeout
+    syntax: *websocket_send_timeout miliseconds*
+
+    default: *60000*
+
+    context: *tcp, server*
+
+    description: set the timeout value of sending to backends.
+
+  ngx_tcp_ssl_module
+    The default config file includes this ngx_tcp_ssl_module. If you want to
+    just compile nginx without ngx_tcp_ssl_module, copy the
+    ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config,
+    reconfigrure and compile nginx.
+
+   ssl
+    syntax: *ssl [on|off] *
+
+    default: *ssl off*
+
+    context: *tcp, server*
+
+    Enables SSL for a server.
+
+   ssl_certificate
+    syntax: *ssl_certificate file*
+
+    default: *ssl_certificate cert.pem*
+
+    context: *tcp, server*
+
+    This directive specifies the file containing the certificate, in PEM
+    format. This file can contain also other certificates and the server
+    private key.
+
+   ssl_certificate_key
+    syntax: *ssl_certificate_key file*
+
+    default: *ssl_certificate_key cert.pem*
+
+    context: *tcp, server*
+
+    This directive specifies the file containing the private key, in PEM
+    format.
+
+   ssl_client_certificate
+    syntax: *ssl_client_certificate file*
+
+    default: *none*
+
+    context: *tcp, server*
+
+    This directive specifies the file containing the CA (root) certificate,
+    in PEM format, that is used for validating client certificates.
+
+   ssl_dhparam
+    syntax: *ssl_dhparam file*
+
+    default: *none*
+
+    context: *tcp, server*
+
+    This directive specifies a file containing Diffie-Hellman key agreement
+    protocol cryptographic parameters, in PEM format, utilized for
+    exchanging session keys between server and client.
+
+   ssl_ciphers
+    syntax: *ssl_ciphers openssl_cipherlist_spec*
+
+    default: *ssl_ciphers HIGH:!aNULL:!MD5*
+
+    context: *tcp, server*
+
+    This directive describes the list of cipher suites the server supports
+    for establishing a secure connection. Cipher suites are specified in the
+    OpenSSL (<http://openssl.org/docs/apps/ciphers.html>) cipherlist format,
+    for example:
+
+    ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+
+    The complete cipherlist supported by the currently installed version of
+    OpenSSL in your platform can be obtained by issuing the command: openssl
+    ciphers
+
+   ssl_crl
+    syntax: *ssl_crl file*
+
+    default: *none*
+
+    context: *tcp, server*
+
+    This directive specifies the filename of a Certificate Revocation List,
+    in PEM format, which is used to check the revocation status of
+    certificates.
+
+   ssl_prefer_server_ciphers
+    syntax: *ssl_prefer_server_ciphers [on|off] *
+
+    default: *ssl_prefer_server_ciphers off*
+
+    context: *tcp, server*
+
+    The server requires that the cipher suite list for protocols SSLv3 and
+    TLSv1 are to be preferred over the client supported cipher suite list.
+
+   ssl_protocols
+    syntax: *ssl_protocols [SSLv2] [SSLv3] [TLSv1] [TLSv1.1] [TLSv1.2]*
+
+    default: *ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2*
+
+    context: *tcp, server*
+
+    This directive enables the protocol versions specified.
+
+   ssl_verify_client
+    syntax: *ssl_verify_client on|off|optional*
+
+    default: *ssl_verify_client off*
+
+    context: *tcp, server*
+
+    This directive enables the verification of the client identity.
+    Parameter 'optional' checks the client identity using its certificate in
+    case it was made available to the server.
+
+   ssl_verify_depth
+    syntax: *ssl_verify_depth number*
+
+    default: *ssl_verify_depth 1*
+
+    context: *tcp, server*
+
+    This directive sets how deep the server should go in the client provided
+    certificate chain in order to verify the client identity.
+
+   ssl_session_cache
+    syntax: *ssl_session_cache off|none|builtin:size and/or
+    shared:name:size*
+
+    default: *ssl_session_cache off*
+
+    context: *tcp, server*
+
+    The directive sets the types and sizes of caches to store the SSL
+    sessions.
+
+    The cache types are:
+
+    *   off -- Hard off: nginx says explicitly to a client that sessions can
+        not reused.
+
+    *   none -- Soft off: nginx says to a client that session can be resued,
+        but nginx actually never reuses them. This is workaround for some
+        mail clients as ssl_session_cache may be used in mail proxy as well
+        as in HTTP server.
+
+    *   builtin -- the OpenSSL builtin cache, is used inside one worker
+        process only. The cache size is assigned in the number of the
+        sessions. Note: there appears to be a memory fragmentation issue
+        using this method, please take that into consideration when using
+        this. See "References" below.
+
+    *   shared -- the cache is shared between all worker processes. The size
+        of the cache is assigned in bytes: 1 MB cache can contain roughly
+        4000 sessions. Each shared cache must be given an arbitrary name. A
+        shared cache with a given name can be used in several virtual hosts.
+
+    It's possible to use both types of cache &mdash; builtin and shared
+    &mdash; simultaneously, for example:
+
+    ssl_session_cache builtin:1000 shared:SSL:10m;
+
+    Bear in mind however, that using only shared cache, i.e., without
+    builtin, should be more effective.
+
+   ssl_session_timeout
+    syntax: *ssl_session_timeout time*
+
+    default: *ssl_session_timeout 5m*
+
+    context: *tcp, server*
+
+    This directive defines the maximum time during which the client can
+    re-use the previously negotiated cryptographic parameters of the secure
+    session that is stored in the SSL cache.
+
 Compatibility
-    *   Nginx 0.7.65+
+    *   My test bed is 0.7.65+
 
 Notes
     The http_response_parse.rl and smtp_response_parse.rl are ragel
@@ -405,11 +677,19 @@ Notes
         $ ragel -G2 http_response_parse.rl
         $ ragel -G2 smtp_response_parse.rl
 
-TODO
 Known Issues
     *   This module can't use the same listening port with the HTTP module.
 
 Changelogs
+  v0.2.0
+    *   add ssl proxy module
+
+    *   add websocket proxy module
+
+    *   add upstream busyness module
+
+    *   add tcp access log module
+
   v0.19
     *   add many check methods
 
@@ -430,7 +710,7 @@ Copyright & License
 
     This module is licensed under the BSD license.
 
-    Copyright (C) 2011 by Weibin Yao <yaoweibin@gmail.com>.
+    Copyright (C) 2012 by Weibin Yao <yaoweibin@gmail.com>.
 
     All rights reserved.
 

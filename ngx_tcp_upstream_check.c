@@ -4,11 +4,15 @@
 #include <ngx_tcp.h>
 #include <ngx_http.h>
 
-/* ngx_spinlock is defined without a matching unlock primitive */
-#define ngx_spinlock_unlock(lock)       (void) ngx_atomic_cmp_set(lock, ngx_pid, 0)
 
-static ngx_int_t ngx_tcp_check_get_shm_name(ngx_str_t *shm_name, ngx_pool_t *pool);
-static ngx_int_t ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data);
+/* ngx_spinlock is defined without a matching unlock primitive */
+#define ngx_spinlock_unlock(lock)      \
+    (void) ngx_atomic_cmp_set(lock, ngx_pid, 0)
+
+static ngx_int_t ngx_tcp_check_get_shm_name(ngx_str_t *shm_name,
+    ngx_pool_t *pool);
+static ngx_int_t ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone,
+    void *data);
 static ngx_int_t ngx_tcp_check_init_process(ngx_cycle_t *cycle);
 
 static void ngx_tcp_check_peek_handler(ngx_event_t *event);
@@ -42,6 +46,7 @@ static void ngx_tcp_check_imap_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
 
 static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf);
+
 
 #define RANDOM "NGX_TCP_CHECK_SSL_HELLO\n\n\n\n\n"
 
@@ -82,91 +87,83 @@ const char sslv3_client_hello_pkt[] = {
 #define SERVER_HELLO 0x02
 
 static check_conf_t  ngx_check_types[] = {
-    {
-        NGX_TCP_CHECK_TCP,
-        "tcp",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_peek_handler,
-        ngx_tcp_check_peek_handler,
-        NULL,
-        NULL,
-        NULL,
-        0
-    },
-    {
-        NGX_TCP_CHECK_HTTP,
-        "http",
-        ngx_string("GET / HTTP/1.0\r\n\r\n"),
-        NGX_CONF_BITMASK_SET | NGX_CHECK_HTTP_2XX | NGX_CHECK_HTTP_3XX,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_http_init,
-        ngx_tcp_check_http_parse,
-        ngx_tcp_check_http_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_SSL_HELLO,
-        "ssl_hello",
-        ngx_string(sslv3_client_hello_pkt),
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_ssl_hello_init,
-        ngx_tcp_check_ssl_hello_parse,
-        ngx_tcp_check_ssl_hello_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_SMTP,
-        "smtp",
-        ngx_string("HELO smtp.localdomain\r\n"),
-        NGX_CONF_BITMASK_SET | NGX_CHECK_SMTP_2XX,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_smtp_init,
-        ngx_tcp_check_smtp_parse,
-        ngx_tcp_check_smtp_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_MYSQL,
-        "mysql",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_mysql_init,
-        ngx_tcp_check_mysql_parse,
-        ngx_tcp_check_mysql_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_POP3,
-        "pop3",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_pop3_init,
-        ngx_tcp_check_pop3_parse,
-        ngx_tcp_check_pop3_reinit,
-        1
-    },
-    {
-        NGX_TCP_CHECK_IMAP,
-        "imap",
-        ngx_null_string,
-        0,
-        ngx_tcp_check_send_handler,
-        ngx_tcp_check_recv_handler,
-        ngx_tcp_check_imap_init,
-        ngx_tcp_check_imap_parse,
-        ngx_tcp_check_imap_reinit,
-        1
-    },
 
+    { NGX_TCP_CHECK_TCP,
+      "tcp",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_peek_handler,
+      ngx_tcp_check_peek_handler,
+      NULL,
+      NULL,
+      NULL,
+      0 },
+
+    { NGX_TCP_CHECK_HTTP,
+      "http",
+      ngx_string("GET / HTTP/1.0\r\n\r\n"),
+      NGX_CONF_BITMASK_SET | NGX_CHECK_HTTP_2XX | NGX_CHECK_HTTP_3XX,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_http_init,
+      ngx_tcp_check_http_parse,
+      ngx_tcp_check_http_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_SSL_HELLO,
+      "ssl_hello",
+      ngx_string(sslv3_client_hello_pkt),
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_ssl_hello_init,
+      ngx_tcp_check_ssl_hello_parse,
+      ngx_tcp_check_ssl_hello_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_SMTP,
+      "smtp",
+      ngx_string("HELO smtp.localdomain\r\n"),
+      NGX_CONF_BITMASK_SET | NGX_CHECK_SMTP_2XX,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_smtp_init,
+      ngx_tcp_check_smtp_parse,
+      ngx_tcp_check_smtp_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_MYSQL,
+      "mysql",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_mysql_init,
+      ngx_tcp_check_mysql_parse,
+      ngx_tcp_check_mysql_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_POP3,
+      "pop3",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_pop3_init,
+      ngx_tcp_check_pop3_parse,
+      ngx_tcp_check_pop3_reinit,
+      1 },
+
+    { NGX_TCP_CHECK_IMAP,
+      "imap",
+      ngx_null_string,
+      0,
+      ngx_tcp_check_send_handler,
+      ngx_tcp_check_recv_handler,
+      ngx_tcp_check_imap_init,
+      ngx_tcp_check_imap_parse,
+      ngx_tcp_check_imap_reinit,
+      1 },
 
     {0, "", ngx_null_string, 0, NULL, NULL, NULL, NULL, NULL, 0}
 };
@@ -183,6 +180,7 @@ static ngx_command_t  ngx_tcp_upstream_check_status_commands[] = {
       ngx_null_command
 };
 
+
 static ngx_http_module_t  ngx_tcp_upstream_check_status_module_ctx = {
     NULL,                                  /* preconfiguration */
     NULL,                                  /* postconfiguration */
@@ -196,6 +194,7 @@ static ngx_http_module_t  ngx_tcp_upstream_check_status_module_ctx = {
     NULL,                                  /* create location configuration */
     NULL                                   /* merge location configuration */
 };
+
 
 ngx_module_t  ngx_tcp_upstream_check_status_module = {
     NGX_MODULE_V1,
@@ -228,8 +227,8 @@ ngx_tcp_get_check_type_conf(ngx_str_t *str)
             break;
         }
 
-        if (ngx_strncmp(str->data, 
-                    (u_char *)ngx_check_types[i].name, str->len) == 0) {
+        if (ngx_strncmp(str->data, (u_char *)ngx_check_types[i].name,
+                        str->len) == 0) {
             return &ngx_check_types[i];
         }
     }
@@ -240,7 +239,7 @@ ngx_tcp_get_check_type_conf(ngx_str_t *str)
 
 ngx_uint_t
 ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
-        ngx_peer_addr_t *peer, ngx_uint_t max_busy) 
+    ngx_peer_addr_t *peer, ngx_uint_t max_busy) 
 {
     ngx_tcp_check_peer_conf_t     *peer_conf;
     ngx_tcp_check_peers_conf_t    *peers_conf;
@@ -251,6 +250,9 @@ ngx_tcp_check_add_peer(ngx_conf_t *cf, ngx_tcp_upstream_srv_conf_t *uscf,
     peers_conf = umcf->peers_conf;
 
     peer_conf = ngx_array_push(&peers_conf->peers);
+    if (peer_conf == NULL) {
+        return NGX_INVALID_CHECK_INDEX;
+    }
 
     ngx_memzero(peer_conf, sizeof(ngx_tcp_check_peer_conf_t));
 
@@ -274,8 +276,23 @@ ngx_tcp_check_peer_down(ngx_uint_t index)
 
     peer_conf = check_peers_ctx->peers.elts;
 
-    return (peer_conf[index].shm->down | 
+    return (peer_conf[index].shm->down || 
             (peer_conf[index].shm->busyness > peer_conf[index].max_busy));
+}
+
+
+ngx_uint_t 
+ngx_tcp_check_get_peer_busyness(ngx_uint_t index)
+{
+    ngx_tcp_check_peer_conf_t     *peer_conf;
+
+    if (check_peers_ctx == NULL || index >= check_peers_ctx->peers.nelts) {
+        return (ngx_uint_t) (-1);
+    }
+
+    peer_conf = check_peers_ctx->peers.elts;
+
+    return peer_conf[index].shm->busyness;
 }
 
 
@@ -339,16 +356,16 @@ ngx_tcp_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data)
 
     if (data) {
         peers_shm = data;
-    }
-    else {
+    } else {
         shpool = (ngx_slab_pool_t *) shm_zone->shm.addr;
 
         peers_shm = ngx_slab_alloc(shpool, sizeof(*peers_shm) +
-                (peers_conf->peers.nelts - 1) * sizeof(ngx_tcp_check_peer_shm_t));
+            (peers_conf->peers.nelts - 1) * sizeof(ngx_tcp_check_peer_shm_t));
 
         if (peers_shm == NULL) {
             ngx_log_error(NGX_LOG_EMERG, shm_zone->shm.log, 0,
-                    "tcp upstream check_shm_size is too small, you should set a larger size.");
+                          "tcp upstream check_shm_size is too small, "
+                          "you should set a larger size.");
             return NGX_ERROR;
         }
     }
@@ -386,8 +403,8 @@ ngx_tcp_check_get_shm_name(ngx_str_t *shm_name, ngx_pool_t *pool)
         return NGX_ERROR;
     }
 
-    last = ngx_snprintf(shm_name->data, SHM_NAME_LEN, "%s#%ui", "ngx_tcp_upstream", 
-            ngx_tcp_check_shm_generation);
+    last = ngx_snprintf(shm_name->data, SHM_NAME_LEN, "%s#%ui",
+                        "ngx_tcp_upstream", ngx_tcp_check_shm_generation);
 
     shm_name->len = last - shm_name->data;
 
@@ -445,8 +462,8 @@ ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf)
     c = peer_conf->pc.connection;
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, 0, 
-            "tcp check clean event: index:%d, fd: %d", 
-            peer_conf->index, c->fd);
+                   "tcp check clean event: index:%d, fd: %d", 
+                   peer_conf->index, c->fd);
 
     ngx_close_connection(c);
 
@@ -468,12 +485,11 @@ ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf)
 }
 
 
-static ngx_flag_t has_cleared = 0;
-
 static void 
 ngx_tcp_check_clear_all_events() 
 {
     ngx_uint_t                     i;
+    static ngx_flag_t              has_cleared = 0;
     ngx_tcp_check_peer_shm_t      *peer_shm;
     ngx_tcp_check_peers_shm_t     *peers_shm;
     ngx_tcp_check_peer_conf_t     *peer_conf;
@@ -526,7 +542,8 @@ ngx_tcp_check_finish_handler(ngx_event_t *event)
 
 
 static void 
-ngx_tcp_check_status_update(ngx_tcp_check_peer_conf_t *peer_conf, ngx_int_t result) 
+ngx_tcp_check_status_update(ngx_tcp_check_peer_conf_t *peer_conf,
+    ngx_int_t result) 
 {
     ngx_tcp_upstream_srv_conf_t   *uscf;
 
@@ -535,14 +552,16 @@ ngx_tcp_check_status_update(ngx_tcp_check_peer_conf_t *peer_conf, ngx_int_t resu
     if (result) {
         peer_conf->shm->rise_count++; 
         peer_conf->shm->fall_count = 0; 
-        if (peer_conf->shm->down && peer_conf->shm->rise_count >= uscf->rise_count) {
+        if (peer_conf->shm->down
+            && (peer_conf->shm->rise_count >= uscf->rise_count)) {
+
             peer_conf->shm->down = 0; 
         } 
-    }
-    else {
+    } else {
         peer_conf->shm->rise_count = 0; 
         peer_conf->shm->fall_count++; 
-        if (!peer_conf->shm->down && peer_conf->shm->fall_count >= uscf->fall_count) {
+        if (!peer_conf->shm->down
+             && (peer_conf->shm->fall_count >= uscf->fall_count)) {
             peer_conf->shm->down = 1; 
         }
     }
@@ -563,7 +582,7 @@ ngx_tcp_check_timeout_handler(ngx_event_t *event)
     peer_conf = event->data;
 
     ngx_log_error(NGX_LOG_ERR, event->log, 0,
-            "check time out with peer: %V ", &peer_conf->peer->name);
+                  "check time out with peer: %V ", &peer_conf->peer->name);
 
     ngx_tcp_check_status_update(peer_conf, 0);
     ngx_tcp_check_clean_event(peer_conf);
@@ -591,26 +610,26 @@ ngx_tcp_check_peek_handler(ngx_event_t *event)
     err = ngx_socket_errno;
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
-            "tcp check upstream recv(): %d, fd: %d",
-            n, c->fd);
+                   "tcp check upstream recv(): %d, fd: %d",
+                   n, c->fd);
 
     if (n >= 0 || err == NGX_EAGAIN) {
         ngx_tcp_check_status_update(peer_conf, 1);
-    }
-    else {
+    } else {
         c->error = 1;
         ngx_tcp_check_status_update(peer_conf, 0);
     }
 
     ngx_tcp_check_clean_event(peer_conf);
 
-    /*dummy*/
+    /* dummy */
     ngx_tcp_check_finish_handler(event);
 }
 
 
-void http_field(void *data, const signed char *field, 
-        size_t flen, const signed char *value, size_t vlen)
+void
+http_field(void *data, const signed char *field, 
+    size_t flen, const signed char *value, size_t vlen)
 {
 #if (NGX_DEBUG)
     ngx_str_t str_field, str_value;
@@ -622,12 +641,13 @@ void http_field(void *data, const signed char *field,
     str_value.len = vlen;
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "%V: %V", &str_field, &str_value);
+                   "%V: %V", &str_field, &str_value);
 #endif
 }
 
 
-void http_version(void *data, const signed char *at, size_t length)
+void
+http_version(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -636,16 +656,17 @@ void http_version(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "VERSION: \"%V\"", &str);
+                   "VERSION: \"%V\"", &str);
 #endif
 }
 
 
-void status_code(void *data, const signed char *at, size_t length)
+void
+status_code(void *data, const signed char *at, size_t length)
 {
     int                        code;
-    http_parser               *hp;
     ngx_tcp_check_ctx         *ctx;
+    http_response_parser      *hp;
     ngx_tcp_check_peer_conf_t *peer_conf = data;
 
 #if (NGX_DEBUG)
@@ -655,7 +676,7 @@ void status_code(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "STATUS_CODE: \"%V\"", &str);
+                   "STATUS_CODE: \"%V\"", &str);
 #endif
 
     ctx = peer_conf->check_data;
@@ -665,23 +686,24 @@ void status_code(void *data, const signed char *at, size_t length)
 
     if (code >= 200 && code < 300) {
         hp->status_code_n = NGX_CHECK_HTTP_2XX;
-    }
-    else if (code >= 300 && code < 400) {
+
+    } else if (code >= 300 && code < 400) {
         hp->status_code_n = NGX_CHECK_HTTP_3XX;
-    }
-    else if (code >= 400 && code < 500) {
+
+    } else if (code >= 400 && code < 500) {
         hp->status_code_n = NGX_CHECK_HTTP_4XX;
-    }
-    else if (code >= 500 && code < 600) {
+
+    } else if (code >= 500 && code < 600) {
         hp->status_code_n = NGX_CHECK_HTTP_5XX;
-    }
-    else {
+
+    } else {
         hp->status_code_n = NGX_CHECK_HTTP_ERR;
     }
 }
 
 
-void reason_phrase(void *data, const signed char *at, size_t length)
+void
+reason_phrase(void *data, const signed char *at, size_t length)
 {
 #if (NGX_DEBUG)
     ngx_str_t str;
@@ -690,18 +712,21 @@ void reason_phrase(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "REASON_PHRASE: \"%V\"", &str);
+                   "REASON_PHRASE: \"%V\"", &str);
 #endif
 }
 
 
-void header_done(void *data, const signed char *at, size_t length)
+void
+header_done(void *data, const signed char *at, size_t length)
 {
 
 }
 
 
-static void check_http_parser_init(http_parser *hp, void *data) 
+static void
+check_http_response_parser_init(http_response_parser *hp, 
+    void *data) 
 {
     hp->data = data;
     hp->http_field = http_field;
@@ -711,7 +736,7 @@ static void check_http_parser_init(http_parser *hp, void *data)
     hp->reason_phrase = reason_phrase;
     hp->header_done = header_done;
     
-    http_parser_init(hp);
+    http_response_parser_init(hp);
 }
 
 
@@ -730,12 +755,12 @@ ngx_tcp_check_http_init(ngx_tcp_check_peer_conf_t *peer_conf)
     ctx->recv.start = ctx->recv.pos = NULL;
     ctx->recv.end = ctx->recv.last = NULL;
 
-    ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(http_parser));
+    ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(http_response_parser));
     if (ctx->parser == NULL) {
         return NGX_ERROR;
     }
 
-    check_http_parser_init(ctx->parser, peer_conf);
+    check_http_response_parser_init(ctx->parser, peer_conf);
 
     return NGX_OK;
 }
@@ -745,10 +770,9 @@ static ngx_int_t
 ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf) 
 {
     ssize_t                       n, offset, length;
-    http_parser                  *hp;
     ngx_tcp_check_ctx            *ctx;
+    http_response_parser         *hp;
     ngx_tcp_upstream_srv_conf_t  *uscf;
-
 
     uscf = peer_conf->conf;
     ctx = peer_conf->check_data;
@@ -758,31 +782,32 @@ ngx_tcp_check_http_parse(ngx_tcp_check_peer_conf_t *peer_conf)
         offset = ctx->recv.pos - ctx->recv.start;
         length = ctx->recv.last - ctx->recv.start;
 
-        n = http_parser_execute(hp, (signed char *)ctx->recv.start, length, offset);
-        ctx->recv.pos += n;
+        n = http_response_parser_execute(hp, (signed char *)ctx->recv.start,
+                                         length, offset);
+        ctx->recv.pos = ctx->recv.start + n;
 
-        if (http_parser_finish(hp) == -1) {
+        if (http_response_parser_finish(hp) == -1) {
             ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
-                    "http parse error with peer: %V, recv data: %s", 
-                    &peer_conf->peer->name, ctx->recv.start);
+                          "http parse error with peer: %V, recv data: %s", 
+                          &peer_conf->peer->name, ctx->recv.start);
             return NGX_ERROR;
         }
 
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-                "http_parse: hp->status_code_n: %d, conf: %d",
-                hp->status_code_n, uscf->code.status_alive);
+                       "http_parse: hp->status_code_n: %d, conf: %d",
+                       hp->status_code_n, uscf->code.status_alive);
 
         if (hp->status_code_n == 0) {
             return NGX_AGAIN;
-        }
-        else if (hp->status_code_n & uscf->code.status_alive) {
+
+        } else if (hp->status_code_n & uscf->code.status_alive) {
             return NGX_OK;
-        }
-        else {
+
+        } else {
             return NGX_ERROR;
         }
-    }
-    else {
+
+    } else {
         return NGX_AGAIN;
     }
 
@@ -802,7 +827,7 @@ ngx_tcp_check_http_reinit(ngx_tcp_check_peer_conf_t *peer_conf)
 
     ctx->recv.pos = ctx->recv.last = ctx->recv.start;
 
-    check_http_parser_init(ctx->parser, peer_conf);
+    check_http_response_parser_init(ctx->parser, peer_conf);
 }
 
 
@@ -825,7 +850,7 @@ ngx_tcp_check_ssl_hello_init(ngx_tcp_check_peer_conf_t *peer_conf)
 }
 
 
-/*a rough check of server ssl_hello responses*/
+/* a rough check of server ssl_hello responses */
 static ngx_int_t 
 ngx_tcp_check_ssl_hello_parse(ngx_tcp_check_peer_conf_t *peer_conf) 
 {
@@ -843,11 +868,12 @@ ngx_tcp_check_ssl_hello_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     resp = (server_ssl_hello_t *) ctx->recv.pos;
 
     ngx_log_debug7(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "tcp check ssl_parse, type: %d, version: %d.%d, length: %d, handshanke_type: %d, "
-            "hello_version: %d.%d", 
-            resp->msg_type, resp->version.major, resp->version.minor, 
-            ntohs(resp->length), resp->handshake_type, 
-            resp->hello_version.major, resp->hello_version.minor);
+                   "tcp check ssl_parse, type: %d, version: %d.%d, "
+                   "length: %d, handshanke_type: %d, "
+                   "hello_version: %d.%d", 
+                   resp->msg_type, resp->version.major, resp->version.minor, 
+                   ntohs(resp->length), resp->handshake_type, 
+                   resp->hello_version.major, resp->hello_version.minor);
 
     if (resp->msg_type != HANDSHAKE) {
         return NGX_ERROR;
@@ -885,7 +911,7 @@ domain(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "DOMAIN: \"%V\"", &str);
+                   "DOMAIN: \"%V\"", &str);
 #endif
 }
 
@@ -900,7 +926,7 @@ greeting_text(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "GREETING_TEXT: \"%V\"", &str);
+                   "GREETING_TEXT: \"%V\"", &str);
 #endif
 }
 
@@ -920,7 +946,7 @@ reply_code(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "REPLY_CODE: \"%V\"", &str);
+                   "REPLY_CODE: \"%V\"", &str);
 #endif
 
     ctx = peer_conf->check_data;
@@ -930,17 +956,17 @@ reply_code(void *data, const signed char *at, size_t length)
 
     if (code >= 200 && code < 300) {
         sp->hello_reply_code = NGX_CHECK_SMTP_2XX;
-    }
-    else if (code >= 300 && code < 400) {
+
+    } else if (code >= 300 && code < 400) {
         sp->hello_reply_code = NGX_CHECK_SMTP_3XX;
-    }
-    else if (code >= 400 && code < 500) {
+
+    } else if (code >= 400 && code < 500) {
         sp->hello_reply_code = NGX_CHECK_SMTP_4XX;
-    }
-    else if (code >= 500 && code < 600) {
+
+    } else if (code >= 500 && code < 600) {
         sp->hello_reply_code = NGX_CHECK_SMTP_5XX;
-    }
-    else {
+
+    } else {
         sp->hello_reply_code = NGX_CHECK_SMTP_ERR;
     }
 }
@@ -956,7 +982,7 @@ reply_text(void *data, const signed char *at, size_t length)
     str.len = length;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "REPLY_TEXT: \"%V\"", &str);
+                   "REPLY_TEXT: \"%V\"", &str);
 #endif
 }
 
@@ -1000,7 +1026,7 @@ ngx_tcp_check_smtp_init(ngx_tcp_check_peer_conf_t *peer_conf)
     ctx->recv.end = ctx->recv.last = NULL;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "smtp_init: send:%V", &uscf->send);
+                   "smtp_init: send:%V", &uscf->send);
 
     ctx->parser = ngx_pcalloc(peer_conf->pool, sizeof(smtp_parser));
     if (ctx->parser == NULL) {
@@ -1033,14 +1059,17 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     length = ctx->recv.last - ctx->recv.start;
 
     n = smtp_parser_execute(sp, (signed char *)ctx->recv.start, length, offset);
-    ctx->recv.pos += n;
+    ctx->recv.pos = ctx->recv.start + n;
 
     if (smtp_parser_finish(sp) == -1) {
         ngx_log_error(NGX_LOG_ERR, ngx_cycle->log, 0,
-                "smtp parse error with peer: %V, recv data: %s", 
-                &peer_conf->peer->name, ctx->recv.pos);
+                      "smtp parse error with peer: %V, recv data: %s", 
+                      &peer_conf->peer->name, ctx->recv.pos);
 
-        /*Some SMTP servers are not strictly designed with the RFC2821, but it does work*/
+        /* 
+         * Some SMTP servers are not strictly designed with the RFC2821, 
+         * but it does work
+         * */
         if (*ctx->recv.start == '2') {
             return NGX_OK;
         }
@@ -1049,16 +1078,16 @@ ngx_tcp_check_smtp_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     }
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "smtp_parse: sp->hello_reply_code: %d, conf: %d",
-            sp->hello_reply_code, uscf->code.status_alive);
+                   "smtp_parse: sp->hello_reply_code: %d, conf: %d",
+                   sp->hello_reply_code, uscf->code.status_alive);
 
     if (sp->hello_reply_code == 0) {
         return NGX_AGAIN;
-    }
-    else if (sp->hello_reply_code & uscf->code.status_alive) {
+
+    } else if (sp->hello_reply_code & uscf->code.status_alive) {
         return NGX_OK;
-    }
-    else {
+
+    } else {
         return NGX_ERROR;
     }
 
@@ -1116,10 +1145,10 @@ ngx_tcp_check_mysql_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     handshake = (mysql_handshake_init_t *) ctx->recv.pos;
 
     ngx_log_debug3(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "mysql_parse: packet_number=%d, protocol=%d, server=%s", 
-            handshake->packet_number,
-            handshake->protocol_version,
-            handshake->others);
+                   "mysql_parse: packet_number=%d, protocol=%d, server=%s", 
+                   handshake->packet_number,
+                   handshake->protocol_version,
+                   handshake->others);
 
     /* The mysql greeting packet's serial number always begin with 0. */
     if (handshake->packet_number != 0x00) {
@@ -1178,11 +1207,12 @@ ngx_tcp_check_pop3_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     ch = *(ctx->recv.start);
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "pop3_parse: packet_greeting \"%s\"", ctx->recv.start);
+                   "pop3_parse: packet_greeting \"%s\"", ctx->recv.start);
 
-    /* RFC 1939
-       There are currently two status indicators: positive ("+OK") and 
-       negative ("-ERR").  Servers MUST send the "+OK" and "-ERR" in upper case.
+    /*
+     * RFC 1939
+     * There are currently two status indicators: positive ("+OK") and 
+     * negative ("-ERR").  Servers MUST send the "+OK" and "-ERR" in upper case.
      */
     if (ch != '+') {
         return NGX_ERROR;
@@ -1238,11 +1268,11 @@ ngx_tcp_check_imap_parse(ngx_tcp_check_peer_conf_t *peer_conf)
     }
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
-            "imap_parse: packet_greeting \"%s\"", ctx->recv.start);
+                   "imap_parse: packet_greeting \"%s\"", ctx->recv.start);
 
     /* RFC 3501
-       command         = tag SP (command-any / command-auth / command-nonauth /
-        command-select) CRLF
+     * command         = tag SP (command-any / command-auth / command-nonauth /
+     * command-select) CRLF
      */
 
     p = ctx->recv.start;
@@ -1298,7 +1328,7 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
 
     if (c->pool == NULL) {
         ngx_log_error(NGX_LOG_ERR, event->log, 0,
-                "check pool NULL with peer: %V ", &peer_conf->peer->name);
+                      "check pool NULL with peer: %V ", &peer_conf->peer->name);
 
         goto check_send_fail;
     }
@@ -1321,7 +1351,8 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
         if (peer_conf->init == NULL || peer_conf->init(peer_conf) != NGX_OK) {
 
             ngx_log_error(NGX_LOG_ERR, event->log, 0,
-                    "check init error with peer: %V ", &peer_conf->peer->name);
+                          "check init error with peer: %V ",
+                          &peer_conf->peer->name);
 
             goto check_send_fail;
         }
@@ -1338,16 +1369,17 @@ ngx_tcp_check_send_handler(ngx_event_t *event)
 
         err = (size >=0) ? 0 : ngx_socket_errno;
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
-                "tcp check send size: %d, total: %d", size, ctx->send.last - ctx->send.pos);
+                       "tcp check send size: %d, total: %d",
+                       size, ctx->send.last - ctx->send.pos);
 #endif
 
         if (size >= 0) {
             ctx->send.pos += size;
-        }
-        else if (size == NGX_AGAIN) {
+
+        } else if (size == NGX_AGAIN) {
             return;
-        }
-        else {
+
+        } else {
             c->error = 1;
             goto check_send_fail;
         }
@@ -1407,7 +1439,7 @@ ngx_tcp_check_recv_handler(ngx_event_t *event)
 
     while (1) {
         n = ctx->recv.end - ctx->recv.last;
-        /*Not enough buffer? Enlarge twice*/
+        /* Not enough buffer? Enlarge twice */
         if (n == 0) {
             size = ctx->recv.end - ctx->recv.start;
             new_buf = ngx_palloc(c->pool, size * 2);
@@ -1431,16 +1463,18 @@ ngx_tcp_check_recv_handler(ngx_event_t *event)
 
         err = (size >= 0) ? 0 : ngx_socket_errno;
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, err, 
-                "tcp check recv size: %d, peer: %V", size, &peer_conf->peer->name);
+                       "tcp check recv size: %d, peer: %V",
+                       size, &peer_conf->peer->name);
 #endif
 
         if (size > 0) {
             ctx->recv.last += size;
             continue;
+
         } else if (size == 0 || size == NGX_AGAIN) {
             break;
-        }
-        else {
+
+        } else {
             c->error = 1;
             goto check_recv_fail;
         }
@@ -1449,29 +1483,40 @@ ngx_tcp_check_recv_handler(ngx_event_t *event)
     rc = peer_conf->parse(peer_conf); 
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, c->log, 0, 
-            "tcp check parse rc: %d, peer: %V", rc, &peer_conf->peer->name);
+                   "tcp check parse rc: %d, peer: %V",
+                   rc, &peer_conf->peer->name);
 
     switch (rc) {
-        case NGX_AGAIN:
-            return;
-        case NGX_ERROR:
-            ngx_log_error(NGX_LOG_ERR, event->log, 0,
-                    "check protocol %s error with peer: %V ", 
-                    peer_conf->conf->check_type_conf->name, &peer_conf->peer->name);
-            ngx_tcp_check_status_update(peer_conf, 0);
-            break;
-        case NGX_OK:
-        default:
-            ngx_tcp_check_status_update(peer_conf, 1);
+
+    case NGX_AGAIN:
+        return;
+
+    case NGX_ERROR:
+        ngx_log_error(NGX_LOG_ERR, event->log, 0,
+                      "check protocol %s error with peer: %V ", 
+                      peer_conf->conf->check_type_conf->name,
+                      &peer_conf->peer->name);
+
+        ngx_tcp_check_status_update(peer_conf, 0);
+        break;
+
+    case NGX_OK:
+        /* pass throught */
+
+    default:
+        ngx_tcp_check_status_update(peer_conf, 1);
     }
 
     peer_conf->state = NGX_TCP_CHECK_RECV_DONE;
     ngx_tcp_check_clean_event(peer_conf);
+
     return;
 
 check_recv_fail:
+
     ngx_tcp_check_status_update(peer_conf, 0);
     ngx_tcp_check_clean_event(peer_conf);
+
     return;
 }
 
@@ -1511,7 +1556,7 @@ ngx_tcp_check_connect_handler(ngx_event_t *event)
         return;
     }
 
-    /*NGX_OK or NGX_AGAIN*/
+    /* NGX_OK or NGX_AGAIN */
     c = peer_conf->pc.connection;
     c->data = peer_conf;
     c->log = peer_conf->pc.log;
@@ -1549,15 +1594,16 @@ ngx_tcp_check_begin_handler(ngx_event_t *event)
 
     ngx_add_timer(event, uscf->check_interval/2);
 
-    /*This process are processing the event now.*/
+    /* This process are processing the event now. */
     if (peer_conf->shm->owner == ngx_pid) {
         return;
     }
 
     ngx_log_debug4(NGX_LOG_DEBUG_TCP, event->log, 0, 
-            "tcp check begin handler index:%ud, owner: %d, ngx_pid: %ud, time:%ud", 
-            peer_conf->index, peer_conf->shm->owner, ngx_pid, 
-            (ngx_current_msec - peer_conf->shm->access_time));
+                   "tcp check begin handler index:%ud, owner: %d, "
+                   "ngx_pid: %ud, time:%d", 
+                   peer_conf->index, peer_conf->shm->owner, ngx_pid, 
+                   (ngx_current_msec - peer_conf->shm->access_time));
 
     ngx_spinlock(&peer_conf->shm->lock, ngx_pid, 1024);
 
@@ -1627,19 +1673,22 @@ ngx_tcp_upstream_init_main_check_conf(ngx_conf_t *cf, void*conf)
         /*the default check shmare memory size*/
         shm_size = (umcf->upstreams.nelts + 1 )* ngx_pagesize;
 
-        shm_size = shm_size < umcf->check_shm_size ? umcf->check_shm_size : shm_size;
+        shm_size = shm_size < umcf->check_shm_size 
+                   ? umcf->check_shm_size : shm_size;
 
-        shm_zone = ngx_shared_memory_add(cf, shm_name, shm_size, &ngx_tcp_upstream_module);
+        shm_zone = ngx_shared_memory_add(cf, shm_name, shm_size,
+                                         &ngx_tcp_upstream_module);
 
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, cf->log, 0,
-                "[tcp_upstream] upsteam:%V, shm_zone size:%ui", shm_name, shm_size);
+                       "[tcp_upstream] upsteam:%V, shm_zone size:%ui",
+                       shm_name, shm_size);
 
         shm_zone->data = umcf->peers_conf;
         check_peers_ctx = umcf->peers_conf;
 
         shm_zone->init = ngx_tcp_upstream_check_init_shm_zone;
-    }
-    else {
+
+    } else {
         check_peers_ctx = NULL;
     }
 
@@ -1665,7 +1714,8 @@ ngx_tcp_check_init_process(ngx_cycle_t *cycle)
         return NGX_ERROR;
     }
 
-    shm_zone = ngx_shared_memory_find(cycle, &shm_name, &ngx_tcp_upstream_module);
+    shm_zone = ngx_shared_memory_find(cycle, &shm_name, 
+                                      &ngx_tcp_upstream_module);
 
     if (shm_zone == NULL || shm_zone->data == NULL) {
         return NGX_OK;
@@ -1675,10 +1725,11 @@ ngx_tcp_check_init_process(ngx_cycle_t *cycle)
     peers_shm = peers_conf->peers_shm;
 
     ngx_log_debug2(NGX_LOG_DEBUG_TCP, cycle->log, 0, 
-            "tcp check upstream init_process, shm_name: %V, peer number: %ud",
-            &shm_name, peers_conf->peers.nelts);
+                   "tcp check upstream init_process, shm_name: %V, "
+                   "peer number: %ud",
+                   &shm_name, peers_conf->peers.nelts);
 
-    srand(ngx_pid);
+    srandom(ngx_pid);
 
     peer_conf = peers_conf->peers.elts;
     peer_shm = peers_shm->peers;
@@ -1773,7 +1824,8 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r)
     if (shm_zone == NULL || shm_zone->data == NULL) {
 
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "[tcp upstream check] can not find the shared memory zone \"%V\" ", &shm_name);
+                      "[tcp upstream check] can not find the "
+                      "shared memory zone \"%V\" ", &shm_name);
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -1860,7 +1912,7 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r)
 
 static char *
 ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
-        ngx_command_t *cmd, void *conf) 
+    ngx_command_t *cmd, void *conf) 
 {
     ngx_http_core_loc_conf_t                *clcf;
 

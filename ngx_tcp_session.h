@@ -10,12 +10,6 @@
 #include <ngx_tcp.h>
 
 
-
-typedef struct ngx_tcp_proxy_s {
-    ngx_peer_connection_t  *upstream;
-    ngx_buf_t              *buffer;
-} ngx_tcp_proxy_ctx_t;
-
 typedef struct ngx_tcp_session_s {
     uint32_t                signature;         /* "TCP" */
 
@@ -35,10 +29,11 @@ typedef struct ngx_tcp_session_s {
 
     ngx_tcp_cleanup_t      *cleanup;
 
-    /*ngx_tcp_proxy_ctx_t   *proxy;*/
-    /*ngx_uint_t             tcp_state;*/
-    /*unsigned               protocol:3;*/
-    /*unsigned               blocked:1;*/
+    time_t                  start_sec;
+    ngx_msec_t              start_msec;
+
+    off_t                   bytes_read;
+    off_t                   bytes_write;
 
     unsigned                quit:1;
     ngx_str_t              *addr_text;
@@ -46,13 +41,14 @@ typedef struct ngx_tcp_session_s {
 
 } ngx_tcp_session_t;
 
+
 typedef void (*ngx_tcp_cleanup_pt)(void *data);
 
 
 struct ngx_tcp_cleanup_s {
-    ngx_tcp_cleanup_pt               handler;
-    void                             *data;
-    ngx_tcp_cleanup_t               *next;
+    ngx_tcp_cleanup_pt      handler;
+    void                   *data;
+    ngx_tcp_cleanup_t      *next;
 };
 
 void ngx_tcp_init_connection(ngx_connection_t *c);
@@ -70,8 +66,6 @@ void ngx_tcp_finalize_session(ngx_tcp_session_t *s);
 ngx_tcp_cleanup_t * ngx_tcp_cleanup_add(ngx_tcp_session_t *s, size_t size);
 
 ngx_int_t ngx_tcp_access_handler(ngx_tcp_session_t *s);
-void ngx_tcp_proxy_init_session(ngx_connection_t *c, ngx_tcp_session_t *s);
-
-extern ngx_module_t  ngx_tcp_proxy_module;
+ngx_int_t ngx_tcp_log_handler(ngx_tcp_session_t *s);
 
 #endif

@@ -1,5 +1,5 @@
 
-#include "ngx_tcp_upstream_check.h"
+#include "../ngx_tcp_upstream_check.h"
 
 #include <stdio.h>
 #include <assert.h>

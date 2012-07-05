@@ -39,10 +39,10 @@ __DATA__
     }
 
     server {
-        listen 1982;
+        listen 1984;
 
         proxy_pass test;
     }
---- request
+--- request_https
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^.*$

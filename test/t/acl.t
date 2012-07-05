@@ -38,7 +38,7 @@ __DATA__
     server {
         deny 127.0.0.1;
 
-        listen 1982;
+        listen 1984;
 
         proxy_pass test;
     }
@@ -54,7 +54,7 @@ GET /
     }
 
     server {
-        listen 1982;
+        listen 1984;
 
         proxy_pass test;
     }
@@ -70,7 +70,7 @@ GET /
 
     server {
         deny 10.231.143.122;
-        listen 1982;
+        listen 1984;
 
         server_name _;
 

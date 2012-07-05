@@ -6,7 +6,7 @@
 
 typedef struct {
     /* the round robin data must be first */
-    ngx_tcp_upstream_rr_peer_data_t   rrp;
+    ngx_tcp_upstream_rr_peer_data_t    rrp;
 
     ngx_uint_t                         hash;
 
@@ -52,9 +52,9 @@ static ngx_tcp_module_t  ngx_tcp_upstream_ip_hash_module_ctx = {
 
 ngx_module_t  ngx_tcp_upstream_ip_hash_module = {
     NGX_MODULE_V1,
-    &ngx_tcp_upstream_ip_hash_module_ctx, /* module context */
-    ngx_tcp_upstream_ip_hash_commands,    /* module directives */
-    NGX_TCP_MODULE,                       /* module type */
+    &ngx_tcp_upstream_ip_hash_module_ctx,  /* module context */
+    ngx_tcp_upstream_ip_hash_commands,     /* module directives */
+    NGX_TCP_MODULE,                        /* module type */
     NULL,                                  /* init master */
     NULL,                                  /* init module */
     NULL,                                  /* init process */
@@ -85,7 +85,7 @@ ngx_tcp_upstream_init_ip_hash_peer(ngx_tcp_session_t *s,
 {
     u_char                                 *p;
     struct sockaddr_in                     *sin;
-    ngx_tcp_upstream_ip_hash_peer_data_t  *iphp;
+    ngx_tcp_upstream_ip_hash_peer_data_t   *iphp;
 
     iphp = ngx_palloc(s->pool, sizeof(ngx_tcp_upstream_ip_hash_peer_data_t));
     if (iphp == NULL) {
@@ -225,6 +225,7 @@ ngx_tcp_upstream_ip_hash(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     uscf->flags = NGX_TCP_UPSTREAM_CREATE
                   |NGX_TCP_UPSTREAM_MAX_FAILS
                   |NGX_TCP_UPSTREAM_FAIL_TIMEOUT
+                  |NGX_TCP_UPSTREAM_MAX_BUSY
                   |NGX_TCP_UPSTREAM_DOWN;
 
     return NGX_CONF_OK;

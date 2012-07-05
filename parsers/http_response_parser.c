@@ -1,7 +1,7 @@
 
-#line 1 "http_response_parse.rl"
+#line 1 "http_response_parser.rl"
 
-#include "ngx_tcp_upstream_check.h"
+#include <http_response_parser.h>
 
 #include <stdio.h>
 #include <assert.h>
@@ -17,30 +17,30 @@
 /** Machine **/
 
 
-#line 88 "http_response_parse.rl"
+#line 88 "http_response_parser.rl"
 
 
 /** Data **/
 
-#line 26 "http_response_parse.c"
-static const int http_parser_start = 1;
-static const int http_parser_first_final = 20;
-static const int http_parser_error = 0;
+#line 26 "http_response_parser.c"
+static const int http_response_parser_start = 1;
+static const int http_response_parser_first_final = 20;
+static const int http_response_parser_error = 0;
 
-static const int http_parser_en_main = 1;
+static const int http_response_parser_en_main = 1;
 
 
-#line 92 "http_response_parse.rl"
+#line 92 "http_response_parser.rl"
 
-int http_parser_init(http_parser *parser)  {
+int http_response_parser_init(http_response_parser *parser)  {
   int cs = 0;
   
-#line 39 "http_response_parse.c"
+#line 39 "http_response_parser.c"
 	{
-	cs = http_parser_start;
+	cs = http_response_parser_start;
 	}
 
-#line 96 "http_response_parse.rl"
+#line 96 "http_response_parser.rl"
   parser->cs = cs;
   parser->body_start = 0;
   parser->content_len = 0;
@@ -54,7 +54,7 @@ int http_parser_init(http_parser *parser)  {
 
 
 /** exec **/
-size_t http_parser_execute(http_parser *parser, const char signed *buffer, size_t len, size_t off)  {
+size_t http_response_parser_execute(http_response_parser *parser, const signed char *buffer, size_t len, size_t off)  {
   const signed char *p, *pe;
   int cs = parser->cs;
 
@@ -64,7 +64,7 @@ size_t http_parser_execute(http_parser *parser, const char signed *buffer, size_
   pe = buffer + len;
 
   
-#line 68 "http_response_parse.c"
+#line 68 "http_response_parser.c"
 	{
 	if ( p == pe )
 		goto _test_eof;
@@ -78,14 +78,14 @@ st0:
 cs = 0;
 	goto _out;
 tr0:
-#line 21 "http_response_parse.rl"
+#line 21 "http_response_parser.rl"
 	{MARK(mark, p); }
 	goto st2;
 st2:
 	if ( ++p == pe )
 		goto _test_eof2;
 case 2:
-#line 89 "http_response_parse.c"
+#line 89 "http_response_parser.c"
 	if ( (*p) == 84 )
 		goto st3;
 	goto st0;
@@ -143,7 +143,7 @@ case 9:
 		goto st9;
 	goto st0;
 tr9:
-#line 36 "http_response_parse.rl"
+#line 36 "http_response_parser.rl"
 	{	
     if(parser->http_version != NULL)
       parser->http_version(parser->data, PTR_TO(mark), LEN(mark, p));
@@ -153,26 +153,26 @@ st10:
 	if ( ++p == pe )
 		goto _test_eof10;
 case 10:
-#line 157 "http_response_parse.c"
+#line 157 "http_response_parser.c"
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto tr10;
 	goto st0;
 tr10:
-#line 21 "http_response_parse.rl"
+#line 21 "http_response_parser.rl"
 	{MARK(mark, p); }
 	goto st11;
 st11:
 	if ( ++p == pe )
 		goto _test_eof11;
 case 11:
-#line 169 "http_response_parse.c"
+#line 169 "http_response_parser.c"
 	if ( (*p) == 32 )
 		goto tr11;
 	if ( 48 <= (*p) && (*p) <= 57 )
 		goto st11;
 	goto st0;
 tr11:
-#line 41 "http_response_parse.rl"
+#line 41 "http_response_parser.rl"
 	{
     if(parser->status_code != NULL)
       parser->status_code(parser->data, PTR_TO(mark), LEN(mark,p));
@@ -182,7 +182,7 @@ st12:
 	if ( ++p == pe )
 		goto _test_eof12;
 case 12:
-#line 186 "http_response_parse.c"
+#line 186 "http_response_parser.c"
 	if ( (*p) < 11 ) {
 		if ( 0 <= (*p) && (*p) <= 9 )
 			goto tr13;
@@ -193,14 +193,14 @@ case 12:
 		goto tr13;
 	goto st0;
 tr13:
-#line 21 "http_response_parse.rl"
+#line 21 "http_response_parser.rl"
 	{MARK(mark, p); }
 	goto st13;
 st13:
 	if ( ++p == pe )
 		goto _test_eof13;
 case 13:
-#line 204 "http_response_parse.c"
+#line 204 "http_response_parser.c"
 	if ( (*p) == 13 )
 		goto tr15;
 	if ( (*p) > 9 ) {
@@ -210,16 +210,16 @@ case 13:
 		goto st13;
 	goto st0;
 tr15:
-#line 46 "http_response_parse.rl"
+#line 46 "http_response_parser.rl"
 	{
     if(parser->reason_phrase != NULL)
       parser->reason_phrase(parser->data, PTR_TO(mark), LEN(mark,p));
   }
 	goto st14;
 tr23:
-#line 28 "http_response_parse.rl"
+#line 28 "http_response_parser.rl"
 	{ MARK(mark, p); }
-#line 30 "http_response_parse.rl"
+#line 30 "http_response_parser.rl"
 	{
     if(parser->http_field != NULL) {
       parser->http_field(parser->data, PTR_TO(field_start), parser->field_len, PTR_TO(mark), LEN(mark, p));
@@ -227,7 +227,7 @@ tr23:
   }
 	goto st14;
 tr26:
-#line 30 "http_response_parse.rl"
+#line 30 "http_response_parser.rl"
 	{
     if(parser->http_field != NULL) {
       parser->http_field(parser->data, PTR_TO(field_start), parser->field_len, PTR_TO(mark), LEN(mark, p));
@@ -238,7 +238,7 @@ st14:
 	if ( ++p == pe )
 		goto _test_eof14;
 case 14:
-#line 242 "http_response_parse.c"
+#line 242 "http_response_parser.c"
 	if ( (*p) == 10 )
 		goto st15;
 	goto st0;
@@ -278,7 +278,7 @@ case 16:
 		goto tr19;
 	goto st0;
 tr19:
-#line 51 "http_response_parse.rl"
+#line 51 "http_response_parser.rl"
 	{ 
     parser->body_start = p - buffer + 1; 
     if(parser->header_done != NULL)
@@ -290,17 +290,17 @@ st20:
 	if ( ++p == pe )
 		goto _test_eof20;
 case 20:
-#line 294 "http_response_parse.c"
+#line 294 "http_response_parser.c"
 	goto st0;
 tr18:
-#line 23 "http_response_parse.rl"
+#line 23 "http_response_parser.rl"
 	{ MARK(field_start, p); }
 	goto st17;
 st17:
 	if ( ++p == pe )
 		goto _test_eof17;
 case 17:
-#line 304 "http_response_parse.c"
+#line 304 "http_response_parser.c"
 	switch( (*p) ) {
 		case 33: goto st17;
 		case 58: goto tr21;
@@ -326,34 +326,34 @@ case 17:
 		goto st17;
 	goto st0;
 tr21:
-#line 24 "http_response_parse.rl"
+#line 24 "http_response_parser.rl"
 	{ 
     parser->field_len = LEN(field_start, p);
   }
 	goto st18;
 tr24:
-#line 28 "http_response_parse.rl"
+#line 28 "http_response_parser.rl"
 	{ MARK(mark, p); }
 	goto st18;
 st18:
 	if ( ++p == pe )
 		goto _test_eof18;
 case 18:
-#line 343 "http_response_parse.c"
+#line 343 "http_response_parser.c"
 	switch( (*p) ) {
 		case 13: goto tr23;
 		case 32: goto tr24;
 	}
 	goto tr22;
 tr22:
-#line 28 "http_response_parse.rl"
+#line 28 "http_response_parser.rl"
 	{ MARK(mark, p); }
 	goto st19;
 st19:
 	if ( ++p == pe )
 		goto _test_eof19;
 case 19:
-#line 357 "http_response_parse.c"
+#line 357 "http_response_parser.c"
 	if ( (*p) == 13 )
 		goto tr26;
 	goto st19;
@@ -382,9 +382,9 @@ case 19:
 	_out: {}
 	}
 
-#line 119 "http_response_parse.rl"
+#line 119 "http_response_parser.rl"
 
-  if (!http_parser_has_error(parser))
+  if (!http_response_parser_has_error(parser))
     parser->cs = cs;
   parser->nread += p - (buffer + off);
 
@@ -398,21 +398,21 @@ case 19:
   return(parser->nread);
 }
 
-int http_parser_finish(http_parser *parser)
+int http_response_parser_finish(http_response_parser *parser)
 {
-  if (http_parser_has_error(parser) ) {
+  if (http_response_parser_has_error(parser) ) {
     return -1;
-  } else if (http_parser_is_finished(parser) ) {
+  } else if (http_response_parser_is_finished(parser) ) {
     return 1;
   } else {
     return 0;
   }
 }
 
-int http_parser_has_error(http_parser *parser) {
-  return parser->cs == http_parser_error;
+int http_response_parser_has_error(http_response_parser *parser) {
+  return parser->cs == http_response_parser_error;
 }
 
-int http_parser_is_finished(http_parser *parser) {
-  return parser->cs >= http_parser_first_final;
+int http_response_parser_is_finished(http_response_parser *parser) {
+  return parser->cs >= http_response_parser_first_final;
 }

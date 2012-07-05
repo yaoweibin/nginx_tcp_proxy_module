@@ -35,9 +35,8 @@ our $WorkerConnections      = 1024;
 our $LogLevel               = 'debug';
 our $MasterProcessEnabled   = 'off';
 our $DaemonEnabled          = 'on';
-our $ServerPort             = 1982;
-our $ServerPortForClient    = 1982;
-#our $ServerPortForClient    = 1984;
+our $ServerPort             = 1984;
+our $ServerPortForClient    = 1984;
 
 
 sub repeat_each (@) {
@@ -176,7 +175,9 @@ sub setup_server_root () {
 
     my $index_file = "$HtmlDir/index.html";
 
-    open my $out, ">$index_file" or
+    my $out;
+
+    open $out, ">$index_file" or
         die "Can't open $index_file for writing: $!\n";
 
     print $out '<html><head><title>It works!</title></head><body>It works!</body></html>';
@@ -185,6 +186,56 @@ sub setup_server_root () {
 
     mkdir $ConfDir or
         die "Failed to do mkdir $ConfDir\n";
+
+    my $ssl_crt = "$ConfDir/ssl.crt";
+
+    open $out, ">$ssl_crt" or
+        die "Can't open $ssl_crt for writing: $!\n";
+
+    print $out <<_EOC_;
+-----BEGIN CERTIFICATE-----
+MIIClzCCAgACCQCKlE5LBV9thDANBgkqhkiG9w0BAQUFADCBjzELMAkGA1UEBhMC
+Q04xEjAQBgNVBAgTCVpoZSBKaWFuZzERMA8GA1UEBxMISGFuZ3pob3UxFDASBgNV
+BAoTC05ldGVhc2UgTHRkMQswCQYDVQQLEwJJVDEUMBIGA1UEAxMLbml4Y3JhZnQu
+aW4xIDAeBgkqhkiG9w0BCQEWEWFkbWluQG5peGNyYWZ0LmluMB4XDTEwMDkwMzA2
+NTk1OFoXDTExMDkwMzA2NTk1OFowgY8xCzAJBgNVBAYTAkNOMRIwEAYDVQQIEwla
+aGUgSmlhbmcxETAPBgNVBAcTCEhhbmd6aG91MRQwEgYDVQQKEwtOZXRlYXNlIEx0
+ZDELMAkGA1UECxMCSVQxFDASBgNVBAMTC25peGNyYWZ0LmluMSAwHgYJKoZIhvcN
+AQkBFhFhZG1pbkBuaXhjcmFmdC5pbjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
+gYEAyGpGE56F6KcC2EnU/Nf0JWUrwApvJjDc6yYYpZWtYoSHdwDMwnbF7nQbBTjQ
+Ew2C23RvYlrpxaEBvIi6y4CnE98AvYfI50dDtT1cO4lBoDugbIgtryZywXHL2TbU
+ZQ2eJc+6vJClVGc1LjZ10ZzAAt63VroO2FAh/fZUZPXEzUMCAwEAATANBgkqhkiG
+9w0BAQUFAAOBgQA7x4lND+41f5ihXgd4cAM8W4GQ+mpQpKt+BRxto740SdUL+DNt
+PmMLoqw7Pis9Pkn7PQj/O3vJkx4Bfzmrm/s0bX82mYJSjPz8XL42n7n3Cg8HCCLG
+3JeNnJc75EYwpqf7tyauMUZSACBIGXeteu4OyZ4j/qObJ3GyKVFqR/PJrQ==
+-----END CERTIFICATE-----
+_EOC_
+    close $out;
+
+    my $ssl_key = "$ConfDir/ssl.key";
+
+    open $out, ">$ssl_key" or
+        die "Can't open $ssl_key for writing: $!\n";
+
+    print $out <<_EOC_;
+-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQDIakYTnoXopwLYSdT81/QlZSvACm8mMNzrJhilla1ihId3AMzC
+dsXudBsFONATDYLbdG9iWunFoQG8iLrLgKcT3wC9h8jnR0O1PVw7iUGgO6BsiC2v
+JnLBccvZNtRlDZ4lz7q8kKVUZzUuNnXRnMAC3rdWug7YUCH99lRk9cTNQwIDAQAB
+AoGAdWCAoFb0mHjQGrrLKjaUgB5LzFKQHG77xCDwyHHsNUnnSNRIGBCWBf0sIhfP
+DYmZPUxpO9KBHcUZjkEKHcvAjcGUDdm2HoXYt9V5peAYqdbYOZ/cfEGRzRVTDcy4
+etDvmNqj4t6F9nuq5Rkx7wg/mkGp7Jj0JC5nn7gIcpBiAVkCQQD12rXZ9nhvwKuD
+yF+7lUnmIHRePjtJQcK4+xS9F4UgPiL/cZ3JRcZeo2bagE5ye+mLeGuL3zDOsbY1
+/4dzfulPAkEA0K+HK5rESxFuCOH/XhY85jrt1P2ICFfr1S4zi9Sijquczo9XXHJx
+cXrj4nOiIzmvLSk6MjrMYNhwW7Sycbw3zQJAD7MUs8N6c2BxU2wDOP5ShsCBzdbZ
+gFcTsS5PZ7fNx35QS9GcitLK1RZIJiHVYJgrFL3u2DK7cieFBDO6GZT8HwJBAI7I
+2rqaDV6zkU8gmqKcopSAk4Qc6HuU9LaLAxfUqFjn0MWATCzj3PzhMZUau0BQ0qwa
+vkfp9Tb6QH5ut32cY60CQQCycpFyUhKpY4l81On7LK3Nq2z0+RZ85MbCIkQkQn2H
+4fqfNoKrLPP2JrMCYrvjrc+hez/ffd3u2II/93kksfCx
+-----END RSA PRIVATE KEY-----
+_EOC_
+    close $out;
+
 }
 
 sub write_config_file ($$) {
@@ -208,6 +259,10 @@ error_log $ErrLogFile $LogLevel;
 pid       $PidFile;
 
 tcp {
+
+ssl_certificate "$ConfDir/ssl.crt";
+ssl_certificate_key "$ConfDir/ssl.key";
+
 # Begin test case config...
     $config
 # End test case config.
@@ -412,7 +467,7 @@ start_nginx:
                 }
             }
 
-            sleep 6;
+            sleep 10;
         }
     }
 

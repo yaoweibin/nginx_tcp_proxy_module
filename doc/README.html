@@ -27,6 +27,7 @@
 			<li><a href="#tcp">tcp</a></li>
 			<li><a href="#server">server</a></li>
 			<li><a href="#listen">listen</a></li>
+			<li><a href="#access_log">access_log</a></li>
 			<li><a href="#allow">allow</a></li>
 			<li><a href="#deny">deny</a></li>
 			<li><a href="#so_keepalive">so_keepalive</a></li>
@@ -49,6 +50,7 @@
 			<li><a href="#check_smtp_expect_alive">check_smtp_expect_alive</a></li>
 			<li><a href="#check_shm_size">check_shm_size</a></li>
 			<li><a href="#check_status">check_status</a></li>
+			<li><a href="#busyness">busyness</a></li>
 			<li><a href="#ip_hash">ip_hash</a></li>
 		</ul>
 
@@ -62,15 +64,43 @@
 			<li><a href="#proxy_send_timeout">proxy_send_timeout</a></li>
 		</ul>
 
+		<li><a href="#ngx_tcp_websocket_module">ngx_tcp_websocket_module</a></li>
+		<ul>
+
+			<li><a href="#websocket_pass">websocket_pass</a></li>
+			<li><a href="#websocket_buffer">websocket_buffer</a></li>
+			<li><a href="#websocket_connect_timeout">websocket_connect_timeout</a></li>
+			<li><a href="#websocket_read_timeout">websocket_read_timeout</a></li>
+			<li><a href="#websocket_send_timeout">websocket_send_timeout</a></li>
+		</ul>
+
+		<li><a href="#ngx_tcp_ssl_module">ngx_tcp_ssl_module</a></li>
+		<ul>
+
+			<li><a href="#ssl">ssl</a></li>
+			<li><a href="#ssl_certificate">ssl_certificate</a></li>
+			<li><a href="#ssl_certificate_key">ssl_certificate_key</a></li>
+			<li><a href="#ssl_client_certificate">ssl_client_certificate</a></li>
+			<li><a href="#ssl_dhparam">ssl_dhparam</a></li>
+			<li><a href="#ssl_ciphers">ssl_ciphers</a></li>
+			<li><a href="#ssl_crl">ssl_crl</a></li>
+			<li><a href="#ssl_prefer_server_ciphers">ssl_prefer_server_ciphers</a></li>
+			<li><a href="#ssl_protocols">ssl_protocols</a></li>
+			<li><a href="#ssl_verify_client">ssl_verify_client</a></li>
+			<li><a href="#ssl_verify_depth">ssl_verify_depth</a></li>
+			<li><a href="#ssl_session_cache">ssl_session_cache</a></li>
+			<li><a href="#ssl_session_timeout">ssl_session_timeout</a></li>
+		</ul>
+
 	</ul>
 
 	<li><a href="#compatibility">Compatibility</a></li>
 	<li><a href="#notes">Notes</a></li>
-	<li><a href="#todo">TODO</a></li>
 	<li><a href="#known_issues">Known Issues</a></li>
 	<li><a href="#changelogs">Changelogs</a></li>
 	<ul>
 
+		<li><a href="#v0_2_0">v0.2.0</a></li>
 		<li><a href="#v0_19">v0.19</a></li>
 		<li><a href="#v0_1">v0.1</a></li>
 	</ul>
@@ -91,7 +121,6 @@
 <hr />
 <h1><a name="installation">Installation</a></h1>
 <p>Download the latest stable version of the release tarball of this module from github (<a href="http://github.com/yaoweibin/nginx_tcp_proxy_module">http://github.com/yaoweibin/nginx_tcp_proxy_module</a>)</p>
-<p>The development version of this module is here (<a href="https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop">https://github.com/yaoweibin/nginx_tcp_proxy_module/tree/develop</a>). I have added the features of tcp_ssl_proxy, tcp_upstream_busyness, access_log.</p>
 <p>Grab the nginx source code from nginx.org (<a href="http://nginx.org/">http://nginx.org/</a>), for example, the version 1.2.1 (see nginx compatibility), and then build the source with this module:</p>
 <pre>
     $ wget '<a href="http://nginx.org/download/nginx-1.2.1.tar.gz">http://nginx.org/download/nginx-1.2.1.tar.gz</a>'
@@ -121,8 +150,8 @@
 <pre>
     upstream cluster {
         # simple round-robin
-        server 127.0.0.1:3306;
-        server 127.0.0.1:1234;</pre>
+        server 192.168.0.1:80;
+        server 192.168.0.2:80;</pre>
 <pre>
         check interval=3000 rise=2 fall=5 timeout=1000;</pre>
 <pre>
@@ -143,9 +172,9 @@
 </p>
 <hr />
 <h1><a name="description">Description</a></h1>
-<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_upstream_ip_hash_module. All these modules work togther to add the support of TCP proxy with Nginx. I also add other features: ip_hash, upstream server health check, status monitor.</p>
+<p>This module actually include many modules: ngx_tcp_module, ngx_tcp_core_module, ngx_tcp_upstream_module, ngx_tcp_proxy_module, ngx_tcp_websocket_module, ngx_tcp_ssl_module, ngx_tcp_upstream_ip_hash_module. All these modules work together to support TCP proxy with Nginx. I also added other features: ip_hash, upstream server health check, status monitor.</p>
 <p>The motivation of writing these modules is Nginx's high performance and robustness. At first, I developed this module just for general TCP proxy. And now, this module is frequently used in websocket reverse proxying.</p>
-<p>You can't use the same listening port with HTTP modules.</p>
+<p>Note, You can't use the same listening port with HTTP modules.</p>
 <p>
 </p>
 <hr />
@@ -171,10 +200,45 @@
 <p>
 </p>
 <h3><a name="listen">listen</a></h3>
-<p><strong>syntax:</strong> <em>listen address:port [ bind ]</em></p>
+<p><strong>syntax:</strong> <em>listen address:port [ bind | ssl | default]</em></p>
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>server</em></p>
-<p><strong>description:</strong> The same as listen (<a href="http://wiki.nginx.org/NginxMailCoreModule#listen">http://wiki.nginx.org/NginxMailCoreModule#listen</a>).</p>
+<p><strong>description:</strong> The same as listen (<a href="http://wiki.nginx.org/NginxMailCoreModule#listen">http://wiki.nginx.org/NginxMailCoreModule#listen</a>). The parameter of default means the default server if you have several server blocks with the same port.</p>
+<p>
+</p>
+<h3><a name="access_log">access_log</a></h3>
+<p><strong>syntax:</strong> <em>access_log path [buffer=size] | off</em></p>
+<p><strong>default:</strong> <em>access_log logs/tcp_access.log</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> Set the access.log. Each record's format is like this:</p>
+<p>log_time worker_process_pid client_ip host_ip accept_time upstream_ip bytes_read bytes_write</p>
+<p>2011/08/02 06:19:07 [5972] 127.0.0.1 0.0.0.0:1982 2011/08/02 06:18:19 172.19.0.129:80 80 236305</p>
+<ul>
+<li>
+<p><em>log_time</em>: The current time when writing this log. The log action is called when the proxy session is closed.</p>
+</li>
+<li>
+<p><em>worker_process_pid</em>: the pid of worker process</p>
+</li>
+<li>
+<p><em>client_ip</em>: the client ip</p>
+</li>
+<li>
+<p><em>host_ip</em>: the server ip and port</p>
+</li>
+<li>
+<p><em>accept_time</em>: the time when the server accepts client's connection</p>
+</li>
+<li>
+<p><em>upstream_ip</em>: the upstream server's ip</p>
+</li>
+<li>
+<p><em>bytes_read</em>: the bytes read from client</p>
+</li>
+<li>
+<p><em>bytes_write</em>: the bytes written to client</p>
+</li>
+</ul>
 <p>
 </p>
 <h3><a name="allow">allow</a></h3>
@@ -213,10 +277,10 @@
 <p>
 </p>
 <h3><a name="server_name">server_name</a></h3>
-<p><strong>syntax:</strong> <em>server_name name fqdn_server_host</em></p>
+<p><strong>syntax:</strong> <em>server_name name</em></p>
 <p><strong>default:</strong> <em>The name of the host, obtained through gethostname()</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>).</p>
+<p><strong>description:</strong> The same as server_name (<a href="http://wiki.nginx.org/NginxMailCoreModule#server_name">http://wiki.nginx.org/NginxMailCoreModule#server_name</a>). You can specify several server name in different server block with the same port. They can be used in websocket module.</p>
 <p>
 </p>
 <h3><a name="resolver">resolver</a></h3>
@@ -279,19 +343,19 @@
 <p><em>ssl_hello</em> sends a client ssl hello packet and receives the server ssl hello packet.</p>
 </li>
 <li>
-<p><em>http</em> sends a http requst packet, recvives and parses the http response to diagnose if the upstream server is alive.</p>
+<p><em>http</em> sends a http request packet, receives and parses the http response to diagnose if the upstream server is alive.</p>
 </li>
 <li>
-<p><em>smtp</em> sends a smtp requst packet, recvives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.</p>
+<p><em>smtp</em> sends a smtp request packet, receives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.</p>
 </li>
 <li>
-<p><em>mysql</em> connects to the mysql server, recvives the greeting response to diagnose if the upstream server is alive.</p>
+<p><em>mysql</em> connects to the mysql server, receives the greeting response to diagnose if the upstream server is alive.</p>
 </li>
 <li>
-<p><em>pop3</em> recvives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should be an OK response.</p>
+<p><em>pop3</em> receives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should be an OK response.</p>
 </li>
 <li>
-<p><em>imap</em> connects to the imap server, recvives the greeting response to diagnose if the upstream server is alive.</p>
+<p><em>imap</em> connects to the imap server, receives the greeting response to diagnose if the upstream server is alive.</p>
 </li>
 </ol>
 </ul>
@@ -308,7 +372,7 @@
 <p><strong>syntax:</strong> <em>check_http_expect_alive [ http_2xx | http_3xx | http_4xx | http_5xx ]</em></p>
 <p><strong>default:</strong> <em>http_2xx | http_3xx</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
-<p><strong>description:</strong> These status codes indicate the upstream server's http response is ok, the backend is alive.</p>
+<p><strong>description:</strong> These status codes indicate the upstream server's http response is OK, the backend is alive.</p>
 <p>
 </p>
 <h3><a name="check_smtp_send">check_smtp_send</a></h3>
@@ -322,14 +386,14 @@
 <p><strong>syntax:</strong> <em>check_smtp_expect_alive [smtp_2xx | smtp_3xx | smtp_4xx | smtp_5xx]</em></p>
 <p><strong>default:</strong> <em>smtp_2xx</em></p>
 <p><strong>context:</strong> <em>upstream</em></p>
-<p><strong>description:</strong> These status codes indicate the upstream server's smtp response is ok, the backend is alive.</p>
+<p><strong>description:</strong> These status codes indicate the upstream server's smtp response is OK, the backend is alive.</p>
 <p>
 </p>
 <h3><a name="check_shm_size">check_shm_size</a></h3>
 <p><strong>syntax:</strong> <em>check_shm_size size</em></p>
 <p><strong>default:</strong> <em>(number_of_checked_upstream_blocks + 1) * pagesize</em></p>
 <p><strong>context:</strong> <em>tcp</em></p>
-<p><strong>description:</strong> If you store hundreds of serveres in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.</p>
+<p><strong>description:</strong> If you store hundreds of servers in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.</p>
 <p>
 </p>
 <h3><a name="check_status">check_status</a></h3>
@@ -364,6 +428,14 @@
 <p><em>Check type</em>: The type of the check packet</p>
 </li>
 </ul>
+<p><strong>ngx_tcp_upstream_busyness_module</strong></p>
+<p>
+</p>
+<h3><a name="busyness">busyness</a></h3>
+<p><strong>syntax:</strong> <em>busyness</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>upstream</em></p>
+<p><strong>description:</strong> the upstream server will be dispatched by backend servers' busyness.</p>
 <p><strong>ngx_tcp_upstream_ip_hash_module</strong></p>
 <p>
 </p>
@@ -412,11 +484,165 @@
 <p><strong>description:</strong> set the timeout value of sending to backends.</p>
 <p>
 </p>
+<h2><a name="ngx_tcp_websocket_module">ngx_tcp_websocket_module</a></h2>
+<p>
+</p>
+<h3><a name="websocket_pass">websocket_pass</a></h3>
+<p><strong>syntax:</strong> <em>websocket_pass [path] host:port</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>server</em></p>
+<p><strong>description:</strong> proxy the websocket request to the backend server. Default port is 80. You can specify several different paths in the same server block.</p>
+<p>
+</p>
+<h3><a name="websocket_buffer">websocket_buffer</a></h3>
+<p><strong>syntax:</strong> <em>websocket_buffer size</em></p>
+<p><strong>default:</strong> <em>4k</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the size of proxy buffer.</p>
+<p>
+</p>
+<h3><a name="websocket_connect_timeout">websocket_connect_timeout</a></h3>
+<p><strong>syntax:</strong> <em>websocket_connect_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of connection to backends.</p>
+<p>
+</p>
+<h3><a name="websocket_read_timeout">websocket_read_timeout</a></h3>
+<p><strong>syntax:</strong> <em>websocket_read_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of reading from backends. Your timeout will be the minimum of this and the *timeout* parameter, so if you want a long timeout for your websockets, make sure to set both paramaters.</p>
+<p>
+</p>
+<h3><a name="websocket_send_timeout">websocket_send_timeout</a></h3>
+<p><strong>syntax:</strong> <em>websocket_send_timeout miliseconds</em></p>
+<p><strong>default:</strong> <em>60000</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> set the timeout value of sending to backends.</p>
+<p>
+</p>
+<h2><a name="ngx_tcp_ssl_module">ngx_tcp_ssl_module</a></h2>
+<p>The default config file includes this ngx_tcp_ssl_module. If you want to just compile nginx without ngx_tcp_ssl_module, copy the ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config,  reconfigrure and compile nginx.</p>
+<p>
+</p>
+<h3><a name="ssl">ssl</a></h3>
+<p><strong>syntax:</strong> <em>ssl [on|off] </em></p>
+<p><strong>default:</strong> <em>ssl off</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>Enables SSL for a server.</p>
+<p>
+</p>
+<h3><a name="ssl_certificate">ssl_certificate</a></h3>
+<p><strong>syntax:</strong> <em>ssl_certificate file</em></p>
+<p><strong>default:</strong> <em>ssl_certificate cert.pem</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive specifies the file containing the certificate, in PEM format. This file can contain also other certificates and the server private key.</p>
+<p>
+</p>
+<h3><a name="ssl_certificate_key">ssl_certificate_key</a></h3>
+<p><strong>syntax:</strong> <em>ssl_certificate_key file</em></p>
+<p><strong>default:</strong> <em>ssl_certificate_key cert.pem</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive specifies the file containing the private key, in PEM format.</p>
+<p>
+</p>
+<h3><a name="ssl_client_certificate">ssl_client_certificate</a></h3>
+<p><strong>syntax:</strong> <em>ssl_client_certificate file</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive specifies the file containing the CA (root) certificate, in PEM format, that is used for validating client certificates.</p>
+<p>
+</p>
+<h3><a name="ssl_dhparam">ssl_dhparam</a></h3>
+<p><strong>syntax:</strong> <em>ssl_dhparam file</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive specifies a file containing Diffie-Hellman key agreement protocol cryptographic parameters, in PEM format, utilized for exchanging session keys between server and client.</p>
+<p>
+</p>
+<h3><a name="ssl_ciphers">ssl_ciphers</a></h3>
+<p><strong>syntax:</strong> <em>ssl_ciphers openssl_cipherlist_spec</em></p>
+<p><strong>default:</strong> <em>ssl_ciphers HIGH:!aNULL:!MD5</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive describes the list of cipher suites the server supports for establishing a secure connection. Cipher suites are specified in the OpenSSL (<a href="http://openssl.org/docs/apps/ciphers.html">http://openssl.org/docs/apps/ciphers.html</a>) cipherlist format, for example:</p>
+<p>ssl_ciphers  ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;</p>
+<p>The complete cipherlist supported by the currently installed version of OpenSSL in your platform can be obtained by issuing the command:
+openssl ciphers</p>
+<p>
+</p>
+<h3><a name="ssl_crl">ssl_crl</a></h3>
+<p><strong>syntax:</strong> <em>ssl_crl file</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive specifies the filename of a Certificate Revocation List, in PEM format, which is used to check the revocation status of certificates.</p>
+<p>
+</p>
+<h3><a name="ssl_prefer_server_ciphers">ssl_prefer_server_ciphers</a></h3>
+<p><strong>syntax:</strong> <em>ssl_prefer_server_ciphers [on|off] </em></p>
+<p><strong>default:</strong> <em>ssl_prefer_server_ciphers off</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>The server requires that the cipher suite list for protocols SSLv3 and TLSv1 are to be preferred over the client supported cipher suite list.</p>
+<p>
+</p>
+<h3><a name="ssl_protocols">ssl_protocols</a></h3>
+<p><strong>syntax:</strong> <em>ssl_protocols [SSLv2] [SSLv3] [TLSv1] [TLSv1.1] [TLSv1.2]</em></p>
+<p><strong>default:</strong> <em>ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive enables the protocol versions specified.</p>
+<p>
+</p>
+<h3><a name="ssl_verify_client">ssl_verify_client</a></h3>
+<p><strong>syntax:</strong> <em>ssl_verify_client on|off|optional</em></p>
+<p><strong>default:</strong> <em>ssl_verify_client off</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive enables the verification of the client identity. Parameter 'optional' checks the client identity using its certificate in case it was made available to the server.</p>
+<p>
+</p>
+<h3><a name="ssl_verify_depth">ssl_verify_depth</a></h3>
+<p><strong>syntax:</strong> <em>ssl_verify_depth number</em></p>
+<p><strong>default:</strong> <em>ssl_verify_depth 1</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive sets how deep the server should go in the client provided certificate chain in order to verify the client identity.</p>
+<p>
+</p>
+<h3><a name="ssl_session_cache">ssl_session_cache</a></h3>
+<p><strong>syntax:</strong> <em>ssl_session_cache off|none|builtin:size and/or shared:name:size</em></p>
+<p><strong>default:</strong> <em>ssl_session_cache off</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>The directive sets the types and sizes of caches to store the SSL sessions.</p>
+<p>The cache types are:</p>
+<ul>
+<li>
+<p>off -- Hard off: nginx says explicitly to a client that sessions can not reused.</p>
+</li>
+<li>
+<p>none -- Soft off: nginx says to a client that session can be resued, but nginx actually never reuses them. This is workaround for some mail clients as ssl_session_cache may be used in mail proxy as well as in HTTP server.</p>
+</li>
+<li>
+<p>builtin -- the OpenSSL builtin cache, is used inside one worker process only. The cache size is assigned in the number of the sessions. Note: there appears to be a memory fragmentation issue using this method, please take that into consideration when using this. See ``References'' below.</p>
+</li>
+<li>
+<p>shared -- the cache is shared between all worker processes. The size of the cache is assigned in bytes: 1 MB cache can contain roughly 4000 sessions. Each shared cache must be given an arbitrary name. A shared cache with a given name can be used in several virtual hosts.</p>
+</li>
+</ul>
+<p>It's possible to use both types of cache &amp;mdash; builtin and shared &amp;mdash; simultaneously, for example:</p>
+<p>ssl_session_cache  builtin:1000  shared:SSL:10m;</p>
+<p>Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.</p>
+<p>
+</p>
+<h3><a name="ssl_session_timeout">ssl_session_timeout</a></h3>
+<p><strong>syntax:</strong> <em>ssl_session_timeout time</em></p>
+<p><strong>default:</strong> <em>ssl_session_timeout 5m</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p>This directive defines the maximum time during which the client can re-use the previously negotiated cryptographic parameters of the secure session that is stored in the SSL cache.</p>
+<p>
+</p>
 <hr />
 <h1><a name="compatibility">Compatibility</a></h1>
 <ul>
 <li>
-<p>Nginx 0.7.65+</p>
+<p>My test bed is 0.7.65+</p>
 </li>
 </ul>
 <p>
@@ -430,10 +656,6 @@
 <p>
 </p>
 <hr />
-<h1><a name="todo">TODO</a></h1>
-<p>
-</p>
-<hr />
 <h1><a name="known_issues">Known Issues</a></h1>
 <ul>
 <li>
@@ -444,6 +666,23 @@
 </p>
 <hr />
 <h1><a name="changelogs">Changelogs</a></h1>
+<p>
+</p>
+<h2><a name="v0_2_0">v0.2.0</a></h2>
+<ul>
+<li>
+<p>add ssl proxy module</p>
+</li>
+<li>
+<p>add websocket proxy module</p>
+</li>
+<li>
+<p>add upstream busyness module</p>
+</li>
+<li>
+<p>add tcp access log module</p>
+</li>
+</ul>
 <p>
 </p>
 <h2><a name="v0_19">v0.19</a></h2>
@@ -472,7 +711,7 @@
 <p>This README template copy from agentzh (<a href="http://github.com/agentzh">http://github.com/agentzh</a>).</p>
 <p>I borrowed a lot of code from upstream and mail module from the nginx 0.7.* core. This part of code is copyrighted by Igor Sysoev. And the health check part is borrowed the design of Jack Lindamood's healthcheck module healthcheck_nginx_upstreams (<a href="http://github.com/cep21/healthcheck_nginx_upstreams">http://github.com/cep21/healthcheck_nginx_upstreams</a>);</p>
 <p>This module is licensed under the BSD license.</p>
-<p>Copyright (C) 2011 by Weibin Yao &lt;<a href="mailto:yaoweibin@gmail.com">yaoweibin@gmail.com</a>&gt;.</p>
+<p>Copyright (C) 2012 by Weibin Yao &lt;<a href="mailto:yaoweibin@gmail.com">yaoweibin@gmail.com</a>&gt;.</p>
 <p>All rights reserved.</p>
 <p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</p>
 <ul>
