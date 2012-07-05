@@ -21,19 +21,20 @@ typedef struct ngx_tcp_proxy_conf_s {
 
 static void ngx_tcp_proxy_init_session(ngx_tcp_session_t *s); 
 static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c, 
-        ngx_tcp_session_t *s);
+    ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, 
-        ngx_tcp_upstream_t *u);
+    ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_dummy_write_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_handler(ngx_event_t *ev);
 static void *ngx_tcp_proxy_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent,
-        void *child);
+    void *child);
 
 
 static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
+
     ngx_string("tcp_generic"),
     { 0, 0, 0, 0 },
     NGX_TCP_GENERIC_PROTOCOL,
@@ -41,6 +42,7 @@ static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
     NULL,
     NULL,
     ngx_string("500 Internal server error" CRLF)
+
 };
 
 
@@ -183,7 +185,7 @@ ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev)
 
 
 static  void
-ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s) 
+ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
 {
     ngx_tcp_upstream_t       *u;
     ngx_tcp_proxy_ctx_t      *p;
@@ -232,7 +234,7 @@ ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
 
 
 static void 
-ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u) 
+ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 {
     ngx_connection_t         *c;
     ngx_tcp_proxy_ctx_t      *pctx;
@@ -241,7 +243,8 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     c = s->connection;
     c->log->action = "ngx_tcp_upstream_init_proxy_handler";
 
-    ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0, "tcp proxy upstream init proxy");
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
+                   "tcp proxy upstream init proxy");
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
@@ -281,8 +284,10 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 
 #if (NGX_TCP_SSL)
 
-    /* The ssl connection with client may not trigger the read event again, 
-     * So I trigger it in this function. */
+    /* 
+     * The ssl connection with client may not trigger the read event again,
+     * So I trigger it in this function.
+     * */
     if (s->connection->ssl) {
         ngx_tcp_proxy_handler(s->connection->read); 
     }
@@ -381,8 +386,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
 #endif
 
     ngx_log_debug4(NGX_LOG_DEBUG_TCP, ev->log, 0,
-            "tcp proxy handler: %d, #%d > #%d, time:%ui",
-            do_write, src->fd, dst->fd, ngx_current_msec);
+                   "tcp proxy handler: %d, #%d > #%d, time:%ui",
+                   do_write, src->fd, dst->fd, ngx_current_msec);
 
     for ( ;; ) {
 
@@ -396,7 +401,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
                 n = dst->send(dst, b->pos, size);
                 err = ngx_socket_errno;
 
-                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0, "tcp proxy handler send:%d", n);
+                ngx_log_debug1(NGX_LOG_DEBUG_TCP, ev->log, 0,
+                               "tcp proxy handler send:%d", n);
 
                 if (n == NGX_ERROR) {
                     ngx_log_error(NGX_LOG_ERR, c->log, err, "proxy send error");
@@ -524,8 +530,11 @@ ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_tcp_core_srv_conf_t    *cscf;
 
     cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
+
     if (cscf->protocol && ngx_strncmp(cscf->protocol->name.data,
-                (u_char *)"tcp_generic", sizeof("tcp_generic") - 1) != 0) {
+                                      (u_char *)"tcp_generic",
+                                      sizeof("tcp_generic") - 1) != 0) {
+
         return "the protocol should be tcp_generic";
     }
 

@@ -6,7 +6,7 @@
 
 typedef struct {
     /* the round robin data must be first */
-    ngx_tcp_upstream_rr_peer_data_t   rrp;
+    ngx_tcp_upstream_rr_peer_data_t    rrp;
 
     u_char                             tries;
 
@@ -142,10 +142,11 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
     /* TODO: cached */
 
     if (bp->tries > 20 || bp->rrp.peers->single ||
-            bp->rrp.peers->peer[0].check_index == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
+            bp->rrp.peers->peer[0].check_index
+                                    == (ngx_uint_t) NGX_INVALID_CHECK_INDEX) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_TCP, pc->log, 0,
-                "get busyness peer0, bp->tries: %ui", bp->tries);
+                       "get busyness peer0, bp->tries: %ui", bp->tries);
 
         return bp->get_rr_peer(pc, &bp->rrp);
     }
@@ -166,7 +167,8 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
             peer = &bp->rrp.peers->peer[p];
 
             ngx_log_debug4(NGX_LOG_DEBUG_TCP, pc->log, 0,
-                           "get busyness peer, check_index: %ui, %ui, %04XA, num: %d",
+                           "get busyness peer, check_index: %ui, %ui, "
+                           "%04XA, num: %d",
                            peer->check_index, p, m, bp->rrp.peers->number);
 
             /* ngx_lock_mutex(bp->rrp.peers->mutex); */
@@ -191,7 +193,8 @@ ngx_tcp_upstream_get_busyness_peer(ngx_peer_connection_t *pc, void *data)
         }
 
         ngx_log_debug2(NGX_LOG_DEBUG_TCP, pc->log, 0,
-                "get busyness peer, bp->tries: %ui, p: %ui", bp->tries, p);
+                       "get busyness peer, bp->tries: %ui, p: %ui",
+                       bp->tries, p);
 
         if (++bp->tries >= 20) {
             return bp->get_rr_peer(pc, &bp->rrp);

@@ -245,11 +245,11 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
 
 #if defined(nginx_version) && nginx_version >= 1000006
     ngx_conf_merge_str_value(conf->ecdh_curve, prev->ecdh_curve, 
-                         NGX_DEFAULT_ECDH_CURVE); 
+                             NGX_DEFAULT_ECDH_CURVE); 
 
 #endif
     ngx_conf_merge_str_value(conf->client_certificate, prev->client_certificate,
-                         "");
+                             "");
     ngx_conf_merge_str_value(conf->crl, prev->crl, "");
 
     ngx_conf_merge_str_value(conf->ciphers, prev->ciphers, NGX_DEFAULT_CIPHERS);

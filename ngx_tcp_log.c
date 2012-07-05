@@ -68,7 +68,7 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
             if (len > (size_t) (file->last - file->pos)) {
 
                 ngx_tcp_log_write(s, &log[l], file->buffer,
-                                   file->pos - file->buffer);
+                                  file->pos - file->buffer);
 
                 file->pos = file->buffer;
             }
@@ -115,7 +115,8 @@ ngx_tcp_time(u_char *buf, time_t t)
 }
 
 
-static u_char *ngx_tcp_log_fill(ngx_tcp_session_t *s, u_char *buf) 
+static u_char *
+ngx_tcp_log_fill(ngx_tcp_session_t *s, u_char *buf) 
 {
     u_char              *last;
     ngx_str_t           *name;
