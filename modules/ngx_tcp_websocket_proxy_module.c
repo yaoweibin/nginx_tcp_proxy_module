@@ -1050,9 +1050,9 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
 
     if (c == wctx->upstream->connection) {
         if (ev->write) {
-            ngx_add_timer(c->read, wcf->upstream.read_timeout);
-        } else {
             ngx_add_timer(c->write, wcf->upstream.send_timeout);
+        } else {
+            ngx_add_timer(c->read, wcf->upstream.read_timeout);
         }
     }
 

@@ -509,9 +509,9 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
 
     if (c == pctx->upstream->connection) {
         if (ev->write) {
-            ngx_add_timer(c->read, pcf->upstream.read_timeout);
-        } else {
             ngx_add_timer(c->write, pcf->upstream.send_timeout);
+        } else {
+            ngx_add_timer(c->read, pcf->upstream.read_timeout);
         }
     }
 
