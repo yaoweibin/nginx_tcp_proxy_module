@@ -387,11 +387,8 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     if (rc == NGX_AGAIN) {
         ngx_add_timer(c->write, u->conf->connect_timeout);
         return;
-    }
-    else {
-        ngx_add_timer(c->read, u->conf->read_timeout);
-        ngx_add_timer(c->write, u->conf->send_timeout);
 
+    } else {
         c->write->handler(c->write);
     }
 }

@@ -814,6 +814,10 @@ ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s,
         return;
     }
 
+    if (c->write->timer_set) {
+        ngx_del_timer(c->write);
+    }
+
     s->connection->read->handler = ngx_tcp_websocket_proxy_handler;
     s->connection->write->handler = ngx_tcp_websocket_proxy_handler;
 
@@ -821,18 +825,8 @@ ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s,
     c->write->handler = ngx_tcp_websocket_proxy_handler;
 
     ngx_add_timer(c->read, wcf->upstream.read_timeout);
-    ngx_add_timer(c->write, wcf->upstream.send_timeout);
 
-#if (NGX_TCP_SSL)
-
-    if (s->connection->ssl) {
-        ngx_tcp_websocket_proxy_handler(s->connection->read); 
-        return;
-    }
-
-#endif
-
-    if (ngx_handle_read_event(s->connection->read, 0) != NGX_OK) {
+    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
         return;
     }
@@ -1022,38 +1016,14 @@ ngx_tcp_websocket_proxy_handler(ngx_event_t *ev)
         return;
     }
 
-    if (ngx_handle_write_event(dst->write, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    if (ngx_handle_read_event(dst->read, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    if (ngx_handle_write_event(src->write, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    if (ngx_handle_read_event(src->read, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
     wcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_websocket_module);
 
     if (c == s->connection) {
         ngx_add_timer(c->read, cscf->timeout);
-    }
 
-    if (c == wctx->upstream->connection) {
-        if (ev->write) {
-            ngx_add_timer(c->write, wcf->upstream.send_timeout);
-        } else {
-            ngx_add_timer(c->read, wcf->upstream.read_timeout);
-        }
+    } else if (c == wctx->upstream->connection) {
+        ngx_add_timer(c->read, wcf->upstream.read_timeout);
+
     }
 
     return;

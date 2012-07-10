@@ -119,13 +119,10 @@ ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
 {
     ngx_connection_t         *c;
     ngx_tcp_proxy_conf_t     *pcf;
-    ngx_tcp_core_srv_conf_t  *cscf;
 
     c = s->connection;
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, c->log, 0, "tcp proxy init session");
-
-    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
@@ -139,8 +136,6 @@ ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
 
     c->write->handler = ngx_tcp_proxy_dummy_write_handler;
     c->read->handler = ngx_tcp_proxy_dummy_read_handler;
-
-    ngx_add_timer(c->read, cscf->timeout);
 
     ngx_tcp_proxy_init_upstream(c, s);
 
@@ -239,6 +234,9 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     ngx_connection_t         *c;
     ngx_tcp_proxy_ctx_t      *pctx;
     ngx_tcp_proxy_conf_t     *pcf;
+    ngx_tcp_core_srv_conf_t  *cscf;
+
+    cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
     c = s->connection;
     c->log->action = "ngx_tcp_upstream_init_proxy_handler";
@@ -268,31 +266,31 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
         return;
     }
 
+    if (c->write->timer_set) {
+        ngx_del_timer(c->write);
+    }
+
     s->connection->read->handler = ngx_tcp_proxy_handler;
     s->connection->write->handler = ngx_tcp_proxy_handler;
 
     c->read->handler = ngx_tcp_proxy_handler;
     c->write->handler = ngx_tcp_proxy_handler;
 
-    ngx_add_timer(c->read, pcf->upstream.read_timeout);
-    ngx_add_timer(c->write, pcf->upstream.send_timeout);
+    ngx_add_timer(c->read, cscf->timeout);
 
     if (ngx_handle_read_event(s->connection->read, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
         return;
     }
 
-#if (NGX_TCP_SSL)
+    ngx_add_timer(c->read, pcf->upstream.read_timeout);
 
-    /* 
-     * The ssl connection with client may not trigger the read event again,
-     * So I trigger it in this function.
-     * */
-    if (s->connection->ssl) {
-        ngx_tcp_proxy_handler(s->connection->read); 
+    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
     }
 
-#endif
+    ngx_tcp_proxy_handler(s->connection->read); 
 
     return;
 }
@@ -481,38 +479,14 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
         return;
     }
 
-    if (ngx_handle_write_event(dst->write, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    if (ngx_handle_read_event(dst->read, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    if (ngx_handle_write_event(src->write, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    if (ngx_handle_read_event(src->read, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
     pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
     if (c == s->connection) {
         ngx_add_timer(c->read, cscf->timeout);
-    }
 
-    if (c == pctx->upstream->connection) {
-        if (ev->write) {
-            ngx_add_timer(c->write, pcf->upstream.send_timeout);
-        } else {
-            ngx_add_timer(c->read, pcf->upstream.read_timeout);
-        }
+    } else if (c == pctx->upstream->connection) {
+        ngx_add_timer(c->read, pcf->upstream.read_timeout);
+
     }
 
     return;
