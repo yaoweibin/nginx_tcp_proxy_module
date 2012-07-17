@@ -25,8 +25,6 @@ static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c,
 static void ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, 
     ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
-static void ngx_tcp_proxy_dummy_write_handler(ngx_event_t *ev);
 static void ngx_tcp_proxy_handler(ngx_event_t *ev);
 static void *ngx_tcp_proxy_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent,
@@ -134,48 +132,9 @@ ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
 
     s->out.len = 0;
 
-    c->write->handler = ngx_tcp_proxy_dummy_write_handler;
-    c->read->handler = ngx_tcp_proxy_dummy_read_handler;
-
     ngx_tcp_proxy_init_upstream(c, s);
 
     return;
-}
-
-
-static void
-ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) 
-{
-    ngx_connection_t    *c;
-    ngx_tcp_session_t   *s;
-
-    c = wev->data;
-    s = c->data;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
-                   "tcp proxy dummy write handler: %d", c->fd);
-
-    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-    }
-}
-
-
-static void
-ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) 
-{
-    ngx_connection_t    *c;
-    ngx_tcp_session_t   *s;
-
-    c = rev->data;
-    s = c->data;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
-                   "tcp proxy dummy read handler: %d", c->fd);
-
-    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-    }
 }
 
 
@@ -261,7 +220,7 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
         return;
     }
 
-    if (ngx_tcp_upstream_check_broken_connection(s) != NGX_OK){
+    if (ngx_tcp_upstream_test_connect(c) != NGX_OK){
         ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);
         return;
     }

@@ -56,7 +56,6 @@ static void ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s,
 static char *ngx_tcp_websocket_pass(ngx_conf_t *cf, ngx_command_t *cmd, 
     void *conf);
 static void ngx_tcp_websocket_dummy_read_handler(ngx_event_t *ev);
-static void ngx_tcp_websocket_dummy_write_handler(ngx_event_t *ev);
 static void ngx_tcp_websocket_init_protocol(ngx_event_t *ev);
 static void websocket_http_request_parser_init(http_request_parser *hp, 
     void *data); 
@@ -189,7 +188,6 @@ ngx_tcp_websocket_init_session(ngx_tcp_session_t *s)
         return;
     }
 
-    c->write->handler = ngx_tcp_websocket_dummy_write_handler;
     c->read->handler = ngx_tcp_websocket_init_protocol;
 
     ngx_add_timer(c->read, cscf->timeout);
@@ -216,24 +214,6 @@ ngx_tcp_websocket_init_session(ngx_tcp_session_t *s)
     }
 
     return;
-}
-
-
-static void
-ngx_tcp_websocket_dummy_write_handler(ngx_event_t *wev) 
-{
-    ngx_connection_t    *c;
-    ngx_tcp_session_t   *s;
-
-    c = wev->data;
-    s = c->data;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0, 
-                   "tcp websocket dummy write handler: %d", c->fd);
-
-    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-    }
 }
 
 
@@ -666,7 +646,6 @@ ngx_tcp_websocket_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
                    "path: \"%V\", host: \"%V\"",
                    &wcf->scheme, &wctx->path, &wctx->host);
 
-    c->write->handler = ngx_tcp_websocket_dummy_write_handler;
     c->read->handler = ngx_tcp_websocket_dummy_read_handler;
 
     if (ngx_tcp_upstream_create(s) != NGX_OK) {
@@ -809,7 +788,7 @@ ngx_tcp_upstream_websocket_proxy_init_handler(ngx_tcp_session_t *s,
         return;
     }
 
-    if (ngx_tcp_upstream_check_broken_connection(s) != NGX_OK){
+    if (ngx_tcp_upstream_test_connect(c) != NGX_OK){
         ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);
         return;
     }

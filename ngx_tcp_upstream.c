@@ -421,39 +421,47 @@ ngx_tcp_upstream_handler(ngx_event_t *ev)
 }
 
 
-ngx_int_t 
-ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s) 
+ngx_int_t
+ngx_tcp_upstream_test_connect(ngx_connection_t *c)
 {
-    int                  n;
-    char                 buf[1];
-    ngx_err_t            err;
-    ngx_connection_t    *c;
-    ngx_tcp_upstream_t  *u;
+    int        err;
+    socklen_t  len;
 
-    u = s->upstream;
-    c = u->peer.connection;
+#if (NGX_HAVE_KQUEUE)
 
-    if (u->peer.connection == NULL) {
-        return NGX_ERROR;
+    if (ngx_event_flags & NGX_USE_KQUEUE_EVENT)  {
+        if (c->write->pending_eof) {
+            c->log->action = "connecting to upstream";
+            (void) ngx_connection_error(c, c->write->kq_errno,
+                                    "kevent() reported that connect() failed");
+            return NGX_ERROR;
+        }
+
+    } else
+#endif
+    {
+        err = 0;
+        len = sizeof(int);
+
+        /*
+         * BSDs and Linux return 0 and set a pending error in err
+         * Solaris returns -1 and sets errno
+         */
+
+        if (getsockopt(c->fd, SOL_SOCKET, SO_ERROR, (void *) &err, &len)
+            == -1)
+        {
+            err = ngx_errno;
+        }
+
+        if (err) {
+            c->log->action = "connecting to upstream";
+            (void) ngx_connection_error(c, err, "connect() failed");
+            return NGX_ERROR;
+        }
     }
 
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, c->log, 0,
-                   "tcp upstream check upstream, fd: %d", c->fd);
-
-    n = recv(c->fd, buf, 1, MSG_PEEK);
-
-    err = ngx_socket_errno;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, c->log, err,
-                   "tcp check upstream recv(): %d", n);
-
-    if (n >= 0 || err == NGX_EAGAIN) {
-        return NGX_OK;
-    }
-
-    c->error = 1;
-
-    return NGX_ERROR;
+    return NGX_OK;
 }
 
 

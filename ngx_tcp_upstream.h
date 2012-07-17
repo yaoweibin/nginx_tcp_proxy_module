@@ -172,7 +172,7 @@ void ngx_tcp_upstream_init(ngx_tcp_session_t *s);
 ngx_tcp_upstream_srv_conf_t *ngx_tcp_upstream_add(ngx_conf_t *cf,
     ngx_url_t *u, ngx_uint_t flags);
 
-ngx_int_t ngx_tcp_upstream_check_broken_connection(ngx_tcp_session_t *s);
+ngx_int_t ngx_tcp_upstream_test_connect(ngx_connection_t *s);
 void ngx_tcp_upstream_next(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u,
      ngx_uint_t ft_type);
 
