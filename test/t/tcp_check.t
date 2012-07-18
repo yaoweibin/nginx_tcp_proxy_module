@@ -78,3 +78,21 @@ GET /
 --- request
 GET /
 --- response_body_like: ^<(.*)>$
+
+
+=== TEST 4: the ip_hash test without check
+--- config
+    upstream test{
+        server 127.0.0.1:10000;
+        ip_hash;
+    }
+
+    server {
+        listen 1984;
+
+        proxy_pass test;
+    }
+--- request
+GET /
+--- error_code: 500
+--- response_body_like: ^.*$
