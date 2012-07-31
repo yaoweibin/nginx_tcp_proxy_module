@@ -508,6 +508,11 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ls->ctx = cf->ctx;
     ls->conf = conf;
 
+#if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
+    ls->ipv6only = 1;
+#endif
+
+
     for (i = 2; i < cf->args->nelts; i++) {
 
         if (ngx_strcmp(value[i].data, "bind") == 0) {
@@ -533,7 +538,11 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                     ls->ipv6only = 1;
 
                 } else if (ngx_strcmp(&value[i].data[10], "ff") == 0) {
+#if defined(nginx_version) && nginx_version > 1003003
+                    ls->ipv6only = 0;
+#else
                     ls->ipv6only = 2;
+#endif
 
                 } else {
                     ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,

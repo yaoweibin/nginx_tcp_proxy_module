@@ -58,7 +58,11 @@ typedef struct {
     unsigned                ssl:1;
 #endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
+#if defined(nginx_version) && nginx_version > 1003003
+    unsigned                ipv6only:1;
+#else
     unsigned                ipv6only:2;
+#endif
 #endif
     ngx_tcp_core_srv_conf_t *conf;
 } ngx_tcp_listen_t;
@@ -134,7 +138,11 @@ typedef struct {
     unsigned                 ssl:1;
 #endif
 #if (NGX_HAVE_INET6 && defined IPV6_V6ONLY)
+#if defined(nginx_version) && nginx_version > 1003003
+    unsigned                 ipv6only:1;
+#else
     unsigned                 ipv6only:2;
+#endif
 #endif
 } ngx_tcp_conf_addr_t;
 
