@@ -57,7 +57,7 @@ static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf,
  *
  * Some codes copy from HAProxy 1.4.1
  */
-const char sslv3_client_hello_pkt[] = {
+static const char sslv3_client_hello_pkt[] = {
 	"\x16"                /* ContentType         : 0x16 = Hanshake           */
 	"\x03\x00"            /* ProtocolVersion     : 0x0300 = SSLv3            */
 	"\x00\x79"            /* ContentLength       : 0x79 bytes after this one */
@@ -105,8 +105,10 @@ static check_conf_t  ngx_check_types[] = {
       NGX_CONF_BITMASK_SET | NGX_CHECK_HTTP_2XX | NGX_CHECK_HTTP_3XX,
       ngx_tcp_check_send_handler,
       ngx_tcp_check_recv_handler,
+      /* TODO: unite all the init function */
       ngx_tcp_check_http_init,
       ngx_tcp_check_http_parse,
+      /* TODO: remove all the reinit */
       ngx_tcp_check_http_reinit,
       1 },
 
@@ -465,6 +467,7 @@ ngx_tcp_check_clean_event(ngx_tcp_check_peer_conf_t *peer_conf)
                    "tcp check clean event: index:%d, fd: %d", 
                    peer_conf->index, c->fd);
 
+    /*TODO: connection keepalive*/
     ngx_close_connection(c);
 
     if (peer_conf->check_timeout_ev.timer_set) {
@@ -1538,6 +1541,7 @@ ngx_tcp_check_connect_handler(ngx_event_t *event)
 
     ngx_memzero(&peer_conf->pc, sizeof(ngx_peer_connection_t));
 
+    /*TODO: process keepalive connection*/
     peer_conf->pc.sockaddr = peer_conf->peer->sockaddr;
     peer_conf->pc.socklen = peer_conf->peer->socklen;
     peer_conf->pc.name = &peer_conf->peer->name;

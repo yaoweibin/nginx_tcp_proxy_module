@@ -559,6 +559,7 @@ ngx_tcp_websocket_parse_protocol(ngx_event_t *ev)
         goto websocket_recv_fail;
 
     case NGX_OK:
+        /* TODO: Add the real ip header */
         /* pass through */
 
     default:
