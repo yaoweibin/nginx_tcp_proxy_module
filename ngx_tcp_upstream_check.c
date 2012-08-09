@@ -57,7 +57,7 @@ static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf,
  *
  * Some codes copy from HAProxy 1.4.1
  */
-const char sslv3_client_hello_pkt[] = {
+static const char sslv3_client_hello_pkt[] = {
 	"\x16"                /* ContentType         : 0x16 = Hanshake           */
 	"\x03\x00"            /* ProtocolVersion     : 0x0300 = SSLv3            */
 	"\x00\x79"            /* ContentLength       : 0x79 bytes after this one */
