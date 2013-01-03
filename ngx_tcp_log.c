@@ -20,7 +20,10 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
     ngx_connection_t         *c;
     ngx_tcp_log_t            *log;
     ngx_open_file_t          *file;
-    ngx_tcp_log_srv_conf_t   *lscf;
+ #if (nginx_version) >= 1003010
+    ngx_tcp_log_buf_t        *buffer;
+#endif
+   ngx_tcp_log_srv_conf_t    *lscf;
     ngx_tcp_core_srv_conf_t  *cscf;
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
@@ -63,6 +66,31 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
 
         file = log[l].file;
 
+#if (nginx_version) >= 1003010
+        if (file && file->data) {
+
+            buffer = file->data;
+
+            if (len > (size_t) (buffer->last - buffer->pos)) {
+
+                ngx_tcp_log_write(s, &log[l], buffer->start,
+                                  buffer->pos - buffer->start);
+
+                buffer->pos = buffer->start;
+            }
+
+            if (len <= (size_t) (buffer->last - buffer->pos)) {
+
+                p = buffer->pos;
+
+                p = ngx_tcp_log_fill(s, p);
+
+                buffer->pos = p;
+
+                continue;
+            }
+        }
+#else
         if (file && file->buffer) {
 
             if (len > (size_t) (file->last - file->pos)) {
@@ -84,6 +112,7 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
                 continue;
             }
         }
+#endif
 
         line = ngx_pnalloc(s->pool, len);
         if (line == NULL) {
