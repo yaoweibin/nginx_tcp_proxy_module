@@ -31,6 +31,10 @@ Synopsis
         }
     }
 
+    #You can also include tcp_proxy.conf file individually
+
+    #include /path/to/tcp_proxy.conf;
+
     tcp {
 
         upstream cluster {
