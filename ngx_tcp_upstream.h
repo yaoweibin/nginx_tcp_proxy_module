@@ -104,7 +104,9 @@ struct ngx_tcp_upstream_srv_conf_s {
     ngx_uint_t                       line;
     in_port_t                        port;
     in_port_t                        default_port;
-
+#if (nginx_version) >= 1003011
+    ngx_uint_t                       no_port;  /* unsigned no_port:1 */
+#endif
 
     ngx_uint_t                       fall_count;
     ngx_uint_t                       rise_count;
