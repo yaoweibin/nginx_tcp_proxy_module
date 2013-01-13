@@ -138,8 +138,6 @@ ngx_tcp_upstream_create(ngx_tcp_session_t *s)
 
     if (u && u->cleanup) {
         ngx_tcp_upstream_cleanup(s);
-        *u->cleanup = NULL;
-        u->cleanup = NULL;
     }
 
     u = ngx_pcalloc(s->pool, sizeof(ngx_tcp_upstream_t));
