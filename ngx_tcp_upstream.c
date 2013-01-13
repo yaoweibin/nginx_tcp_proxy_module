@@ -621,14 +621,22 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
             return NULL;
         }
 
+#if (nginx_version) >= 1003011
+        if ((uscfp[i]->flags & NGX_TCP_UPSTREAM_CREATE) && !u->no_port) {
+#else
         if ((uscfp[i]->flags & NGX_TCP_UPSTREAM_CREATE) && u->port) {
+#endif
             ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
                                "upstream \"%V\" may not have port %d",
                                &u->host, u->port);
             return NULL;
         }
 
+#if (nginx_version) >= 1003011
+        if ((flags & NGX_TCP_UPSTREAM_CREATE) && !uscfp[i]->no_port) {
+#else
         if ((flags & NGX_TCP_UPSTREAM_CREATE) && uscfp[i]->port) {
+#endif
             ngx_log_error(NGX_LOG_WARN, cf->log, 0,
                           "upstream \"%V\" may not have port %d in %s:%ui",
                           &u->host, uscfp[i]->port,
@@ -636,7 +644,11 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
             return NULL;
         }
 
+#if (nginx_version) >= 1003011
+        if (uscfp[i]->port && u->port && uscfp[i]->port != u->port) {
+#else
         if (uscfp[i]->port != u->port) {
+#endif
             continue;
         }
 
@@ -660,6 +672,9 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
     uscf->line = cf->conf_file->line;
     uscf->port = u->port;
     uscf->default_port = u->default_port;
+#if (nginx_version) >= 1003011
+    uscf->no_port = u->no_port;
+#endif
     uscf->code.status_alive = 0;
 
     if (u->naddrs == 1) {
@@ -709,6 +724,7 @@ ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
     value = cf->args->elts;
     u.host = value[1];
     u.no_resolve = 1;
+    u.no_port = 1;
 
     uscf = ngx_tcp_upstream_add(cf, &u, 
                                 NGX_TCP_UPSTREAM_CREATE
