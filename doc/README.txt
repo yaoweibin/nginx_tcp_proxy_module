@@ -415,6 +415,16 @@ Directives
 
     description: set the size of proxy buffer.
 
+   proxy_bind
+    syntax: *proxy_bind address*
+
+    default: *none*
+
+    context: *tcp, server*
+
+    description: Force outgoing connections to a proxied server to originate
+    from the specified local IP address.
+
    proxy_connect_timeout
     syntax: *proxy_connect_timeout miliseconds*
 

@@ -59,6 +59,7 @@
 
 			<li><a href="#proxy_pass">proxy_pass</a></li>
 			<li><a href="#proxy_buffer">proxy_buffer</a></li>
+			<li><a href="#proxy_bind">proxy_bind</a></li>
 			<li><a href="#proxy_connect_timeout">proxy_connect_timeout</a></li>
 			<li><a href="#proxy_read_timeout">proxy_read_timeout</a></li>
 			<li><a href="#proxy_send_timeout">proxy_send_timeout</a></li>
@@ -463,6 +464,13 @@
 <p><strong>default:</strong> <em>4k</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
 <p><strong>description:</strong> set the size of proxy buffer.</p>
+<p>
+</p>
+<h3><a name="proxy_bind">proxy_bind</a></h3>
+<p><strong>syntax:</strong> <em>proxy_bind address</em></p>
+<p><strong>default:</strong> <em>none</em></p>
+<p><strong>context:</strong> <em>tcp, server</em></p>
+<p><strong>description:</strong> Force outgoing connections to a proxied server to originate from the specified local IP address.</p>
 <p>
 </p>
 <h3><a name="proxy_connect_timeout">proxy_connect_timeout</a></h3>
