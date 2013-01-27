@@ -60,6 +60,13 @@ static ngx_command_t  ngx_tcp_proxy_commands[] = {
       offsetof(ngx_tcp_proxy_conf_t, buffer_size),
       NULL },
 
+    { ngx_string("proxy_bind"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_tcp_upstream_bind_set_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_proxy_conf_t, upstream.local),
+      NULL },
+
     { ngx_string("proxy_connect_timeout"),
       NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
