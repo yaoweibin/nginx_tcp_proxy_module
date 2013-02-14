@@ -20,7 +20,7 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
     ngx_connection_t         *c;
     ngx_tcp_log_t            *log;
     ngx_open_file_t          *file;
- #if (nginx_version) >= 1003010
+#if (nginx_version) >= 1003010 || (nginx_version) >= 1002007 && (nginx_version) < 1003000
     ngx_tcp_log_buf_t        *buffer;
 #endif
    ngx_tcp_log_srv_conf_t    *lscf;
@@ -66,7 +66,7 @@ ngx_tcp_log_handler(ngx_tcp_session_t *s)
 
         file = log[l].file;
 
-#if (nginx_version) >= 1003010
+#if (nginx_version) >= 1003010 || (nginx_version) >= 1002007 && (nginx_version) < 1003000
         if (file && file->data) {
 
             buffer = file->data;
