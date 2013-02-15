@@ -681,6 +681,20 @@ Notes
         $ ragel -G2 http_response_parse.rl
         $ ragel -G2 smtp_response_parse.rl
 
+TODO
+    *   refact this module, make it more extendable for adding third-party
+        modules
+
+    *   manipulate header like http module's proxy_set_header
+
+    *   built-in variable support
+
+    *   custom log format
+
+    *   syslog support
+
+    *   FTP/IRC proxying
+
 Known Issues
     *   This module can't use the same listening port with the HTTP module.
 
@@ -714,7 +728,7 @@ Copyright & License
 
     This module is licensed under the BSD license.
 
-    Copyright (C) 2012 by Weibin Yao <yaoweibin@gmail.com>.
+    Copyright (C) 2013 by Weibin Yao <yaoweibin@gmail.com>.
 
     All rights reserved.
 

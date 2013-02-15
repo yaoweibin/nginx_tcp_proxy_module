@@ -640,6 +640,15 @@ The http_response_parse.rl and smtp_response_parse.rl are [http://www.complang.o
     $ ragel -G2 smtp_response_parse.rl
 </geshi>
 
+= TODO =
+
+* refact this module, make it more extendable for adding third-party modules
+* manipulate header like http module's proxy_set_header
+* built-in variable support
+* custom log format
+* syslog support
+* FTP/IRC proxying
+
 = Known Issues =
 
 * This module can't use the same listening port with the HTTP module.
@@ -673,7 +682,7 @@ I borrowed a lot of code from upstream and mail module from the nginx 0.7.* core
 
 This module is licensed under the BSD license.
 
-Copyright (C) 2012 by Weibin Yao <yaoweibin@gmail.com>.
+Copyright (C) 2013 by Weibin Yao <yaoweibin@gmail.com>.
 
 All rights reserved.
 
