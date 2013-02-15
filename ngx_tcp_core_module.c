@@ -793,7 +793,7 @@ ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ssize_t                     size;
     ngx_str_t                  *value, name;
     ngx_tcp_log_t              *log;
-#if (nginx_version) >= 1003010
+#if (nginx_version) >= 1003010 || (nginx_version) >= 1002007 && (nginx_version) < 1003000
     ngx_tcp_log_buf_t         *buffer;
 #endif
 
@@ -847,7 +847,7 @@ ngx_tcp_log_set_access_log(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             return NGX_CONF_ERROR;
         }
 
-#if (nginx_version) >= 1003010
+#if (nginx_version) >= 1003010 || (nginx_version) >= 1002007 && (nginx_version) < 1003000
         if (log->file->data) {
 
             buffer = log->file->data;
