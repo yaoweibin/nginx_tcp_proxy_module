@@ -46,6 +46,8 @@ static void ngx_tcp_check_imap_reinit(ngx_tcp_check_peer_conf_t *peer_conf);
 
 static char * ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
         ngx_command_t *cmd, void *conf);
+static char * ngx_tcp_upstream_check_status(ngx_conf_t *cf, 
+        ngx_command_t *cmd, void *conf);
 
 
 #define RANDOM "NGX_TCP_CHECK_SSL_HELLO\n\n\n\n\n"
@@ -168,11 +170,23 @@ static check_conf_t  ngx_check_types[] = {
     {0, "", ngx_null_string, 0, NULL, NULL, NULL, NULL, NULL, 0}
 };
 
+
+static ngx_conf_deprecated_t  ngx_conf_deprecated_check_status = {
+    ngx_conf_deprecated, "check_status", "tcp_check_status"
+};
+
 static ngx_command_t  ngx_tcp_upstream_check_status_commands[] = {
 
     { ngx_string("check_status"),
       NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_NOARGS,
       ngx_tcp_upstream_check_status_set_status,
+      0,
+      0,
+      NULL },
+
+    { ngx_string("tcp_check_status"),
+      NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_NOARGS,
+      ngx_tcp_upstream_check_status,
       0,
       0,
       NULL },
@@ -1912,6 +1926,22 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r)
 
 static char *
 ngx_tcp_upstream_check_status_set_status(ngx_conf_t *cf, 
+    ngx_command_t *cmd, void *conf) 
+{
+    ngx_http_core_loc_conf_t                *clcf;
+
+    clcf = ngx_http_conf_get_module_loc_conf(cf, ngx_http_core_module);
+
+    ngx_conf_deprecated(cf, &ngx_conf_deprecated_check_status, NULL);
+
+    clcf->handler = ngx_tcp_upstream_check_status_handler;
+
+    return NGX_CONF_OK;
+}
+
+
+static char *
+ngx_tcp_upstream_check_status(ngx_conf_t *cf, 
     ngx_command_t *cmd, void *conf) 
 {
     ngx_http_core_loc_conf_t                *clcf;

@@ -26,7 +26,7 @@ Synopsis
             listen 80;
 
             location /status {
-                check_status;
+                tcp_check_status;
             }
         }
     }
@@ -343,8 +343,8 @@ Directives
     shared memory for health check may be not enough, you can enlarged it by
     this directive.
 
-   check_status
-    syntax: *check_status*
+   tcp_check_status
+    syntax: *tcp_check_status*
 
     default: *none*
 

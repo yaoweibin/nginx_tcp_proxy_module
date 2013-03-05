@@ -1,4 +1,4 @@
-﻿= Name =
+﻿﻿= Name =
 
 '''nginx_tcp_proxy_module''' - support TCP proxy with Nginx
 
@@ -30,7 +30,7 @@ http {
         listen 80;
 
         location /status {
-            check_status;
+            tcp_check_status;
         }
     }
 }
@@ -316,9 +316,9 @@ The parameters' meanings are:
 
 '''description:''' If you store hundreds of servers in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.
 
-=== check_status ===
+=== tcp_check_status ===
 
-'''syntax:''' ''check_status''
+'''syntax:''' ''tcp_check_status''
 
 '''default:''' ''none''
 

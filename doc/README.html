@@ -49,7 +49,7 @@
 			<li><a href="#check_smtp_send">check_smtp_send</a></li>
 			<li><a href="#check_smtp_expect_alive">check_smtp_expect_alive</a></li>
 			<li><a href="#check_shm_size">check_shm_size</a></li>
-			<li><a href="#check_status">check_status</a></li>
+			<li><a href="#tcp_check_status">tcp_check_status</a></li>
 			<li><a href="#busyness">busyness</a></li>
 			<li><a href="#ip_hash">ip_hash</a></li>
 		</ul>
@@ -143,7 +143,7 @@
         listen 80;</pre>
 <pre>
         location /status {
-            check_status;
+            tcp_check_status;
         }
     }
 }</pre>
@@ -399,8 +399,8 @@
 <p><strong>description:</strong> If you store hundreds of servers in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.</p>
 <p>
 </p>
-<h3><a name="check_status">check_status</a></h3>
-<p><strong>syntax:</strong> <em>check_status</em></p>
+<h3><a name="tcp_check_status">tcp_check_status</a></h3>
+<p><strong>syntax:</strong> <em>tcp_check_status</em></p>
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>location</em></p>
 <p><strong>description:</strong> Display the health checking servers' status by HTTP. This directive is set in the http block.</p>
