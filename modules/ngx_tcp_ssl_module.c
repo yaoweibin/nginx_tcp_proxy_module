@@ -301,12 +301,36 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     cln->handler = ngx_ssl_cleanup_ctx;
     cln->data = &conf->ssl;
 
+#if defined(tengine_version)
+    ngx_str_t pass_phrase_dialog              = ngx_string("builtin");
+    ngx_str_t ngx_tcp_ssl_unknown_server_name = ngx_string("unknown");
+
+    ngx_tcp_core_srv_conf_t            *cscf;
+    ngx_http_ssl_pphrase_dialog_conf_t  dialog;
+
+    cscf = ngx_tcp_conf_get_module_srv_conf(cf, ngx_tcp_core_module);
+    dialog.ssl = &conf->ssl;
+    dialog.type = &pass_phrase_dialog;
+    if (cscf->server_name.len != 0) {
+        dialog.server_name = &cscf->server_name;
+    } else {
+        dialog.server_name = &ngx_tcp_ssl_unknown_server_name;
+    }
+
+    if (ngx_ssl_certificate(cf, &conf->ssl, &conf->certificate,
+                            &conf->certificate_key, &dialog)
+        != NGX_OK)
+    {
+        return NGX_CONF_ERROR;
+    }
+#else
     if (ngx_ssl_certificate(cf, &conf->ssl, &conf->certificate,
                             &conf->certificate_key)
         != NGX_OK)
     {
         return NGX_CONF_ERROR;
     }
+#endif
 
     if (SSL_CTX_set_cipher_list(conf->ssl.ctx,
                                 (const char *) conf->ciphers.data)
