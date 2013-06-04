@@ -41,7 +41,7 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 2: test the server_name
 --- config
@@ -75,7 +75,7 @@ Host: foo.barzzzz.com
 --- request
 GET /
 --- error_code: 500
---- response_body_like: ^.*$
+--- response_body_like: ^.*
 
 === TEST 3: test the default server_name
 --- config
@@ -108,7 +108,7 @@ GET /
 Host: foo.barzzzzoo.com
 --- request
 GET /
---- response_body_like: ^.*$
+--- response_body_like: ^.*
 
 === TEST 4: test the default path
 --- config
@@ -142,7 +142,7 @@ GET /
 --- request
 GET /404
 --- error_code: 404
---- response_body_like: ^.*$
+--- response_body_like: ^.*
 
 === TEST 5: test the bad path
 --- config
@@ -176,7 +176,7 @@ GET /404
 --- request
 GET /bad
 --- error_code: 500
---- response_body_like: ^.*$
+--- response_body_like: ^.*
 
 === TEST 6: test the good path
 --- config
@@ -212,7 +212,7 @@ Host: blog.163.com
 --- request
 GET /public/theme
 --- error_code: 200
---- response_body_like: ^.*$
+--- response_body_like: ^.*
 
 === TEST 7: test the unknow path
 --- config
@@ -248,4 +248,4 @@ Host: blog.163.com
 --- request
 GET /hoho
 --- error_code: 500
---- response_body_like: ^.*$
+--- response_body_like: ^.*

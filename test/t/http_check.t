@@ -46,7 +46,7 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 2: the http_check test without check
 --- config
@@ -61,7 +61,7 @@ GET /
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 3: the http_check which use the raw name 
 --- config
@@ -80,4 +80,4 @@ GET /
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>

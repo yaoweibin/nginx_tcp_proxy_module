@@ -45,7 +45,7 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 2: the round robin test without check
 --- config
@@ -61,7 +61,7 @@ GET /
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 3: the ip_hash test without check
 --- config
@@ -77,4 +77,4 @@ GET /
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>

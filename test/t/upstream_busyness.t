@@ -43,7 +43,7 @@ __DATA__
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 2: the upstream_busyness command with check
 --- config
@@ -61,4 +61,4 @@ GET /
     }
 --- request
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>

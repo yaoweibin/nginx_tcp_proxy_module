@@ -43,7 +43,7 @@ __DATA__
     }
 --- request_https
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 2: the ssl command with websocket
 --- config
@@ -58,7 +58,7 @@ GET /
     }
 --- request_https
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 3: the ssl command with websocket
 
@@ -76,7 +76,7 @@ GET /
     }
 --- request_https
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 4: the ssl command with ssl on
 
@@ -95,7 +95,7 @@ GET /
     }
 --- request_https
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
 
 === TEST 5: the ssl command with ssl on and listen ssl
 
@@ -114,4 +114,4 @@ GET /
     }
 --- request_https
 GET /
---- response_body_like: ^<(.*)>$
+--- response_body_like: ^<(.*)>
