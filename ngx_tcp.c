@@ -473,7 +473,7 @@ ngx_tcp_add_addrs(ngx_conf_t *cf, ngx_tcp_port_t *mport,
         addrs[i].conf.ssl = addr[i].ssl;
 #endif
 
-        len = ngx_sock_ntop(addr[i].sockaddr, buf, NGX_SOCKADDR_STRLEN, 1);
+        len = ngx_sock_ntop(addr[i].sockaddr, addr[i].socklen, buf, NGX_SOCKADDR_STRLEN, 1);
 
         p = ngx_pnalloc(cf->pool, len);
         if (p == NULL) {
