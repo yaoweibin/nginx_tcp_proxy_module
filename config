@@ -17,7 +17,7 @@ if [ $ngx_found = yes ]; then
     ngx_addon_name=ngx_tcp_module
 
     TCP_CORE_MODULES="ngx_tcp_module ngx_tcp_core_module ngx_tcp_upstream_module"
-    TCP_MODULES="ngx_tcp_proxy_module ngx_tcp_websocket_module ngx_tcp_upstream_ip_hash_module ngx_tcp_upstream_busyness_module"
+    TCP_MODULES="ngx_tcp_proxy_module ngx_tcp_websocket_module ngx_tcp_upstream_ip_hash_module ngx_tcp_upstream_busyness_module ngx_tcp_upstream_keepalive_module"
 
     NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_feature_deps $ngx_tcp_parser_deps"
     NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_tcp_src $ngx_tcp_parser_src"
