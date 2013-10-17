@@ -70,7 +70,7 @@ static ngx_int_t
 ngx_tcp_upstream_init_keepalive(ngx_conf_t *cf,
     ngx_tcp_upstream_srv_conf_t *us)
 {
-    ngx_uint_t                               i;
+    ngx_uint_t                              i;
     ngx_tcp_upstream_keepalive_srv_conf_t  *kcf;
     ngx_tcp_upstream_keepalive_cache_t     *cached;
 
@@ -139,6 +139,8 @@ ngx_tcp_upstream_init_keepalive_peer(ngx_tcp_session_t *r,
     r->upstream->peer.data = kp;
     r->upstream->peer.get  = ngx_tcp_upstream_get_keepalive_peer;
     r->upstream->peer.free = ngx_tcp_upstream_free_keepalive_peer;
+
+    r->upstream->keepalive = 1;
 
 #if (NGX_HTTP_SSL)
     kp->original_set_session = r->upstream->peer.set_session;
