@@ -231,7 +231,6 @@ ngx_tcp_upstream_free_keepalive_peer(ngx_peer_connection_t *pc, void *data,
 
     if (state & NGX_PEER_FAILED
         || c == NULL
-        || c->read->eof
         || c->read->error
         || c->read->timedout
         || c->write->error
