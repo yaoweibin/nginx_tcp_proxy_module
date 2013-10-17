@@ -160,6 +160,8 @@ struct ngx_tcp_upstream_s {
     ngx_tcp_upstream_resolved_t     *resolved;
     ngx_tcp_upstream_state_t        *state;
     ngx_tcp_cleanup_pt              *cleanup;
+
+    unsigned                         keepalive:1;
 };
 
 

@@ -183,8 +183,10 @@ ngx_tcp_upstream_init(ngx_tcp_session_t *s)
     cln = ngx_tcp_cleanup_add(s, 0);
 
     cln->handler = ngx_tcp_upstream_cleanup;
-    cln->data = s;
-    u->cleanup = &cln->handler;
+    cln->data    = s;
+    u->cleanup   = &cln->handler;
+
+    u->keepalive = 1
 
     if (u->resolved == NULL) {
 
