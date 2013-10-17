@@ -561,7 +561,7 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
         u->peer.check_index = NGX_INVALID_CHECK_INDEX;
     }
 
-    if (u->peer.connection) {
+    if (u->peer.connection && !u->keepalive) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
                        "close tcp upstream connection: %d",
