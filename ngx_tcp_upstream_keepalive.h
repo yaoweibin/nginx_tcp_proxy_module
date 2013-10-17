@@ -37,7 +37,7 @@ typedef struct {
 
 
 typedef struct {
-    ngx_http_upstream_keepalive_srv_conf_t  *conf;
+    ngx_tcp_upstream_keepalive_srv_conf_t  *conf;
 
     ngx_queue_t                        queue;
     ngx_connection_t                  *connection;
@@ -45,6 +45,6 @@ typedef struct {
     socklen_t                          socklen;
     u_char                             sockaddr[NGX_SOCKADDRLEN];
 
-} ngx_http_upstream_keepalive_cache_t;
+} ngx_tcp_upstream_keepalive_cache_t;
 
 #endif
