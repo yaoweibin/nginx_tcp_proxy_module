@@ -43,9 +43,9 @@ static ngx_command_t  ngx_tcp_upstream_keepalive_commands[] = {
 
 static ngx_tcp_module_t  ngx_tcp_upstream_keepalive_module_ctx = {
     NULL,
+    NULL,
+    NULL,
     ngx_tcp_upstream_keepalive_create_conf,
-    NULL,
-    NULL,
     NULL
 };
 
