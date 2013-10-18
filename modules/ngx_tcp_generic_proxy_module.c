@@ -398,6 +398,15 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             if (size && dst->write->ready) {
                 c->log->action = send_action;
 
+                /* TODO: move to somewhere */
+                if (ngx_strncmp("quit", b->pos, 4) == 0) {
+                    ngx_log_debug0(NGX_LOG_DEBUG_TCP, ev->log, 0,
+                                   "received quit, close session");
+
+                    ngx_tcp_finalize_session(s);
+                    return;
+                }
+
                 n = dst->send(dst, b->pos, size);
                 err = ngx_socket_errno;
 
