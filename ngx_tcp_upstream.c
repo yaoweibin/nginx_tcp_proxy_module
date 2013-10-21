@@ -341,7 +341,7 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
                    "tcp upstream connect: %d", rc);
 
-    if (rc != NGX_OK && rc != NGX_AGAIN) {
+    if (rc == NGX_ERROR) {
 
         ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, 
                       "upstream servers are busy or encounter error!");
@@ -352,7 +352,19 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
         return;
     }
 
-    /* rc == NGX_OK or rc == NGX_AGAIN */
+    if (rc == NGX_BUSY) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+                      "no live upstreams");
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_NOLIVE);
+        return;
+    }
+
+    if (rc == NGX_DECLINED) {
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);
+        return;
+    }
+
+    /* rc == NGX_OK or rc == NGX_AGAIN or rc == NGX_DONE */
 
     if (u->peer.check_index != NGX_INVALID_CHECK_INDEX) {
         ngx_tcp_check_get_peer(u->peer.check_index);
