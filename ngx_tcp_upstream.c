@@ -98,6 +98,13 @@ static ngx_command_t  ngx_tcp_upstream_commands[] = {
       offsetof(ngx_tcp_upstream_main_conf_t, check_shm_size),
       NULL },
 
+    { ngx_string("server_type"),
+      NGX_TCP_UPS_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_upstream_srv_conf_t, server_type),
+      NULL },
+
     ngx_null_command
 };
 
@@ -690,6 +697,7 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
     uscf->no_port = u->no_port;
 #endif
     uscf->code.status_alive = 0;
+    uscf->server_type = (ngx_str_t) ngx_null_string;
 
     if (u->naddrs == 1) {
         uscf->servers = ngx_array_create(cf->pool, 1,

@@ -32,6 +32,16 @@ static void *ngx_tcp_proxy_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent,
     void *child);
 
+static ngx_keyval_t ngx_tcp_server_types[] = {
+
+    { ngx_string("redis"),
+      ngx_string("quit")
+    },
+
+    { ngx_null_string,
+      ngx_null_string
+    }
+};
 
 static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
 
@@ -301,18 +311,19 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 static void
 ngx_tcp_proxy_handler(ngx_event_t *ev) 
 {
-    char                     *action, *recv_action, *send_action;
-    off_t                    *read_bytes, *write_bytes;
-    size_t                    size;
-    ssize_t                   n;
-    ngx_buf_t                *b;
-    ngx_err_t                 err;
-    ngx_uint_t                do_write, first_read;
-    ngx_connection_t         *c, *src, *dst;
-    ngx_tcp_session_t        *s;
-    ngx_tcp_proxy_conf_t     *pcf;
-    ngx_tcp_proxy_ctx_t      *pctx;
-    ngx_tcp_core_srv_conf_t  *cscf;
+    char                         *action, *recv_action, *send_action;
+    off_t                        *read_bytes, *write_bytes;
+    size_t                        size;
+    ssize_t                       n;
+    ngx_buf_t                    *b;
+    ngx_err_t                     err;
+    ngx_uint_t                    do_write, first_read, i;
+    ngx_connection_t             *c, *src, *dst;
+    ngx_tcp_session_t            *s;
+    ngx_tcp_proxy_conf_t         *pcf;
+    ngx_tcp_proxy_ctx_t          *pctx;
+    ngx_tcp_core_srv_conf_t      *cscf;
+    ngx_tcp_upstream_srv_conf_t  *uscf;
 
     c = ev->data;
     s = c->data;
@@ -389,6 +400,9 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
                    "tcp proxy handler: %d, #%d > #%d, time:%ui",
                    do_write, src->fd, dst->fd, ngx_current_msec);
 
+    pcf  = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
+    uscf = pcf->upstream.upstream;
+
     for ( ;; ) {
 
         if (do_write) {
@@ -398,13 +412,28 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
             if (size && dst->write->ready) {
                 c->log->action = send_action;
 
-                /* TODO: move to somewhere */
-                if (ngx_strncmp("quit", b->pos, 4) == 0) {
-                    ngx_log_debug0(NGX_LOG_DEBUG_TCP, ev->log, 0,
-                                   "received quit, close session");
+                if (uscf->server_type.data) {
+                    for (i = 0; ngx_tcp_server_types[i].key.data; i++) {
+                        if (ngx_strncmp(uscf->server_type.data,
+                               ngx_tcp_server_types[i].key.data,
+                               ngx_min(uscf->server_type.len,
+                                   ngx_tcp_server_types[i].key.len)) == 0) {
+                            break;
+                        }
 
-                    ngx_tcp_finalize_session(s);
-                    return;
+                    }
+                    if (ngx_tcp_server_types[i].value.data
+                        && ngx_strncasecmp(b->pos,
+                                      ngx_tcp_server_types[i].value.data,
+                                      ngx_tcp_server_types[i].value.len) == 0) {
+                        ngx_log_debug0(NGX_LOG_DEBUG_TCP, ev->log, 0,
+                                       "received quit, close session");
+
+                        ngx_tcp_finalize_session(s);
+                        return;
+                    }
+                } else {
+                    s->upstream->keepalive = 0;
                 }
 
                 n = dst->send(dst, b->pos, size);
@@ -509,8 +538,6 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
         ngx_tcp_finalize_session(s);
         return;
     }
-
-    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_proxy_module);
 
     if (c == s->connection) {
         ngx_add_timer(c->read, cscf->timeout);

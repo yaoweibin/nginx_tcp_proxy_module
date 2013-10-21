@@ -120,6 +120,8 @@ struct ngx_tcp_upstream_srv_conf_s {
         ngx_uint_t                   return_code;
         ngx_uint_t                   status_alive;
     } code;
+
+    ngx_str_t                        server_type;
 };
 
 
