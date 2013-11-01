@@ -242,6 +242,30 @@ Directives
     (<http://wiki.nginx.org/NginxHttpUpstreamModule#server>). Default port
     is 80.
 
+   server_type
+    syntax: *server_type parameter*
+
+    default: *none*
+
+    context: *upstream*
+
+    description: Specify the server type, currently only "redis" is
+    supported.
+
+   keepalive
+    syntax: *keepalive num [single]*
+
+    default: *none*
+
+    context: *upstream*
+
+    description: Enables keep-alive connections for the upstream. Num
+    specifies the max number of connections to keep open before, if
+    the max is reached it will close the least recently used connections.
+
+    Single treats everything as a single host. With this flag connections
+    to different backends are treated as equal.
+
    check
     syntax: *check interval=milliseconds [fall=count] [rise=count]
     [timeout=milliseconds] [type=tcp|ssl_hello|smtp|mysql|pop3|imap]*
