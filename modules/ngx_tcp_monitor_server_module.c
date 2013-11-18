@@ -7,6 +7,27 @@
 #include <ngx_core.h>
 #include <ngx_tcp.h>
 
+/*
+ * header: |---- 4 ----|-- 2 --|-- 2 --|
+ *           length       type  padding
+ *
+ */
+typedef struct ngx_tcp_monitor_header_s {
+    uint32_t length;
+    uint16_t type;
+    uint16_t spare0;
+} ngx_tcp_monitor_header_t;
+
+#define HEADER_LENGTH sizeof(ngx_tcp_monitor_header_t)
+
+#define monitor_packet_size(ptr) (*(u_char *)(ptr)  + \
+                     (*((u_char *)(ptr) + 1) << 8)  + \
+                     (*((u_char *)(ptr) + 2) << 16) + \
+                     (*((u_char *)(ptr) + 3) << 24) )
+
+#define MONITOR_TYPE_OFFSET offsetof(ngx_tcp_monitor_header_t, type)
+#define monitor_type(ptr) (*((u_char *)(ptr) + MONITOR_TYPE_OFFSET) + \
+                      (*((u_char *)(ptr) + MONITOR_TYPE_OFFSET + 1) << 8) )
 
 typedef struct ngx_tcp_monitor_s {
     ngx_peer_connection_t    *upstream;
