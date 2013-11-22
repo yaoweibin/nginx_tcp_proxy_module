@@ -11,6 +11,8 @@
  * header: |---- 4 ----|-- 2 --|-- 2 --|
  *           length       type  padding
  *
+ * all are little endian
+ *
  */
 typedef struct ngx_tcp_monitor_header_s {
     uint32_t length;
@@ -49,9 +51,13 @@ static  void ngx_tcp_monitor_init_upstream(ngx_connection_t *c,
 static void ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, 
     ngx_tcp_upstream_t *u);
 static char *ngx_tcp_monitor_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
-static void ngx_tcp_monitor_dummy_read_handler(ngx_event_t *ev);
-static void ngx_tcp_monitor_dummy_write_handler(ngx_event_t *ev);
+static void ngx_tcp_monitor_client_read_handler(ngx_event_t *rev);
+static void ngx_tcp_monitor_client_write_handler(ngx_event_t *wev);
+static void ngx_tcp_monitor_upstream_read_handler(ngx_event_t *rev);
+static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev);
+#if 0
 static void ngx_tcp_monitor_handler(ngx_event_t *ev);
+#endif
 static void *ngx_tcp_monitor_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_monitor_merge_conf(ngx_conf_t *cf, void *parent,
     void *child);
@@ -160,37 +166,25 @@ ngx_tcp_monitor_init_session(ngx_tcp_session_t *s)
 
     s->out.len = 0;
 
-    c->write->handler = ngx_tcp_monitor_dummy_write_handler;
-    c->read->handler = ngx_tcp_monitor_dummy_read_handler;
+    c->write->handler = ngx_tcp_monitor_client_write_handler;
+    c->read->handler  = ngx_tcp_monitor_client_read_handler;
 
     ngx_add_timer(c->read, cscf->timeout);
 
-    ngx_tcp_monitor_init_upstream(c, s);
+    // We will call this after we receive data completely
+    // ngx_tcp_monitor_init_upstream(c, s);
+
+    if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
 
     return;
 }
 
 
 static void
-ngx_tcp_monitor_dummy_write_handler(ngx_event_t *wev) 
-{
-    ngx_connection_t    *c;
-    ngx_tcp_session_t   *s;
-
-    c = wev->data;
-    s = c->data;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
-                   "tcp monitor dummy write handler: %d", c->fd);
-
-    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
-        ngx_tcp_finalize_session(s);
-    }
-}
-
-
-static void
-ngx_tcp_monitor_dummy_read_handler(ngx_event_t *rev) 
+ngx_tcp_monitor_client_read_handler(ngx_event_t *rev) 
 {
     ngx_connection_t    *c;
     ngx_tcp_session_t   *s;
@@ -199,9 +193,64 @@ ngx_tcp_monitor_dummy_read_handler(ngx_event_t *rev)
     s = c->data;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
-                   "tcp monitor dummy read handler: %d", c->fd);
+                   "tcp monitor client read handler: %d", c->fd);
 
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+    }
+}
+
+
+static void
+ngx_tcp_monitor_client_write_handler(ngx_event_t *wev) 
+{
+    ngx_connection_t    *c;
+    ngx_tcp_session_t   *s;
+
+    c = wev->data;
+    s = c->data;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
+                   "tcp monitor client write handler: %d", c->fd);
+
+    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+    }
+}
+
+
+static void ngx_tcp_monitor_upstream_read_handler(ngx_event_t *rev)
+{
+    ngx_connection_t    *c;
+    ngx_tcp_session_t   *s;
+
+    c = rev->data;
+    s = c->data;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
+                   "tcp monitor upstream read handler: %d", c->fd);
+
+    if (ngx_handle_read_event(rev, 0) != NGX_OK) {
+        ngx_tcp_finalize_session(s);
+    }
+
+    // TODO: add condition
+    ngx_tcp_monitor_init_upstream(c, s);
+}
+
+
+static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
+{
+    ngx_connection_t    *c;
+    ngx_tcp_session_t   *s;
+
+    c = wev->data;
+    s = c->data;
+
+    ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
+                   "tcp monitor upstream read handler: %d", c->fd);
+
+    if (ngx_handle_write_event(wev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
     }
 }
@@ -291,16 +340,13 @@ ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *
         return;
     }
 
-    s->connection->read->handler = ngx_tcp_monitor_handler;
-    s->connection->write->handler = ngx_tcp_monitor_handler;
-
-    c->read->handler = ngx_tcp_monitor_handler;
-    c->write->handler = ngx_tcp_monitor_handler;
+    c->read->handler  = ngx_tcp_monitor_upstream_read_handler;
+    c->write->handler = ngx_tcp_monitor_upstream_write_handler;
 
     ngx_add_timer(c->read, pcf->upstream.read_timeout);
     ngx_add_timer(c->write, pcf->upstream.send_timeout);
 
-    if (ngx_handle_read_event(s->connection->read, 0) != NGX_OK) {
+    if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
         return;
     }
@@ -309,6 +355,7 @@ ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *
 }
 
 
+#if 0
 static void
 ngx_tcp_monitor_handler(ngx_event_t *ev) 
 {
@@ -382,6 +429,16 @@ ngx_tcp_monitor_handler(ngx_event_t *ev)
             dst = s->connection;
             b = pctx->buffer;
             write_bytes = &s->bytes_write;
+        }
+    }
+
+    // FIXME: this is debug code
+    int packet_size = 0;
+    if (c == s->connection && src == c) {
+        printf("packet_size: %d\n", packet_size);
+        if (*read_bytes >= (off_t)HEADER_LENGTH) {
+            packet_size = monitor_packet_size(b->pos);
+            printf("packet_size: %d\n", packet_size);
         }
     }
 
@@ -518,6 +575,7 @@ ngx_tcp_monitor_handler(ngx_event_t *ev)
 
     return;
 }
+#endif
 
 
 static char *
