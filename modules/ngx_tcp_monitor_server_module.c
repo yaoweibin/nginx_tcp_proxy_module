@@ -33,15 +33,16 @@ typedef struct ngx_tcp_monitor_header_s {
 
 typedef struct ngx_tcp_monitor_s {
     ngx_peer_connection_t    *upstream;
-    ngx_buf_t                *buffer;
+    ngx_buf_t                *request_body;
+
+    ngx_buf_t                *header_out;
+    ngx_buf_t                *reponse_body;
 } ngx_tcp_monitor_ctx_t;
 
 
 typedef struct ngx_tcp_monitor_conf_s {
     ngx_tcp_upstream_conf_t   upstream;
-
     ngx_str_t                 url;
-    size_t                    buffer_size;
 } ngx_tcp_monitor_conf_t;
 
 
@@ -82,13 +83,6 @@ static ngx_command_t  ngx_tcp_monitor_commands[] = {
       ngx_tcp_monitor_pass,
       NGX_TCP_SRV_CONF_OFFSET,
       0,
-      NULL },
-
-    { ngx_string("monitor_buffer"),
-      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_size_slot,
-      NGX_TCP_SRV_CONF_OFFSET,
-      offsetof(ngx_tcp_monitor_conf_t, buffer_size),
       NULL },
 
     { ngx_string("monitor_connect_timeout"),
@@ -147,8 +141,8 @@ static void
 ngx_tcp_monitor_init_session(ngx_tcp_session_t *s) 
 {
     ngx_connection_t         *c;
-    ngx_tcp_monitor_conf_t   *pcf;
     ngx_tcp_core_srv_conf_t  *cscf;
+    ngx_tcp_monitor_ctx_t    *ctx;
 
     c = s->connection;
 
@@ -156,9 +150,7 @@ ngx_tcp_monitor_init_session(ngx_tcp_session_t *s)
 
     cscf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_core_module);
 
-    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_monitor_module);
-
-    s->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
+    s->buffer = ngx_create_temp_buf(s->connection->pool, HEADER_LENGTH);
     if (s->buffer == NULL) {
         ngx_tcp_finalize_session(s);
         return;
@@ -170,6 +162,14 @@ ngx_tcp_monitor_init_session(ngx_tcp_session_t *s)
     c->read->handler  = ngx_tcp_monitor_client_read_handler;
 
     ngx_add_timer(c->read, cscf->timeout);
+
+    ctx = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_monitor_ctx_t));
+    if (ctx == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    ngx_tcp_set_ctx(s, ctx, ngx_tcp_monitor_module);
 
     // We will call this after we receive data completely
     // ngx_tcp_monitor_init_upstream(c, s);
@@ -260,8 +260,8 @@ static  void
 ngx_tcp_monitor_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
 {
     ngx_tcp_upstream_t       *u;
-    ngx_tcp_monitor_ctx_t      *p;
-    ngx_tcp_monitor_conf_t     *pcf;
+    ngx_tcp_monitor_ctx_t    *p;
+    ngx_tcp_monitor_conf_t   *pcf;
 
     s->connection->log->action = "ngx_tcp_monitor_init_upstream";
 
@@ -270,14 +270,6 @@ ngx_tcp_monitor_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
         ngx_tcp_finalize_session(s);
         return;
     }
-
-    p = ngx_pcalloc(s->connection->pool, sizeof(ngx_tcp_monitor_ctx_t));
-    if (p == NULL) {
-        ngx_tcp_finalize_session(s);
-        return;
-    }
-
-    ngx_tcp_set_ctx(s, p, ngx_tcp_monitor_module);
 
     if (ngx_tcp_upstream_create(s) != NGX_OK) {
         ngx_tcp_finalize_session(s);
@@ -291,10 +283,11 @@ ngx_tcp_monitor_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     u->write_event_handler = ngx_tcp_upstream_init_monitor_handler;
     u->read_event_handler = ngx_tcp_upstream_init_monitor_handler;
 
+    p = ngx_tcp_get_module_ctx(s, ngx_tcp_monitor_module);
     p->upstream = &u->peer;
 
-    p->buffer = ngx_create_temp_buf(s->connection->pool, pcf->buffer_size);
-    if (p->buffer == NULL) {
+    p->header_out = ngx_create_temp_buf(s->connection->pool, HEADER_LENGTH);
+    if (p->header_out == NULL) {
         ngx_tcp_finalize_session(s);
         return;
     }
@@ -636,8 +629,6 @@ ngx_tcp_monitor_create_conf(ngx_conf_t *cf)
         return NULL;
     }
 
-    pcf->buffer_size = NGX_CONF_UNSET_SIZE;
-
     pcf->upstream.connect_timeout = NGX_CONF_UNSET_MSEC;
     pcf->upstream.send_timeout = NGX_CONF_UNSET_MSEC;
     pcf->upstream.read_timeout = NGX_CONF_UNSET_MSEC;
@@ -651,9 +642,6 @@ ngx_tcp_monitor_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_tcp_monitor_conf_t *prev = parent;
     ngx_tcp_monitor_conf_t *conf = child;
-
-    ngx_conf_merge_size_value(conf->buffer_size, prev->buffer_size,
-                              (size_t) ngx_pagesize);
 
     ngx_conf_merge_msec_value(conf->upstream.connect_timeout,
                               prev->upstream.connect_timeout, 60000);
