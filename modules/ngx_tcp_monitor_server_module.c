@@ -186,6 +186,11 @@ ngx_tcp_monitor_init_session(ngx_tcp_session_t *s)
 }
 
 
+/*
+ * FIXME: 1. I am not sure below will block!
+ *        2. Server did not close connection currently!
+ *
+ */
 static void
 ngx_tcp_monitor_client_read_handler(ngx_event_t *rev) 
 {
