@@ -33,7 +33,10 @@ typedef struct ngx_tcp_monitor_header_s {
 
 typedef struct ngx_tcp_monitor_s {
     ngx_peer_connection_t    *upstream;
+    // ngx_tcp_session_t's buffer is header_in
+    // request_body is the request body
     ngx_buf_t                *request_body;
+    ngx_uint_t                request_len;
 
     ngx_buf_t                *header_out;
     ngx_buf_t                *reponse_body;
@@ -186,14 +189,84 @@ ngx_tcp_monitor_init_session(ngx_tcp_session_t *s)
 static void
 ngx_tcp_monitor_client_read_handler(ngx_event_t *rev) 
 {
-    ngx_connection_t    *c;
-    ngx_tcp_session_t   *s;
+    ssize_t                 n, size;
+    ngx_err_t               err;
+    ngx_buf_t              *b;
+    ngx_connection_t       *c;
+    ngx_tcp_session_t      *s;
+    ngx_tcp_monitor_ctx_t  *pctx;
 
     c = rev->data;
     s = c->data;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
                    "tcp monitor client read handler: %d", c->fd);
+
+    if (rev->timedout) {
+        c->log->action = "monitoring";
+
+        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "monitor timed out");
+        c->timedout = 1;
+
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_monitor_module);
+    if (pctx == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    for ( ;; ) {
+        if (c->read->ready) {
+
+            c->log->action = "client read: reading from client";
+            if (s->bytes_read < (off_t)HEADER_LENGTH) {
+                size = HEADER_LENGTH - s->bytes_read;
+                b    = s->buffer;
+            } else {
+                if (pctx->request_body == NULL) {
+                    pctx->request_len  = monitor_packet_size(s->buffer->start);
+                    pctx->request_body = ngx_create_temp_buf(c->pool,
+                                             pctx->request_len);
+                }
+                size = pctx->request_len - s->bytes_read + HEADER_LENGTH;
+                b    = pctx->request_body;
+            }
+            n   = c->recv(c, b->last, size);
+            err = ngx_socket_errno;
+
+            if (n == NGX_ERROR) {
+                ngx_log_error(NGX_LOG_ERR, c->log, err, "client read error");
+            }
+            ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
+                           "tcp monitor handler recv:%d", n);
+
+            if (n == NGX_AGAIN || n == 0) {
+                break;
+            }
+
+            if (n > 0) {
+                b->last       += n;
+                s->bytes_read += n;
+                continue;
+            }
+
+            if (n == NGX_ERROR) {
+                c->read->eof = 1;
+            }
+        }
+
+        break;
+    }
+
+    if ((s->connection->read->eof && s->bytes_read == (off_t)(pctx->request_len + HEADER_LENGTH)))
+    {
+        ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "read client data done");
+        ngx_tcp_monitor_init_upstream(c, s);
+        return;
+    }
 
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
@@ -234,8 +307,6 @@ static void ngx_tcp_monitor_upstream_read_handler(ngx_event_t *rev)
         ngx_tcp_finalize_session(s);
     }
 
-    // TODO: add condition
-    ngx_tcp_monitor_init_upstream(c, s);
 }
 
 
