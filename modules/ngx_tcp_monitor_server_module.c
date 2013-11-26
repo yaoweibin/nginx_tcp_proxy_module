@@ -239,11 +239,16 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
                 size = pctx->request_len - s->bytes_read + HEADER_LENGTH;
                 b    = pctx->request_body;
             }
+            if (size < 0) {
+                ngx_log_error(NGX_LOG_ERR, c->log, 0,
+                              "client data not correct, handler: %d", c->fd);
+            }
             n   = c->recv(c, b->last, size);
             err = ngx_socket_errno;
 
             if (n == NGX_ERROR) {
                 ngx_log_error(NGX_LOG_ERR, c->log, err, "client read error");
+                ngx_tcp_finalize_session(s);
             }
             ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
                            "tcp monitor handler recv:%d", n);
@@ -324,7 +329,7 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
     s = c->data;
 
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
-                   "tcp monitor upstream read handler: %d", c->fd);
+                   "tcp monitor upstream write handler: %d", c->fd);
 
     if (ngx_handle_write_event(wev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
