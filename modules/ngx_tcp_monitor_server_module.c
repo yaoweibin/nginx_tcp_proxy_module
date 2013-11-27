@@ -376,7 +376,7 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
     s = c->data;
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
-                   "tcp monitor upstream writer handler");
+                   "tcp monitor upstream write handler");
 
     if (wev->timedout) {
         c->log->action = "monitoring";
@@ -512,7 +512,7 @@ ngx_tcp_monitor_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
     u->conf = &pcf->upstream;
 
     u->write_event_handler = ngx_tcp_upstream_init_monitor_handler;
-    u->read_event_handler = ngx_tcp_upstream_init_monitor_handler;
+    u->read_event_handler  = ngx_tcp_upstream_init_monitor_handler;
 
     p = ngx_tcp_get_module_ctx(s, ngx_tcp_monitor_module);
     p->upstream = &u->peer;
@@ -573,6 +573,9 @@ ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *
         ngx_tcp_finalize_session(s);
         return;
     }
+
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
+                   "tcp monitor upstream init monitor done");
 
     return;
 }
