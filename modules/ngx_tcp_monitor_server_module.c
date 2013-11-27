@@ -304,8 +304,7 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
         break;
     }
 
-    if ((s->connection->read->eof &&
-         s->bytes_read == (off_t)(pctx->request_len + HEADER_LENGTH)))
+    if (s->bytes_read == (off_t)(pctx->request_len + HEADER_LENGTH))
     {
         ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "read client data done");
         rc = ngx_tcp_monitor_build_query(s, &pctx->upstream_request_header,
@@ -371,20 +370,25 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
     ngx_tcp_monitor_ctx_t  *pctx;
     ngx_buf_t              *b;
     ngx_err_t               err;
+    ngx_tcp_monitor_conf_t *pcf;
 
     c = wev->data;
     s = c->data;
 
+    ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
+                   "tcp monitor upstream writer handler");
+
     if (wev->timedout) {
         c->log->action = "monitoring";
 
-        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "monitor timed out");
+        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "monitor upstream send timed out");
         c->timedout = 1;
 
         ngx_tcp_finalize_session(s);
         return;
     }
 
+    pcf  = ngx_tcp_get_module_srv_conf(s, ngx_tcp_monitor_module);
     pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_monitor_module);
     if (pctx == NULL) {
         ngx_tcp_finalize_session(s);
@@ -431,6 +435,7 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
 
     if (s->bytes_write == (off_t)(header_length + pctx->request_len + tail_length)) {
         ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "upstream send data done");
+        ngx_add_timer(c->read, pcf->upstream.read_timeout);
         if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
             ngx_tcp_finalize_session(s);
             return;
@@ -562,7 +567,6 @@ ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *
     c->read->handler  = ngx_tcp_monitor_upstream_read_handler;
     c->write->handler = ngx_tcp_monitor_upstream_write_handler;
 
-    ngx_add_timer(c->read, pcf->upstream.read_timeout);
     ngx_add_timer(c->write, pcf->upstream.send_timeout);
 
     if (ngx_handle_write_event(c->write, 0) != NGX_OK) {
