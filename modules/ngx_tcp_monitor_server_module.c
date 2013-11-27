@@ -28,11 +28,17 @@ typedef struct ngx_tcp_monitor_header_s {
                      (*((u_char *)(ptr) + 3) << 24) )
 
 #define MONITOR_TYPE_OFFSET offsetof(ngx_tcp_monitor_header_t, type)
-#define monitor_type(ptr) (*((u_char *)(ptr) + MONITOR_TYPE_OFFSET) + \
+#define monitor_packet_type(ptr) (*((u_char *)(ptr) + MONITOR_TYPE_OFFSET) + \
                       (*((u_char *)(ptr) + MONITOR_TYPE_OFFSET + 1) << 8) )
 
-typedef struct ngx_tcp_monitor_s {
+#define PACKET_TYPE_JSON     1
+#define PACKET_TYPE_TLV      2
+#define PACKET_TYPE_BSON     3
+#define PACKET_TYPE_MSGPACK  4
+
+typedef struct ngx_tcp_monitor_ctx_s {
     ngx_peer_connection_t    *upstream;
+
     // ngx_tcp_session_t's buffer is header_in
     // request_body is the request body
     ngx_buf_t                *request_body;
@@ -40,14 +46,31 @@ typedef struct ngx_tcp_monitor_s {
 
     ngx_buf_t                *header_out;
     ngx_buf_t                *reponse_body;
+
+    ngx_buf_t                *upstream_request_header;
+    ngx_buf_t                *upstream_request_tail;
 } ngx_tcp_monitor_ctx_t;
 
 
 typedef struct ngx_tcp_monitor_conf_s {
     ngx_tcp_upstream_conf_t   upstream;
     ngx_str_t                 url;
+    ngx_str_t                 queue_name;
 } ngx_tcp_monitor_conf_t;
 
+#if 0
+static size_t ngx_get_num_size(ngx_uint_t i)
+{
+    size_t n = 0;
+
+    do {
+        i /= 10;
+        n++;
+    } while (i > 0);
+
+    return n;
+}
+#endif
 
 static void ngx_tcp_monitor_init_session(ngx_tcp_session_t *s); 
 static  void ngx_tcp_monitor_init_upstream(ngx_connection_t *c, 
@@ -59,12 +82,11 @@ static void ngx_tcp_monitor_client_read_handler(ngx_event_t *rev);
 static void ngx_tcp_monitor_client_write_handler(ngx_event_t *wev);
 static void ngx_tcp_monitor_upstream_read_handler(ngx_event_t *rev);
 static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev);
-#if 0
-static void ngx_tcp_monitor_handler(ngx_event_t *ev);
-#endif
 static void *ngx_tcp_monitor_create_conf(ngx_conf_t *cf);
 static char *ngx_tcp_monitor_merge_conf(ngx_conf_t *cf, void *parent,
     void *child);
+static ngx_int_t ngx_tcp_monitor_build_query(ngx_tcp_session_t *s,
+    ngx_buf_t **header, ngx_buf_t **tail);
 
 static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
 
@@ -86,6 +108,13 @@ static ngx_command_t  ngx_tcp_monitor_commands[] = {
       ngx_tcp_monitor_pass,
       NGX_TCP_SRV_CONF_OFFSET,
       0,
+      NULL },
+
+    { ngx_string("queue_name"),
+      NGX_TCP_SRV_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_monitor_conf_t, queue_name),
       NULL },
 
     { ngx_string("monitor_connect_timeout"),
@@ -119,8 +148,8 @@ static ngx_tcp_module_t  ngx_tcp_monitor_module_ctx = {
     NULL,                                  /* create main configuration */
     NULL,                                  /* init main configuration */
 
-    ngx_tcp_monitor_create_conf,             /* create server configuration */
-    ngx_tcp_monitor_merge_conf               /* merge server configuration */
+    ngx_tcp_monitor_create_conf,           /* create server configuration */
+    ngx_tcp_monitor_merge_conf             /* merge server configuration */
 };
 
 
@@ -195,6 +224,7 @@ static void
 ngx_tcp_monitor_client_read_handler(ngx_event_t *rev) 
 {
     ssize_t                 n, size;
+    ngx_int_t               rc;
     ngx_err_t               err;
     ngx_buf_t              *b;
     ngx_connection_t       *c;
@@ -271,9 +301,15 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
         break;
     }
 
-    if ((s->connection->read->eof && s->bytes_read == (off_t)(pctx->request_len + HEADER_LENGTH)))
+    if ((s->connection->read->eof &&
+         s->bytes_read == (off_t)(pctx->request_len + HEADER_LENGTH)))
     {
         ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "read client data done");
+        rc = ngx_tcp_monitor_build_query(s, &pctx->upstream_request_header,
+                &pctx->upstream_request_tail);
+        if (rc != NGX_OK) {
+            ngx_tcp_finalize_session(s);
+        }
         ngx_tcp_monitor_init_upstream(c, s);
         return;
     }
@@ -316,7 +352,6 @@ static void ngx_tcp_monitor_upstream_read_handler(ngx_event_t *rev)
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
     }
-
 }
 
 
@@ -331,9 +366,52 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
                    "tcp monitor upstream write handler: %d", c->fd);
 
+    for ( ;; ) {
+        break;
+    }
+
     if (ngx_handle_write_event(wev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
     }
+}
+
+
+static ngx_int_t
+ngx_tcp_monitor_build_query(ngx_tcp_session_t *s, ngx_buf_t **header, ngx_buf_t **tail)
+{
+    size_t  len;
+    u_short packet_type;
+    ngx_tcp_monitor_conf_t  *pcf;
+
+    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_monitor_module);
+    packet_type = monitor_packet_type(s->buffer->start);
+    // FIXME: below is specific to redis protocol
+    // http://redis.io/topics/protocol
+    switch(packet_type) {
+        case PACKET_TYPE_JSON:
+            len = sizeof("LPUSH ") - 1 + pcf->queue_name.len + 1; // last +1 for space
+            *header = ngx_create_temp_buf(s->connection->pool, len);
+            if (*header == NULL) {
+                return NGX_ERROR;
+            }
+            ngx_sprintf((*header)->last, "LPUSH %*s ",
+                        pcf->queue_name.len,
+                        pcf->queue_name.data);
+            len   = sizeof(CRLF) -1;
+            *tail = ngx_create_temp_buf(s->connection->pool, len);
+            if (*tail == NULL) {
+                return NGX_ERROR;
+            }
+            ngx_memcpy((*tail)->last, CRLF, sizeof(CRLF) - 1);
+            break;
+
+        default:
+            ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
+                          "invalid monitor packet type: %hu", packet_type);
+            return NGX_ERROR;
+    }
+
+    return NGX_OK;
 }
 
 
