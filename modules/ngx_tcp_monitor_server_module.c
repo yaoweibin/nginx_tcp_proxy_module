@@ -272,6 +272,8 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
             if (size < 0) {
                 ngx_log_error(NGX_LOG_ERR, c->log, 0,
                               "client data not correct, handler: %d", c->fd);
+                ngx_tcp_finalize_session(s);
+                return;
             }
             n   = c->recv(c, b->last, size);
             err = ngx_socket_errno;
@@ -279,6 +281,7 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
             if (n == NGX_ERROR) {
                 ngx_log_error(NGX_LOG_ERR, c->log, err, "client read error");
                 ngx_tcp_finalize_session(s);
+                return;
             }
             ngx_log_debug1(NGX_LOG_DEBUG_TCP, rev->log, 0,
                            "tcp monitor handler recv:%d", n);
@@ -309,6 +312,7 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
                 &pctx->upstream_request_tail);
         if (rc != NGX_OK) {
             ngx_tcp_finalize_session(s);
+            return;
         }
         ngx_tcp_monitor_init_upstream(c, s);
         return;
@@ -316,6 +320,7 @@ ngx_tcp_monitor_client_read_handler(ngx_event_t *rev)
 
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
+        return;
     }
 }
 
@@ -351,27 +356,91 @@ static void ngx_tcp_monitor_upstream_read_handler(ngx_event_t *rev)
 
     if (ngx_handle_read_event(rev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
+        return;
     }
 }
 
 
 static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
 {
+    ssize_t              n, size;
     ngx_connection_t    *c;
     ngx_tcp_session_t   *s;
+    ngx_uint_t           header_length;
+    ngx_uint_t           tail_length;
+    ngx_tcp_monitor_ctx_t  *pctx;
+    ngx_buf_t              *b;
+    ngx_err_t               err;
 
     c = wev->data;
     s = c->data;
 
+    if (wev->timedout) {
+        c->log->action = "monitoring";
+
+        ngx_log_error(NGX_LOG_INFO, c->log, NGX_ETIMEDOUT, "monitor timed out");
+        c->timedout = 1;
+
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
+    pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_monitor_module);
+    if (pctx == NULL) {
+        ngx_tcp_finalize_session(s);
+        return;
+    }
+
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, wev->log, 0,
                    "tcp monitor upstream write handler: %d", c->fd);
 
+    header_length = pctx->upstream_request_header->end -
+                    pctx->upstream_request_header->start;
+    tail_length   = pctx->upstream_request_tail->end -
+                    pctx->upstream_request_tail->start;
     for ( ;; ) {
+        if (c->write->ready) {
+            c->log->action = "upstream send: sending to upstream server";
+            size = header_length - s->bytes_write;
+            b    = pctx->upstream_request_header;
+            if (size <= 0) {
+                size += pctx->request_len;
+                b     = pctx->request_body;
+            }
+            if (size <= 0) {
+                size += tail_length;
+                b     = pctx->upstream_request_tail;
+            }
+            if (size <= 0) {
+                break;
+            }
+            n = c->send(c, b->pos, size);
+            err = ngx_socket_errno;
+
+            if (n == NGX_ERROR) {
+                ngx_log_error(NGX_LOG_ERR, c->log, err, "monitor upstream send error");
+                return;
+            }
+            if (n > 0) {
+                b->pos +=n;
+                s->bytes_write += n;
+            }
+        }
         break;
+    }
+
+    if (s->bytes_write == (off_t)(header_length + pctx->request_len + tail_length)) {
+        ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "upstream send data done");
+        if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
+            ngx_tcp_finalize_session(s);
+            return;
+        }
+        return;
     }
 
     if (ngx_handle_write_event(wev, 0) != NGX_OK) {
         ngx_tcp_finalize_session(s);
+        return;
     }
 }
 
@@ -403,15 +472,13 @@ ngx_tcp_monitor_build_query(ngx_tcp_session_t *s, ngx_buf_t **header, ngx_buf_t 
                 return NGX_ERROR;
             }
             ngx_memcpy((*tail)->last, CRLF, sizeof(CRLF) - 1);
-            break;
+            return NGX_OK;
 
         default:
             ngx_log_error(NGX_LOG_INFO, s->connection->log, 0,
                           "invalid monitor packet type: %hu", packet_type);
             return NGX_ERROR;
     }
-
-    return NGX_OK;
 }
 
 
