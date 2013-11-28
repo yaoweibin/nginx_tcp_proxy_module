@@ -58,7 +58,7 @@ typedef struct ngx_tcp_monitor_conf_s {
     ngx_str_t                 queue_name;
 } ngx_tcp_monitor_conf_t;
 
-static size_t ngx_get_num_size(ngx_uint_t i)
+static inline size_t ngx_get_num_size(ngx_uint_t i)
 {
     size_t n = 0;
 
@@ -71,7 +71,7 @@ static size_t ngx_get_num_size(ngx_uint_t i)
 }
 
 static void ngx_tcp_monitor_init_session(ngx_tcp_session_t *s); 
-static  void ngx_tcp_monitor_init_upstream(ngx_connection_t *c, 
+static void ngx_tcp_monitor_init_upstream(ngx_connection_t *c,
     ngx_tcp_session_t *s);
 static void ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, 
     ngx_tcp_upstream_t *u);
