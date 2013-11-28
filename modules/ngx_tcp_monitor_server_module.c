@@ -58,7 +58,6 @@ typedef struct ngx_tcp_monitor_conf_s {
     ngx_str_t                 queue_name;
 } ngx_tcp_monitor_conf_t;
 
-#if 0
 static size_t ngx_get_num_size(ngx_uint_t i)
 {
     size_t n = 0;
@@ -70,7 +69,6 @@ static size_t ngx_get_num_size(ngx_uint_t i)
 
     return n;
 }
-#endif
 
 static void ngx_tcp_monitor_init_session(ngx_tcp_session_t *s); 
 static  void ngx_tcp_monitor_init_upstream(ngx_connection_t *c, 
@@ -436,7 +434,9 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
 
     if (s->bytes_write == (off_t)(header_length + pctx->request_len + tail_length)) {
         ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "upstream send data done");
-        ngx_del_timer(c->write);
+        if (c->write->timer_set) {
+            ngx_del_timer(c->write);
+        }
         ngx_add_timer(c->read, pcf->upstream.read_timeout);
         if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
             ngx_tcp_finalize_session(s);
@@ -458,21 +458,31 @@ ngx_tcp_monitor_build_query(ngx_tcp_session_t *s, ngx_buf_t **header, ngx_buf_t 
     size_t  len;
     u_short packet_type;
     ngx_tcp_monitor_conf_t  *pcf;
+    ngx_tcp_monitor_ctx_t   *pctx;
 
-    pcf = ngx_tcp_get_module_srv_conf(s, ngx_tcp_monitor_module);
+    pcf  = ngx_tcp_get_module_srv_conf(s, ngx_tcp_monitor_module);
+    pctx = ngx_tcp_get_module_ctx(s, ngx_tcp_monitor_module);
     packet_type = monitor_packet_type(s->buffer->start);
     // FIXME: below is specific to redis protocol
     // http://redis.io/topics/protocol
     switch(packet_type) {
         case PACKET_TYPE_JSON:
-            len = sizeof("LPUSH ") - 1 + pcf->queue_name.len + 1; // last +1 for space
+            len = sizeof("*3" CRLF "$5" CRLF "LPUSH" CRLF "$") -1
+                  + ngx_get_num_size(pcf->queue_name.len)
+                  + sizeof(CRLF) -1 + pcf->queue_name.len
+                  + sizeof(CRLF "$") -1
+                  + ngx_get_num_size(pctx->request_len)
+                  + sizeof(CRLF) - 1;
             *header = ngx_create_temp_buf(s->connection->pool, len);
             if (*header == NULL) {
                 return NGX_ERROR;
             }
-            ngx_sprintf((*header)->last, "LPUSH %*s ",
+            ngx_sprintf((*header)->last, "*3"CRLF"$5"CRLF"LPUSH"CRLF
+                        "$%d"CRLF"%*s"CRLF"$%d"CRLF,
                         pcf->queue_name.len,
-                        pcf->queue_name.data);
+                        pcf->queue_name.len,
+                        pcf->queue_name.data,
+                        pctx->request_len);
             len   = sizeof(CRLF) -1;
             *tail = ngx_create_temp_buf(s->connection->pool, len);
             if (*tail == NULL) {
