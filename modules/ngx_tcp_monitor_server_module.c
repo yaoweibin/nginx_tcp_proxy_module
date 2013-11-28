@@ -88,7 +88,7 @@ static char *ngx_tcp_monitor_merge_conf(ngx_conf_t *cf, void *parent,
 static ngx_int_t ngx_tcp_monitor_build_query(ngx_tcp_session_t *s,
     ngx_buf_t **header, ngx_buf_t **tail);
 
-static ngx_tcp_protocol_t  ngx_tcp_generic_protocol = {
+static ngx_tcp_protocol_t  ngx_tcp_monitor_protocol = {
 
     ngx_string("monitor_server"),
     { 0, 0, 0, 0 },
@@ -143,7 +143,7 @@ static ngx_command_t  ngx_tcp_monitor_commands[] = {
 
 
 static ngx_tcp_module_t  ngx_tcp_monitor_module_ctx = {
-    &ngx_tcp_generic_protocol,             /* protocol */
+    &ngx_tcp_monitor_protocol,             /* protocol */
 
     NULL,                                  /* create main configuration */
     NULL,                                  /* init main configuration */
@@ -428,6 +428,7 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
             if (n > 0) {
                 b->pos +=n;
                 s->bytes_write += n;
+                continue;
             }
         }
         break;
@@ -435,6 +436,7 @@ static void ngx_tcp_monitor_upstream_write_handler(ngx_event_t *wev)
 
     if (s->bytes_write == (off_t)(header_length + pctx->request_len + tail_length)) {
         ngx_log_error(NGX_LOG_DEBUG, c->log, 0, "upstream send data done");
+        ngx_del_timer(c->write);
         ngx_add_timer(c->read, pcf->upstream.read_timeout);
         if (ngx_handle_read_event(c->read, 0) != NGX_OK) {
             ngx_tcp_finalize_session(s);
@@ -573,6 +575,8 @@ ngx_tcp_upstream_init_monitor_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *
         ngx_tcp_finalize_session(s);
         return;
     }
+
+    c->write->handler(c->write);
 
     ngx_log_debug0(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
                    "tcp monitor upstream init monitor done");
@@ -824,7 +828,7 @@ ngx_tcp_monitor_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     }
 
     if (cscf->protocol == NULL) {
-        cscf->protocol = &ngx_tcp_generic_protocol;
+        cscf->protocol = &ngx_tcp_monitor_protocol;
     }
 
     if (pcf->upstream.upstream) {
