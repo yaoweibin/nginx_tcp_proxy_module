@@ -18,7 +18,7 @@ typedef struct ngx_tcp_monitor_header_s {
     uint32_t length;
     uint16_t type;
     uint16_t spare0;
-} ngx_tcp_monitor_header_t;
+} __attribute__ ((packed)) ngx_tcp_monitor_header_t;
 
 #define HEADER_LENGTH sizeof(ngx_tcp_monitor_header_t)
 
