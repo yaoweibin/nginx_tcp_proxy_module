@@ -56,7 +56,7 @@ typedef struct ngx_tcp_rpc_conf_s {
     ngx_str_t                 document_root;
 } ngx_tcp_rpc_conf_t;
 
-static void ngx_tcp_rpc_init_session(ngx_tcp_session_t *s); 
+static void ngx_tcp_rpc_init_session(ngx_tcp_session_t *s);
 static void ngx_tcp_rpc_client_read_handler(ngx_event_t *rev);
 static void ngx_tcp_rpc_client_write_handler(ngx_event_t *wev);
 static void *ngx_tcp_rpc_create_conf(ngx_conf_t *cf);
@@ -123,29 +123,29 @@ ngx_module_t  ngx_tcp_rpc_module = {
 };
 
 
-static void 
-ngx_tcp_rpc_init_session(ngx_tcp_session_t *s) 
+static void
+ngx_tcp_rpc_init_session(ngx_tcp_session_t *s)
 {
     return;
 }
 
 
 static void
-ngx_tcp_rpc_client_read_handler(ngx_event_t *rev) 
+ngx_tcp_rpc_client_read_handler(ngx_event_t *rev)
 {
     return;
 }
 
 
 static void
-ngx_tcp_rpc_client_write_handler(ngx_event_t *wev) 
+ngx_tcp_rpc_client_write_handler(ngx_event_t *wev)
 {
     return;
 }
 
 
 static void *
-ngx_tcp_rpc_create_conf(ngx_conf_t *cf) 
+ngx_tcp_rpc_create_conf(ngx_conf_t *cf)
 {
     ngx_tcp_rpc_conf_t  *pcf;
 
@@ -161,7 +161,7 @@ ngx_tcp_rpc_create_conf(ngx_conf_t *cf)
 #define unused(arg) (void)(arg)
 
 static char *
-ngx_tcp_rpc_merge_conf(ngx_conf_t *cf, void *parent, void *child) 
+ngx_tcp_rpc_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_tcp_rpc_conf_t *prev = parent;
     ngx_tcp_rpc_conf_t *conf = child;
