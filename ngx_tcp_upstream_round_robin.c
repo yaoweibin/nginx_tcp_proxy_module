@@ -288,9 +288,13 @@ ngx_tcp_upstream_create_round_robin_peer(ngx_tcp_session_t *s,
 {
     u_char                            *p;
     size_t                             len;
+#if (nginx_version) >= 1005008
     socklen_t                          socklen;
-    ngx_uint_t                         i, n;
     struct sockaddr                   *sockaddr;
+#else
+    struct sockaddr_in                *sin;
+#endif
+    ngx_uint_t                         i, n;
     ngx_tcp_upstream_rr_peers_t       *peers;
     ngx_tcp_upstream_rr_peer_data_t   *rrp;
 
@@ -329,6 +333,7 @@ ngx_tcp_upstream_create_round_robin_peer(ngx_tcp_session_t *s,
 
         for (i = 0; i < ur->naddrs; i++) {
 
+#if (nginx_version) >= 1005008
             socklen = ur->addrs[i].socklen;
 
             sockaddr = ngx_palloc(s->pool, socklen);
@@ -357,6 +362,29 @@ ngx_tcp_upstream_create_round_robin_peer(ngx_tcp_session_t *s,
 
             peers->peer[i].sockaddr = sockaddr;
             peers->peer[i].socklen = socklen;
+#else
+            len = NGX_INET_ADDRSTRLEN + sizeof(":65536") - 1;
+
+            p = ngx_pnalloc(s->pool, len);
+            if (p == NULL) {
+                return NGX_ERROR;
+            }
+
+            len = ngx_inet_ntop(AF_INET, &ur->addrs[i], p, NGX_INET_ADDRSTRLEN);
+            len = ngx_sprintf(&p[len], ":%d", ur->port) - p;
+
+            sin = ngx_pcalloc(s->pool, sizeof(struct sockaddr_in));
+            if (sin == NULL) {
+                return NGX_ERROR;
+            }
+
+            sin->sin_family = AF_INET;
+            sin->sin_port = htons(ur->port);
+            sin->sin_addr.s_addr = ur->addrs[i];
+
+            peers->peer[i].sockaddr = (struct sockaddr *) sin;
+            peers->peer[i].socklen = sizeof(struct sockaddr_in);
+#endif
             peers->peer[i].name.len = len;
             peers->peer[i].name.data = p;
             peers->peer[i].weight = 1;
