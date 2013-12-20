@@ -391,6 +391,8 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
     /* SSL Need this */
     if (s->connection->ssl) {
         first_read = 1;
+    } else {
+        first_read = 0;
     }
 #else
     first_read = 0;
