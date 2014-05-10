@@ -1793,6 +1793,7 @@ ngx_tcp_check_init_process(ngx_cycle_t *cycle)
 static ngx_int_t 
 ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r) 
 {
+    size_t                         buffer_size;
     ngx_buf_t                     *b;
     ngx_str_t                      shm_name;
     ngx_int_t                      rc;
@@ -1850,7 +1851,11 @@ ngx_tcp_upstream_check_status_handler(ngx_http_request_t *r)
     peer_conf = peers_conf->peers.elts;
     peer_shm = peers_shm->peers;
 
-    b = ngx_create_temp_buf(r->pool, ngx_pagesize);
+    /* 1/4 pagesize for each record */
+    buffer_size = peers_conf->peers.nelts * ngx_pagesize / 4;
+    buffer_size = ngx_align(buffer_size, ngx_pagesize) + ngx_pagesize;
+
+    b = ngx_create_temp_buf(r->pool, buffer_size);
     if (b == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
