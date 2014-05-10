@@ -271,8 +271,14 @@ typedef struct {
 #define ngx_tcp_conf_get_module_srv_conf(cf, module)                        \
     ((ngx_tcp_conf_ctx_t *) cf->ctx)->srv_conf[module.ctx_index]
 
+#define ngx_tcp_cycle_get_module_main_conf(cycle, module)                   \
+    (cycle->conf_ctx[ngx_tcp_module.index] ?                                \
+        ((ngx_tcp_conf_ctx_t *) cycle->conf_ctx[ngx_tcp_module.index])      \
+            ->main_conf[module.ctx_index]:                                  \
+        NULL)
 
 extern ngx_uint_t    ngx_tcp_max_module;
 extern ngx_module_t  ngx_tcp_core_module;
+extern ngx_module_t  ngx_tcp_module;
 
 #endif /* _NGX_TCP_H_INCLUDED_ */
