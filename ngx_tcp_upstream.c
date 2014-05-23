@@ -98,6 +98,13 @@ static ngx_command_t  ngx_tcp_upstream_commands[] = {
       offsetof(ngx_tcp_upstream_main_conf_t, check_shm_size),
       NULL },
 
+    { ngx_string("server_type"),
+      NGX_TCP_UPS_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_upstream_srv_conf_t, server_type),
+      NULL },
+
     ngx_null_command
 };
 
@@ -183,8 +190,10 @@ ngx_tcp_upstream_init(ngx_tcp_session_t *s)
     cln = ngx_tcp_cleanup_add(s, 0);
 
     cln->handler = ngx_tcp_upstream_cleanup;
-    cln->data = s;
-    u->cleanup = &cln->handler;
+    cln->data    = s;
+    u->cleanup   = &cln->handler;
+
+    u->keepalive = 0;
 
     if (u->resolved == NULL) {
 
@@ -358,7 +367,7 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
                    "tcp upstream connect: %d", rc);
 
-    if (rc != NGX_OK && rc != NGX_AGAIN) {
+    if (rc == NGX_ERROR) {
 
         ngx_log_error(NGX_LOG_ERR, s->connection->log, 0, 
                       "upstream servers are busy or encounter error!");
@@ -369,7 +378,19 @@ ngx_tcp_upstream_connect(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
         return;
     }
 
-    /* rc == NGX_OK or rc == NGX_AGAIN */
+    if (rc == NGX_BUSY) {
+        ngx_log_error(NGX_LOG_ERR, s->connection->log, 0,
+                      "no live upstreams");
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_NOLIVE);
+        return;
+    }
+
+    if (rc == NGX_DECLINED) {
+        ngx_tcp_upstream_next(s, u, NGX_TCP_UPSTREAM_FT_ERROR);
+        return;
+    }
+
+    /* rc == NGX_OK or rc == NGX_AGAIN or rc == NGX_DONE */
 
     if (u->peer.check_index != NGX_INVALID_CHECK_INDEX) {
         ngx_tcp_check_get_peer(u->peer.check_index);
@@ -560,7 +581,7 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
 
     if (u->cleanup) {
         *u->cleanup = NULL;
-        u->cleanup = NULL;
+         u->cleanup = NULL;
     }
 
     if (u->state && u->state->response_sec) {
@@ -578,7 +599,7 @@ ngx_tcp_upstream_finalize_session(ngx_tcp_session_t *s,
         u->peer.check_index = NGX_INVALID_CHECK_INDEX;
     }
 
-    if (u->peer.connection) {
+    if (u->peer.connection && !u->keepalive) {
 
         ngx_log_debug1(NGX_LOG_DEBUG_TCP, s->connection->log, 0,
                        "close tcp upstream connection: %d",
@@ -695,6 +716,7 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
     uscf->no_port = u->no_port;
 #endif
     uscf->code.status_alive = 0;
+    uscf->server_type = (ngx_str_t) ngx_null_string;
 
     if (u->naddrs == 1) {
         uscf->servers = ngx_array_create(cf->pool, 1,

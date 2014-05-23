@@ -120,6 +120,8 @@ struct ngx_tcp_upstream_srv_conf_s {
         ngx_uint_t                   return_code;
         ngx_uint_t                   status_alive;
     } code;
+
+    ngx_str_t                        server_type;
 };
 
 
@@ -164,6 +166,8 @@ struct ngx_tcp_upstream_s {
     ngx_tcp_upstream_resolved_t     *resolved;
     ngx_tcp_upstream_state_t        *state;
     ngx_tcp_cleanup_pt              *cleanup;
+
+    unsigned                         keepalive:1;
 };
 
 
