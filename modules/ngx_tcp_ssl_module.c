@@ -241,11 +241,15 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_str_value(conf->certificate, prev->certificate, "");
     ngx_conf_merge_str_value(conf->certificate_key, prev->certificate_key, "");
 
+#if defined(nginx_version) && nginx_version >= 1007003
+    ngx_conf_merge_ptr_value(conf->passwords, prev->passwords, NULL);
+#endif
+
     ngx_conf_merge_str_value(conf->dhparam, prev->dhparam, "");
 
 #if defined(nginx_version) && nginx_version >= 1000006
-    ngx_conf_merge_str_value(conf->ecdh_curve, prev->ecdh_curve, 
-                             NGX_DEFAULT_ECDH_CURVE); 
+    ngx_conf_merge_str_value(conf->ecdh_curve, prev->ecdh_curve,
+                             NGX_DEFAULT_ECDH_CURVE);
 
 #endif
     ngx_conf_merge_str_value(conf->client_certificate, prev->client_certificate,
@@ -324,8 +328,13 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
         return NGX_CONF_ERROR;
     }
 #else
+#if defined(nginx_version) && nginx_version >= 1007003
+    if (ngx_ssl_certificate(cf, &conf->ssl, &conf->certificate,
+                            &conf->certificate_key, conf->passwords)
+#else
     if (ngx_ssl_certificate(cf, &conf->ssl, &conf->certificate,
                             &conf->certificate_key)
+#endif
         != NGX_OK)
     {
         return NGX_CONF_ERROR;
