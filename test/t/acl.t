@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: test ACL
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -44,13 +44,15 @@ __DATA__
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- error_code: 500
 --- response_body_like: ^.*$
 
 === TEST 2: test ACL without anything
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -60,12 +62,14 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^.*$
 
 === TEST 3: test ACL witht other ip
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -81,4 +85,6 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^.*$

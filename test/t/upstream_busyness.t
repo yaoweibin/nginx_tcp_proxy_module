@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: the upstream_busyness command
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
         busyness;
     }
 
@@ -43,12 +43,14 @@ __DATA__
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 2: the upstream_busyness command with check
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
 
         check interval=3000 rise=1 fall=5 timeout=1000;
         busyness;
@@ -61,4 +63,6 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>

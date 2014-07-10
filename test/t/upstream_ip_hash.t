@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: the upstream_ip_hash command
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
         ip_hash;
     }
 
@@ -43,12 +43,16 @@ __DATA__
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 2: the upstream_ip_hash command with check
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
 
         check interval=2000;
         ip_hash;
@@ -61,4 +65,8 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>

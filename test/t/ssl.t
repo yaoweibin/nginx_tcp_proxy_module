@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: the ssl command
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
         ip_hash;
     }
 
@@ -43,12 +43,14 @@ __DATA__
     }
 --- request_https
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 2: the ssl command with websocket
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -58,13 +60,15 @@ GET /
     }
 --- request_https
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 3: the ssl command with websocket
 
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -76,13 +80,15 @@ GET /
     }
 --- request_https
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 4: the ssl command with ssl on
 
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -95,13 +101,15 @@ GET /
     }
 --- request_https
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 5: the ssl command with ssl on and listen ssl
 
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -114,4 +122,6 @@ GET /
     }
 --- request_https
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>

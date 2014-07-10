@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: the http_check test
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
 
         check interval=3000 rise=1 fall=5 timeout=1000 type=http;
         check_http_send "GET /test HTTP/1.0\r\n\r\n";
@@ -46,12 +46,14 @@ __DATA__
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 2: the http_check test without check
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -61,12 +63,14 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 3: the http_check which use the raw name 
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
 
         check interval=3000 rise=1 fall=5 timeout=1000 type=http;
         check_http_send "GET /test HTTP/1.0\r\n\r\n";
@@ -76,8 +80,10 @@ GET /
     server {
         listen 1984;
 
-        proxy_pass blog.163.com;
+        proxy_pass www.taobao.com;
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>

@@ -32,7 +32,7 @@ __DATA__
 === TEST 1: the tcp_check test
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
         #ip_hash;
         check interval=3000 rise=1 fall=5 timeout=1000;
     }
@@ -45,12 +45,14 @@ __DATA__
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 2: the round robin test without check
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
     }
 
     server {
@@ -61,12 +63,14 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
 
 === TEST 3: the ip_hash test without check
 --- config
     upstream test{
-        server blog.163.com;
+        server www.taobao.com;
         ip_hash;
     }
 
@@ -77,4 +81,6 @@ GET /
     }
 --- request
 GET /
+--- request_headers
+Host: www.taobao.com
 --- response_body_like: ^<(.*)>
