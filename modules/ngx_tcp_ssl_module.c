@@ -18,7 +18,9 @@ static char *ngx_tcp_ssl_enable(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 static char *ngx_tcp_ssl_session_cache(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
-
+static ngx_int_t ngx_tcp_ssl_client_certificate(ngx_conf_t *cf, ngx_ssl_t *ssl,
+    ngx_str_t *cert, ngx_int_t depth, ngx_int_t optional);
+static int ngx_tcp_ssl_verify_callback(int ok, X509_STORE_CTX *x509_store);
 
 static ngx_conf_bitmask_t  ngx_tcp_ssl_protocols[] = {
     { ngx_string("SSLv2"), NGX_SSL_SSLv2 },
@@ -358,9 +360,10 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
             return NGX_CONF_ERROR;
         }
 
-        if (ngx_ssl_client_certificate(cf, &conf->ssl,
+        if (ngx_tcp_ssl_client_certificate(cf, &conf->ssl,
                                        &conf->client_certificate,
-                                       conf->verify_depth)
+                                       conf->verify_depth,
+                                       conf->verify == 2 ? 1 : 0)
             != NGX_OK)
         {
             return NGX_CONF_ERROR;
@@ -538,4 +541,110 @@ invalid:
                        "invalid session cache \"%V\"", &value[i]);
 
     return NGX_CONF_ERROR;
+}
+
+// borrowed from original ngx_event_openssl.c v1.7.1
+ngx_int_t
+ngx_tcp_ssl_client_certificate(ngx_conf_t *cf, ngx_ssl_t *ssl, ngx_str_t *cert,
+    ngx_int_t depth, ngx_int_t optional)
+{
+    STACK_OF(X509_NAME)  *list;
+
+    /* @see https://www.openssl.org/docs/ssl/SSL_CTX_set_verify.html
+     * When proxying tcp connection, you expect handshake to fail if no 
+     * client certificate was send by client and ssl_verify_client=on.
+     * But by default nginx allowed connection by any client. 
+     */
+    int ossl_verify_mode = optional ? SSL_VERIFY_PEER
+    						: SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+
+    SSL_CTX_set_verify(ssl->ctx, ossl_verify_mode, ngx_tcp_ssl_verify_callback);
+
+    SSL_CTX_set_verify_depth(ssl->ctx, depth);
+
+    if (cert->len == 0) {
+        return NGX_OK;
+    }
+
+    if (ngx_conf_full_name(cf->cycle, cert, 1) != NGX_OK) {
+        return NGX_ERROR;
+    }
+
+    if (SSL_CTX_load_verify_locations(ssl->ctx, (char *) cert->data, NULL)
+        == 0)
+    {
+        ngx_ssl_error(NGX_LOG_EMERG, ssl->log, 0,
+                      "SSL_CTX_load_verify_locations(\"%s\") failed",
+                      cert->data);
+        return NGX_ERROR;
+    }
+
+    /*
+     * SSL_CTX_load_verify_locations() may leave errors in the error queue
+     * while returning success
+     */
+
+    ERR_clear_error();
+
+    list = SSL_load_client_CA_file((char *) cert->data);
+
+    if (list == NULL) {
+        ngx_ssl_error(NGX_LOG_EMERG, ssl->log, 0,
+                      "SSL_load_client_CA_file(\"%s\") failed", cert->data);
+        return NGX_ERROR;
+    }
+
+    /*
+     * before 0.9.7h and 0.9.8 SSL_load_client_CA_file()
+     * always leaved an error in the error queue
+     */
+
+    ERR_clear_error();
+
+    SSL_CTX_set_client_CA_list(ssl->ctx, list);
+
+    return NGX_OK;
+}
+
+static int
+ngx_tcp_ssl_verify_callback(int ok, X509_STORE_CTX *x509_store)
+{
+#if (NGX_DEBUG)
+    char              *subject, *issuer;
+    int                err, depth;
+    X509              *cert;
+    X509_NAME         *sname, *iname;
+    ngx_connection_t  *c;
+    ngx_ssl_conn_t    *ssl_conn;
+
+    ssl_conn = X509_STORE_CTX_get_ex_data(x509_store,
+                                          SSL_get_ex_data_X509_STORE_CTX_idx());
+
+    c = ngx_ssl_get_connection(ssl_conn);
+
+    cert = X509_STORE_CTX_get_current_cert(x509_store);
+    err = X509_STORE_CTX_get_error(x509_store);
+    depth = X509_STORE_CTX_get_error_depth(x509_store);
+
+    sname = X509_get_subject_name(cert);
+    subject = sname ? X509_NAME_oneline(sname, NULL, 0) : "(none)";
+
+    iname = X509_get_issuer_name(cert);
+    issuer = iname ? X509_NAME_oneline(iname, NULL, 0) : "(none)";
+
+    ngx_log_debug5(NGX_LOG_DEBUG_EVENT, c->log, 0,
+                   "verify:%d, error:%d, depth:%d, "
+                   "subject:\"%s\",issuer: \"%s\"",
+                   ok, err, depth, subject, issuer);
+
+    if (sname) {
+        OPENSSL_free(subject);
+    }
+
+    if (iname) {
+        OPENSSL_free(issuer);
+    }
+#endif
+
+    return ok;
 }
