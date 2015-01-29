@@ -19,10 +19,10 @@ typedef struct ngx_tcp_proxy_conf_s {
 } ngx_tcp_proxy_conf_t;
 
 
-static void ngx_tcp_proxy_init_session(ngx_tcp_session_t *s); 
-static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c, 
+static void ngx_tcp_proxy_init_session(ngx_tcp_session_t *s);
+static  void ngx_tcp_proxy_init_upstream(ngx_connection_t *c,
     ngx_tcp_session_t *s);
-static void ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, 
+static void ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s,
     ngx_tcp_upstream_t *u);
 static char *ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 static void ngx_tcp_proxy_dummy_read_handler(ngx_event_t *ev);
@@ -114,8 +114,8 @@ ngx_module_t  ngx_tcp_proxy_module = {
 };
 
 
-static void 
-ngx_tcp_proxy_init_session(ngx_tcp_session_t *s) 
+static void
+ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
 {
     ngx_connection_t         *c;
     ngx_tcp_proxy_conf_t     *pcf;
@@ -149,7 +149,7 @@ ngx_tcp_proxy_init_session(ngx_tcp_session_t *s)
 
 
 static void
-ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev) 
+ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev)
 {
     ngx_connection_t    *c;
     ngx_tcp_session_t   *s;
@@ -167,7 +167,7 @@ ngx_tcp_proxy_dummy_write_handler(ngx_event_t *wev)
 
 
 static void
-ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev) 
+ngx_tcp_proxy_dummy_read_handler(ngx_event_t *rev)
 {
     ngx_connection_t    *c;
     ngx_tcp_session_t   *s;
@@ -233,7 +233,7 @@ ngx_tcp_proxy_init_upstream(ngx_connection_t *c, ngx_tcp_session_t *s)
 }
 
 
-static void 
+static void
 ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 {
     ngx_connection_t         *c;
@@ -284,12 +284,12 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 
 #if (NGX_TCP_SSL)
 
-    /* 
+    /*
      * The ssl connection with client may not trigger the read event again,
      * So I trigger it in this function.
      * */
     if (s->connection->ssl) {
-        ngx_tcp_proxy_handler(s->connection->read); 
+        ngx_tcp_proxy_handler(s->connection->read);
     }
 
 #endif
@@ -299,7 +299,7 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 
 
 static void
-ngx_tcp_proxy_handler(ngx_event_t *ev) 
+ngx_tcp_proxy_handler(ngx_event_t *ev)
 {
     char                     *action, *recv_action, *send_action;
     off_t                    *read_bytes, *write_bytes;
@@ -307,7 +307,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
     ssize_t                   n;
     ngx_buf_t                *b;
     ngx_err_t                 err;
-    ngx_uint_t                do_write, first_read;
+    ngx_uint_t                do_write, first_read = 0;
     ngx_connection_t         *c, *src, *dst;
     ngx_tcp_session_t        *s;
     ngx_tcp_proxy_conf_t     *pcf;
@@ -431,7 +431,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
         size = b->end - b->last;
 
         if (size) {
-            if (src->read->ready || first_read) { 
+            if (src->read->ready || first_read) {
 
                 first_read = 0;
                 c->log->action = recv_action;
@@ -522,7 +522,7 @@ ngx_tcp_proxy_handler(ngx_event_t *ev)
 
 
 static char *
-ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) 
+ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_tcp_proxy_conf_t *pcf = conf;
 
@@ -570,7 +570,7 @@ ngx_tcp_proxy_pass(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
 static void *
-ngx_tcp_proxy_create_conf(ngx_conf_t *cf) 
+ngx_tcp_proxy_create_conf(ngx_conf_t *cf)
 {
     ngx_tcp_proxy_conf_t  *pcf;
 
@@ -590,7 +590,7 @@ ngx_tcp_proxy_create_conf(ngx_conf_t *cf)
 
 
 static char *
-ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent, void *child) 
+ngx_tcp_proxy_merge_conf(ngx_conf_t *cf, void *parent, void *child)
 {
     ngx_tcp_proxy_conf_t *prev = parent;
     ngx_tcp_proxy_conf_t *conf = child;
