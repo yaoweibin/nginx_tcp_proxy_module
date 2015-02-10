@@ -90,7 +90,6 @@ typedef struct {
 #define NGX_TCP_UPSTREAM_BACKUP        0x0020
 #define NGX_TCP_UPSTREAM_SRUN_ID       0x0040
 #define NGX_TCP_UPSTREAM_MAX_BUSY      0x0080
-#define NGX_TCP_UPSTREAM_ACCEPT_PROXY  0x0100
 
 struct ngx_tcp_upstream_srv_conf_s {
 

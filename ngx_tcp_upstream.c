@@ -758,8 +758,7 @@ ngx_tcp_upstream(ngx_conf_t *cf, ngx_command_t *cmd, void *dummy)
                                |NGX_TCP_UPSTREAM_FAIL_TIMEOUT
                                |NGX_TCP_UPSTREAM_MAX_BUSY
                                |NGX_TCP_UPSTREAM_DOWN
-                               |NGX_TCP_UPSTREAM_BACKUP
-                               |NGX_TCP_UPSTREAM_ACCEPT_PROXY);
+                               |NGX_TCP_UPSTREAM_BACKUP);
     if (uscf == NULL) {
         return NGX_CONF_ERROR;
     }
@@ -957,17 +956,6 @@ ngx_tcp_upstream_server(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             }
 
             us->down = 1;
-
-            continue;
-        }
-
-        if (ngx_strncmp(value[i].data, "accept_proxy", 12) == 0) {
-
-            if (!(uscf->flags & NGX_TCP_UPSTREAM_ACCEPT_PROXY)) {
-                goto invalid;
-            }
-
-            us->accept_proxy = 1;
 
             continue;
         }
