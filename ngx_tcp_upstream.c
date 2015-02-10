@@ -99,7 +99,7 @@ static ngx_command_t  ngx_tcp_upstream_commands[] = {
       NULL },
 
     { ngx_string("accept_proxy"),
-      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
+      NGX_TCP_UPS_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       NGX_TCP_SRV_CONF_OFFSET,
       offsetof(ngx_tcp_upstream_srv_conf_t, accept_proxy),
@@ -697,6 +697,7 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
     uscf->line = cf->conf_file->line;
     uscf->port = u->port;
     uscf->default_port = u->default_port;
+    uscf->accept_proxy = NGX_CONF_UNSET;
 #if (nginx_version) >= 1003011
     uscf->no_port = u->no_port;
 #endif

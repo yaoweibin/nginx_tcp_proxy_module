@@ -329,7 +329,7 @@ ngx_tcp_upstream_init_proxy_handler(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
 
 #endif
 
-    if (s->upstream->conf->upstream.accept_proxy) {
+    if (s->upstream->conf->upstream->accept_proxy) {
         ngx_tcp_proxy_send_proxy_protocol(s, u);        
     }
     return;
