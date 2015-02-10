@@ -98,6 +98,12 @@ static ngx_command_t  ngx_tcp_upstream_commands[] = {
       offsetof(ngx_tcp_upstream_main_conf_t, check_shm_size),
       NULL },
 
+    { ngx_string("accept_proxy"),
+      NGX_TCP_MAIN_CONF|NGX_TCP_SRV_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_TCP_SRV_CONF_OFFSET,
+      offsetof(ngx_tcp_upstream_srv_conf_t, accept_proxy),
+      NULL },
     ngx_null_command
 };
 
