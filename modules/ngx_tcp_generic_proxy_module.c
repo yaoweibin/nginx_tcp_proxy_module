@@ -245,7 +245,7 @@ ngx_tcp_proxy_send_proxy_protocol(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     c->log->action = "ngx_tcp_proxy_send_proxy_protocol";
 
     client = (struct sockaddr_in*)s->connection->sockaddr;
-    listener = (struct sockaddr_in*)s->connection->listening->sockaddr; // doesn't appear to be correct
+    listener = (struct sockaddr_in*)s->connection->local_sockaddr; // doesn't appear to be correct
     src_addr = (u_char *)&client->sin_addr;
     dst_addr = (u_char *)&listener->sin_addr;
 
@@ -255,9 +255,7 @@ ngx_tcp_proxy_send_proxy_protocol(ngx_tcp_session_t *s, ngx_tcp_upstream_t *u)
     // PROXY TCP4 <src ip> <dst ip> <src port> <dst port>\r\n
     proxy_line.data = ngx_pnalloc(c->pool, 56); // maximum length for TCP4
     proxy_line.len = ngx_sprintf(proxy_line.data,
-                                 // "PROXY TCP4 %V %V %d %d\r\n",
                                  "PROXY TCP4 %ud.%ud.%ud.%ud %ud.%ud.%ud.%ud %d %d\r\n",
-                                 // s->connection->addr_text,
                                  src_addr[0], src_addr[1], src_addr[2], src_addr[3],
                                  dst_addr[0], dst_addr[1], dst_addr[2], dst_addr[3],
                                  client->sin_port,
