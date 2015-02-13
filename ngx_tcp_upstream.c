@@ -697,7 +697,7 @@ ngx_tcp_upstream_add(ngx_conf_t *cf, ngx_url_t *u, ngx_uint_t flags)
     uscf->line = cf->conf_file->line;
     uscf->port = u->port;
     uscf->default_port = u->default_port;
-    uscf->accept_proxy = NGX_CONF_UNSET;
+    uscf->accept_proxy = 0;
 #if (nginx_version) >= 1003011
     uscf->no_port = u->no_port;
 #endif
