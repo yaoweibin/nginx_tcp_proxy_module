@@ -307,7 +307,7 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     cln->handler = ngx_ssl_cleanup_ctx;
     cln->data = &conf->ssl;
 
-#if defined(tengine_version)
+#if defined(tengine_version) && tengine_version < 2002000
     ngx_str_t pass_phrase_dialog              = ngx_string("builtin");
     ngx_str_t ngx_tcp_ssl_unknown_server_name = ngx_string("unknown");
 
