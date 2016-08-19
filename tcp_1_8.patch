@@ -1,0 +1,68 @@
+From c30ac038b33e16890291f8dd5b7c8b2cc87b42a3 Mon Sep 17 00:00:00 2001
+From: medzeus2 <root@s53.dev>
+Date: Fri, 19 Aug 2016 18:06:53 +0800
+Subject: [PATCH] create patch fro nginx_tcp_proxy_module
+
+---
+ src/core/ngx_log.c            |    2 +-
+ src/core/ngx_log.h            |    3 ++-
+ src/event/ngx_event_connect.h |    2 ++
+ 3 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/core/ngx_log.c b/src/core/ngx_log.c
+index 8e9408d..b511284 100644
+--- a/src/core/ngx_log.c
++++ b/src/core/ngx_log.c
+@@ -86,7 +86,7 @@ static ngx_str_t err_levels[] = {
+ 
+ static const char *debug_levels[] = {
+     "debug_core", "debug_alloc", "debug_mutex", "debug_event",
+-    "debug_http", "debug_mail", "debug_stream"
++    "debug_http", "debug_mail", "debug_stream", "debug_tcp"
+ };
+ 
+ 
+diff --git a/src/core/ngx_log.h b/src/core/ngx_log.h
+index afb73bf..28b1aff 100644
+--- a/src/core/ngx_log.h
++++ b/src/core/ngx_log.h
+@@ -30,6 +30,7 @@
+ #define NGX_LOG_DEBUG_HTTP        0x100
+ #define NGX_LOG_DEBUG_MAIL        0x200
+ #define NGX_LOG_DEBUG_STREAM      0x400
++#define NGX_LOG_DEBUG_TCP         0x800
+ 
+ /*
+  * do not forget to update debug_levels[] in src/core/ngx_log.c
+@@ -37,7 +38,7 @@
+  */
+ 
+ #define NGX_LOG_DEBUG_FIRST       NGX_LOG_DEBUG_CORE
+-#define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_STREAM
++#define NGX_LOG_DEBUG_LAST        NGX_LOG_DEBUG_TCP
+ #define NGX_LOG_DEBUG_CONNECTION  0x80000000
+ #define NGX_LOG_DEBUG_ALL         0x7ffffff0
+ 
+diff --git a/src/event/ngx_event_connect.h b/src/event/ngx_event_connect.h
+index 10b72a1..384586b 100644
+--- a/src/event/ngx_event_connect.h
++++ b/src/event/ngx_event_connect.h
+@@ -33,6 +33,7 @@ typedef void (*ngx_event_save_peer_session_pt)(ngx_peer_connection_t *pc,
+     void *data);
+ #endif
+ 
++#define NGX_INVALID_CHECK_INDEX (ngx_uint_t)(-1)
+ 
+ struct ngx_peer_connection_s {
+     ngx_connection_t                *connection;
+@@ -42,6 +43,7 @@ struct ngx_peer_connection_s {
+     ngx_str_t                       *name;
+ 
+     ngx_uint_t                       tries;
++    ngx_uint_t                       check_index;
+     ngx_msec_t                       start_time;
+ 
+     ngx_event_get_peer_pt            get;
+-- 
+1.7.1
+
