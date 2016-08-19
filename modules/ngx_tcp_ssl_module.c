@@ -322,10 +322,16 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
     } else {
         dialog.server_name = &ngx_tcp_ssl_unknown_server_name;
     }
+#if defined(nginx_version) && nginx_version >= 1007003
+    if (ngx_ssl_certificate(cf, &conf->ssl, &conf->certificate,
+                             &conf->certificate_key, &dialog, conf->passwords)
+        != NGX_OK)
 
+#else
     if (ngx_ssl_certificate(cf, &conf->ssl, &conf->certificate,
                             &conf->certificate_key, &dialog)
         != NGX_OK)
+#endif
     {
         return NGX_CONF_ERROR;
     }
