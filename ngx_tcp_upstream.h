@@ -140,7 +140,7 @@ struct ngx_tcp_upstream_resolved_s {
 
     ngx_uint_t                       naddrs;
 #if (nginx_version) >= 1005008
-    ngx_addr_t                      *addrs;
+    ngx_resolver_addr_t             *addrs;
 #else
     in_addr_t                       *addrs;
 #endif
