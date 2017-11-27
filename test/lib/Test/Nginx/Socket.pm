@@ -229,7 +229,7 @@ $parsed_req->{content}";
                         $decoded .= $1;
                         #warn "decoded: [$1]\n";
                     } else {
-                        fail("$name - invalid chunked data received (not enought octets for the data section)");
+                        fail("$name - invalid chunked data received (not enough octets for the data section)");
                         return;
                     }
 
