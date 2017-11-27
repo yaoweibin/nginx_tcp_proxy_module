@@ -74,7 +74,7 @@ Description
     Note, You can't use the same listening port with HTTP modules.
 
 Directives
-  ngx_tcp_moodule
+  ngx_tcp_module
    tcp
     syntax: *tcp {...}*
 
@@ -85,7 +85,7 @@ Directives
     description: All the tcp related directives are contained in the tcp
     block.
 
-    ngx_tcp_core_moodule
+    ngx_tcp_core_module
 
    server
     syntax: *server {...}*
