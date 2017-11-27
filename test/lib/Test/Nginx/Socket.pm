@@ -201,7 +201,7 @@ $parsed_req->{content}";
     my $raw_resp = send_request($req, $block->raw_request_middle_delay,
         $timeout);
 
-    #warn "raw resonse: [$raw_resp]\n";
+    #warn "raw response: [$raw_resp]\n";
 
     my $res = HTTP::Response->parse($raw_resp);
     my $enc = $res->header('Transfer-Encoding');
