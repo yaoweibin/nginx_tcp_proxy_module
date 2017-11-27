@@ -1515,7 +1515,7 @@ ngx_tcp_check_recv_handler(ngx_event_t *event)
         break;
 
     case NGX_OK:
-        /* pass throught */
+        /* pass through */
 
     default:
         ngx_tcp_check_status_update(peer_conf, 1);
