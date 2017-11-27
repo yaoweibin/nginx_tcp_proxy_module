@@ -482,7 +482,7 @@ Directives
     description: set the timeout value of reading from backends. Your
     timeout will be the minimum of this and the *timeout* parameter, so if
     you want a long timeout for your websockets, make sure to set both
-    paramaters.
+    parameters.
 
    websocket_send_timeout
     syntax: *websocket_send_timeout miliseconds*
