@@ -12,7 +12,7 @@ EventMachine.run {
 
     ws.onclose { puts "Connection closed" }
     ws.onmessage { |msg|
-      puts "Recieved message: #{msg}"
+      puts "Received message: #{msg}"
       ws.send "Pong: #{msg}"
     }
   end
