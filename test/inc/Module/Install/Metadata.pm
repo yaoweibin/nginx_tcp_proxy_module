@@ -168,7 +168,7 @@ sub perl_version {
 	# Normalize the version
 	$version = $self->_perl_version($version);
 
-	# We don't support the reall old versions
+	# We don't support the really old versions
 	unless ( $version >= 5.005 ) {
 		die "Module::Install only supports 5.005 or newer (use ExtUtils::MakeMaker)\n";
 	}
