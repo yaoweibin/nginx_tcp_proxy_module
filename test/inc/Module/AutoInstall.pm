@@ -153,7 +153,7 @@ sub import {
         $modules = [ %{$modules} ] if UNIVERSAL::isa( $modules, 'HASH' );
 
         unshift @$modules, -default => &{ shift(@$modules) }
-          if ( ref( $modules->[0] ) eq 'CODE' );    # XXX: bugward combatability
+          if ( ref( $modules->[0] ) eq 'CODE' );    # XXX: bugward compatibility
 
         while ( my ( $mod, $arg ) = splice( @$modules, 0, 2 ) ) {
             if ( $mod =~ m/^-(\w+)$/ ) {
