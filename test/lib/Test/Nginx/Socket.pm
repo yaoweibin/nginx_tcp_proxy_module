@@ -411,7 +411,7 @@ sub send_request ($$$) {
 
             my $res = read_event_handler($ctx);
             if (!$res) {
-                # error occured
+                # error occurred
                 if ($err_hdls->exists($hdl)) {
                     $err_hdls->remove($hdl);
                 }
@@ -441,7 +441,7 @@ sub send_request ($$$) {
 
             my $res = write_event_handler($ctx);
             if (!$res) {
-                # error occured
+                # error occurred
                 if ($err_hdls->exists($hdl)) {
                     $err_hdls->remove($hdl);
                 }
