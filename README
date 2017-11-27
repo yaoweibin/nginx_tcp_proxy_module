@@ -635,7 +635,7 @@ Directives
     *   off -- Hard off: nginx says explicitly to a client that sessions can
         not reused.
 
-    *   none -- Soft off: nginx says to a client that session can be resued,
+    *   none -- Soft off: nginx says to a client that session can be reused,
         but nginx actually never reuses them. This is workaround for some
         mail clients as ssl_session_cache may be used in mail proxy as well
         as in HTTP server.
