@@ -201,7 +201,7 @@ $parsed_req->{content}";
     my $raw_resp = send_request($req, $block->raw_request_middle_delay,
         $timeout);
 
-    #warn "raw resonse: [$raw_resp]\n";
+    #warn "raw response: [$raw_resp]\n";
 
     my $res = HTTP::Response->parse($raw_resp);
     my $enc = $res->header('Transfer-Encoding');
@@ -229,7 +229,7 @@ $parsed_req->{content}";
                         $decoded .= $1;
                         #warn "decoded: [$1]\n";
                     } else {
-                        fail("$name - invalid chunked data received (not enought octets for the data section)");
+                        fail("$name - invalid chunked data received (not enough octets for the data section)");
                         return;
                     }
 
@@ -411,7 +411,7 @@ sub send_request ($$$) {
 
             my $res = read_event_handler($ctx);
             if (!$res) {
-                # error occured
+                # error occurred
                 if ($err_hdls->exists($hdl)) {
                     $err_hdls->remove($hdl);
                 }
@@ -441,7 +441,7 @@ sub send_request ($$$) {
 
             my $res = write_event_handler($ctx);
             if (!$res) {
-                # error occured
+                # error occurred
                 if ($err_hdls->exists($hdl)) {
                     $err_hdls->remove($hdl);
                 }

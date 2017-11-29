@@ -74,7 +74,7 @@ Description
     Note, You can't use the same listening port with HTTP modules.
 
 Directives
-  ngx_tcp_moodule
+  ngx_tcp_module
    tcp
     syntax: *tcp {...}*
 
@@ -85,7 +85,7 @@ Directives
     description: All the tcp related directives are contained in the tcp
     block.
 
-    ngx_tcp_core_moodule
+    ngx_tcp_core_module
 
    server
     syntax: *server {...}*
@@ -482,7 +482,7 @@ Directives
     description: set the timeout value of reading from backends. Your
     timeout will be the minimum of this and the *timeout* parameter, so if
     you want a long timeout for your websockets, make sure to set both
-    paramaters.
+    parameters.
 
    websocket_send_timeout
     syntax: *websocket_send_timeout miliseconds*
@@ -635,7 +635,7 @@ Directives
     *   off -- Hard off: nginx says explicitly to a client that sessions can
         not reused.
 
-    *   none -- Soft off: nginx says to a client that session can be resued,
+    *   none -- Soft off: nginx says to a client that session can be reused,
         but nginx actually never reuses them. This is workaround for some
         mail clients as ssl_session_cache may be used in mail proxy as well
         as in HTTP server.

@@ -41,7 +41,7 @@ sub makemaker_args {
 	return $args;
 }
 
-# For mm args that take multiple space-seperated args,
+# For mm args that take multiple space-separated args,
 # append an argument to the current list.
 sub makemaker_append {
 	my $self = sShift;

@@ -60,10 +60,10 @@ static char * ngx_tcp_upstream_check_status(ngx_conf_t *cf,
  * Some codes copy from HAProxy 1.4.1
  */
 static const char sslv3_client_hello_pkt[] = {
-	"\x16"                /* ContentType         : 0x16 = Hanshake           */
+	"\x16"                /* ContentType         : 0x16 = Handshake          */
 	"\x03\x00"            /* ProtocolVersion     : 0x0300 = SSLv3            */
 	"\x00\x79"            /* ContentLength       : 0x79 bytes after this one */
-	"\x01"                /* HanshakeType        : 0x01 = CLIENT HELLO       */
+	"\x01"                /* HandshakeType       : 0x01 = CLIENT HELLO       */
 	"\x00\x00\x75"        /* HandshakeLength     : 0x75 bytes after this one */
 	"\x03\x00"            /* Hello Version       : 0x0300 = v3               */
 	"\x00\x00\x00\x00"    /* Unix GMT Time (s)   : filled with <now> (@0x0B) */
@@ -883,7 +883,7 @@ ngx_tcp_check_ssl_hello_parse(ngx_tcp_check_peer_conf_t *peer_conf)
 
     ngx_log_debug7(NGX_LOG_DEBUG_TCP, ngx_cycle->log, 0, 
                    "tcp check ssl_parse, type: %d, version: %d.%d, "
-                   "length: %d, handshanke_type: %d, "
+                   "length: %d, handshake_type: %d, "
                    "hello_version: %d.%d", 
                    resp->msg_type, resp->version.major, resp->version.minor, 
                    ntohs(resp->length), resp->handshake_type, 
@@ -1515,7 +1515,7 @@ ngx_tcp_check_recv_handler(ngx_event_t *event)
         break;
 
     case NGX_OK:
-        /* pass throught */
+        /* pass through */
 
     default:
         ngx_tcp_check_status_update(peer_conf, 1);

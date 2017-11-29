@@ -21,7 +21,7 @@
 	<li><a href="#directives">Directives</a></li>
 	<ul>
 
-		<li><a href="#ngx_tcp_moodule">ngx_tcp_moodule</a></li>
+		<li><a href="#ngx_tcp_module">ngx_tcp_module</a></li>
 		<ul>
 
 			<li><a href="#tcp">tcp</a></li>
@@ -184,7 +184,7 @@
 <h1><a name="directives">Directives</a></h1>
 <p>
 </p>
-<h2><a name="ngx_tcp_moodule">ngx_tcp_moodule</a></h2>
+<h2><a name="ngx_tcp_module">ngx_tcp_module</a></h2>
 <p>
 </p>
 <h3><a name="tcp">tcp</a></h3>
@@ -192,7 +192,7 @@
 <p><strong>default:</strong> <em>none</em></p>
 <p><strong>context:</strong> <em>main</em></p>
 <p><strong>description:</strong> All the tcp related directives are contained in the tcp block.</p>
-<p><strong>ngx_tcp_core_moodule</strong></p>
+<p><strong>ngx_tcp_core_module</strong></p>
 <p>
 </p>
 <h3><a name="server">server</a></h3>
@@ -515,7 +515,7 @@
 <p><strong>syntax:</strong> <em>websocket_read_timeout miliseconds</em></p>
 <p><strong>default:</strong> <em>60000</em></p>
 <p><strong>context:</strong> <em>tcp, server</em></p>
-<p><strong>description:</strong> set the timeout value of reading from backends. Your timeout will be the minimum of this and the *timeout* parameter, so if you want a long timeout for your websockets, make sure to set both paramaters.</p>
+<p><strong>description:</strong> set the timeout value of reading from backends. Your timeout will be the minimum of this and the *timeout* parameter, so if you want a long timeout for your websockets, make sure to set both parameters.</p>
 <p>
 </p>
 <h3><a name="websocket_send_timeout">websocket_send_timeout</a></h3>
@@ -620,7 +620,7 @@ openssl ciphers</p>
 <p>off -- Hard off: nginx says explicitly to a client that sessions can not reused.</p>
 </li>
 <li>
-<p>none -- Soft off: nginx says to a client that session can be resued, but nginx actually never reuses them. This is workaround for some mail clients as ssl_session_cache may be used in mail proxy as well as in HTTP server.</p>
+<p>none -- Soft off: nginx says to a client that session can be reused, but nginx actually never reuses them. This is workaround for some mail clients as ssl_session_cache may be used in mail proxy as well as in HTTP server.</p>
 </li>
 <li>
 <p>builtin -- the OpenSSL builtin cache, is used inside one worker process only. The cache size is assigned in the number of the sessions. Note: there appears to be a memory fragmentation issue using this method, please take that into consideration when using this. See ``References'' below.</p>
