@@ -81,34 +81,35 @@ Note, You can't use the same listening port with HTTP modules.
 
 ##  Directives
 ###  ngx_tcp_module
-#####  tcp
-syntax: `tcp {...}`
-default: none
-context: main
+####  tcp
+
+syntax: `tcp {...}`   
+default: none  
+context: main  
 description: All the tcp related directives are contained in the tcp
-block.
+block.  
 
 ###  ngx_tcp_core_module
-#####  server
-syntax: `server {...}`
-default: none
-context: tcp
+####  server
+syntax: `server {...}`  
+default: none  
+context: tcp  
 description: All the specific server directives are contained in the
-server block.
+server block.  
 
-#####  listen
-syntax: `listen address:port [ bind | ssl | default]`
-default: none
-context: server
-description: The same as listen (<http://wiki.nginx.org/NginxMailCoreModule#listen>). The parameter of
+####  listen
+syntax: `listen address:port [ bind | ssl | default]`  
+default: none  
+context: server  
+description: The same as listen (<http://wiki.nginx.org/NginxMailCoreModule#listen>). The parameter of  
 default means the default server if you have several server blocks with
-the same port.
+the same port.  
 
-#####  access_log
-syntax: `access_log path [buffer=size] | off`
-default: access_log logs/tcp_access.log
-context: tcp, server
-description: Set the access.log. Each record's format is like this:
+####  access_log
+syntax: `access_log path [buffer=size] | off`  
+default: access_log logs/tcp_access.log  
+context: tcp, server  
+description: Set the access.log. Each record's format is like this:  
 
 ```bash
 log_time worker_process_pid client_ip host_ip accept_time upstream_ip
@@ -118,391 +119,359 @@ bytes_read bytes_write
 172.19.0.129:80 80 236305
 ```
 
-* `log_time` - The current time when writing this log. The log action is called when the proxy session is closed.
-* `worker_process_pid` - the pid of worker process
-* `client_ip` - the client ip
-* `host_ip` - the server ip and port
-* `accept_time` - the time when the server accepts client's connection
-* `upstream_ip` - the upstream server's ip
-* `bytes_read` - the bytes read from client
-* `bytes_write` - the bytes written to client
+* `log_time` - The current time when writing this log. The log action is called when the proxy session is closed.  
+* `worker_process_pid` - the pid of worker process  
+* `client_ip` - the client ip  
+* `host_ip` - the server ip and port  
+* `accept_time` - the time when the server accepts client's connection  
+* `upstream_ip` - the upstream server's ip  
+* `bytes_read` - the bytes read from client  
+* `bytes_write` - the bytes written to client  
 
-#####  allow
-syntax: `allow [ address | CIDR | all ]`
-default: none
-context: server
-description: Directive grants access for the network or addresses
-indicated.
+####  allow
+syntax: `allow [ address | CIDR | all ]`  
+default: none  
+context: server  
+description: Directive grants access for the network or addresses indicated.  
 
-#####  deny
-syntax: `deny [ address | CIDR | all ]`
-default: none
-context: server
-description: Directive grants access for the network or addresses
-indicated.
+####  deny
+syntax: `deny [ address | CIDR | all ]`  
+default: none  
+context: server  
+description: Directive grants access for the network or addresses indicated.  
 
-#####  so_keepalive
-syntax: `so_keepalive on|off`
-default: off
-context: main, server
+####  so_keepalive
+syntax: `so_keepalive on|off`  
+default: off  
+context: main, server  
 description: The same as so_keepalive
-(<http://wiki.nginx.org/NginxMailCoreModule#so_keepalive>).
+(<http://wiki.nginx.org/NginxMailCoreModule#so_keepalive>).  
 
-#####  tcp_nodelay
-syntax: `tcp_nodelay on|off`
-default: on
-context: main, server
+####  tcp_nodelay
+syntax: `tcp_nodelay on|off`  
+default: on  
+context: main, server  
 description: The same as tcp_nodelay
-(<http://wiki.nginx.org/NginxHttpCoreModule#tcp_nodelay>).
+(<http://wiki.nginx.org/NginxHttpCoreModule#tcp_nodelay>).  
 
-#####  timeout
-syntax: `timeout milliseconds`
-default: 60000
-context: main, server
-description: set the timeout value with clients.
+####  timeout
+syntax: `timeout milliseconds`  
+default: 60000  
+context: main, server  
+description: set the timeout value with clients.  
 
-#####  server_name
-syntax: `server_name name`
-default: The name of the host, obtained through gethostname()`
-context: tcp, server
-description: The same as server_name
+####  server_name
+syntax: `server_name name`  
+default: The name of the host, obtained through gethostname()`  
+context: tcp, server  
+description: The same as server_name  
 (<http://wiki.nginx.org/NginxMailCoreModule#server_name>). You can
 specify several server name in different server block with the same
-port. They can be used in websocket module.
+port. They can be used in websocket module.  
 
-#####  resolver
-syntax: `resolver address`
-default: none
-context: tcp,  server
-description: DNS server
+####  resolver
+syntax: `resolver address`  
+default: none  
+context: tcp,  server  
+description: DNS server  
 
-#####  resolver_timeout
-syntax: `resolver_timeout time`
-default: `30s`
-context: tcp, server
-description: Resolver timeout in seconds.
+####  resolver_timeout
+syntax: `resolver_timeout time`  
+default: `30s`  
+context: tcp, server  
+description: Resolver timeout in seconds.  
 
 ###  ngx_tcp_upstream_module
-#####  upstream
-syntax: `upstream {...}`
-default: none
-context: tcp
-description: All the upstream directives are contained in this block.
-The upstream server will be dispatched with round robin by default.
+####  upstream
+syntax: `upstream {...}`  
+default: none  
+context: tcp  
+description: All the upstream directives are contained in this block. The upstream server will be dispatched with round robin by default.  
 
-#####  server
-syntax: `server name [parameters]`
-default: none
-context: upstream
+####  server
+syntax: `server name [parameters]`  
+default: none  
+context: upstream  
 description: Most of the parameters are the same as server
-(<http://wiki.nginx.org/NginxHttpUpstreamModule#server>). Default port
-is 80.
+(<http://wiki.nginx.org/NginxHttpUpstreamModule#server>). Default port is 80.  
 
-#####  check
+####  check
 syntax: 
 
 ```bash 
 check interval=milliseconds [fall=count][rise=count]
 [timeout=milliseconds] [type=tcp|ssl_hello|smtp|mysql|pop3|imap]
-```
+```  
 default: none, if parameters omitted, default parameters are
-interval=30000 fall=5 rise=2 timeout=1000
-context: upstream
-description: Add the health check for the upstream servers. At present,the check method is a simple tcp connect.
-The parameters' meanings are:
-* `interval:` the check request's interval time.
-* `fall(fall_count):` After fall_count check failures, the server is marked down.
-* `rise(rise_count):` After rise_count check success, the server is  marked up.
-* `timeout:` the check request's timeout.
+interval=30000 fall=5 rise=2 timeout=1000  
+context: upstream  
+description: Add the health check for the upstream servers. At present,the check method is a simple tcp connect.  
+The parameters' meanings are:  
+* `interval:` the check request's interval time.  
+* `fall(fall_count):` After fall_count check failures, the server is marked down.  
+* `rise(rise_count):` After rise_count check success, the server is  marked up.  
+* `timeout:` the check request's timeout.  
 * `type:` the check protocol type:  
+  1.`tcp` is a simple tcp socket connect and peek one byte.  
+  2.`ssl_hello` sends a client ssl hello packet and receives the server ssl hello packet.  
+  3.`http` sends a http request packet, receives and parses the http response to diagnose if the upstream server is alive.  
+  4.`smtp` sends a smtp request packet, receives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.  
+  5.`mysql` connects to the mysql server, receives the greeting response to diagnose if the upstream server is alive.  
+  6.`pop3` receives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should bean OK response.  
+  7.`imap` connects to the imap server, receives the greeting response to diagnose if the upstream server is alive.  
 
-  1.`tcp` is a simple tcp socket connect and peek one byte.
+####  check_http_send
+syntax: `check_http_send http_packet`  
+default: "GET / HTTP/1.0\r\n\r\n"  
+context: upstream  
+description: If you set the check type is http, then the check function will sends this http packet to check the upstream server.  
 
-  2.`ssl_hello` sends a client ssl hello packet and receives the server ssl hello packet.
+####  check_http_expect_alive
+syntax: `check_http_expect_alive [ http_2xx | http_3xx | http_4xx | http_5xx ]`  
+default: http_2xx | http_3xx  
+context: upstream  
+description: These status codes indicate the upstream server's http response is OK, the backend is alive.  
 
-  3.`http` sends a http request packet, receives and parses the http response to diagnose if the upstream server is alive.
+####  check_smtp_send
+syntax: `check_smtp_send smtp_packet`  
+default: "HELO smtp.localdomain\r\n"  
+context: upstream  
+description: If you set the check type is smtp, then the check function will sends this smtp packet to check the upstream server.  
 
-  4.`smtp` sends a smtp request packet, receives and parses the smtp response to diagnose if the upstream server is alive. The response begins with '2' should be an OK response.
+####  check_smtp_expect_alive
+syntax: `check_smtp_expect_alive [smtp_2xx | smtp_3xx | smtp_4xx | smtp_5xx]`   
+default: smtp_2xx  
+context: upstream  
+description: These status codes indicate the upstream server's smtp response is OK, the backend is alive.  
 
-  5.`mysql` connects to the mysql server, receives the greeting response to diagnose if the upstream server is alive.
+####  check_shm_size
+syntax: `check_shm_size size`  
+default: (number_of_checked_upstream_blocks + 1)  * pagesize  
+context: tcp  
+description: If you store hundreds of servers in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.  
 
-  6.`pop3` receives and parses the pop3 response to diagnose if the upstream server is alive. The response begins with '+' should bean OK response.
+####  tcp_check_status
+syntax: `tcp_check_status`  
+default: none  
+context: location  
+description: Display the health checking servers' status by HTTP. This directive is set in the http block.  
 
-  7.`imap` connects to the imap server, receives the greeting response to diagnose if the upstream server is alive.
-
-#####  check_http_send
-syntax: `check_http_send http_packet`
-default: "GET / HTTP/1.0\r\n\r\n"
-context: upstream
-description: If you set the check type is http, then the check function
-will sends this http packet to check the upstream server.
-
-#####  check_http_expect_alive
-syntax: `check_http_expect_alive [ http_2xx | http_3xx | http_4xx |
-http_5xx ]`
-default: http_2xx | http_3xx
-context: upstream
-description: These status codes indicate the upstream server's http response is OK, the backend is alive.
-
-#####  check_smtp_send
-syntax: `check_smtp_send smtp_packet`
-default: "HELO smtp.localdomain\r\n"
-context: upstream
-description: If you set the check type is smtp, then the check function will sends this smtp packet to check the upstream server.
-
-#####  check_smtp_expect_alive
-syntax: `check_smtp_expect_alive [smtp_2xx | smtp_3xx | smtp_4xx |
-smtp_5xx]`
-
-default: smtp_2xx
-context: upstream
-description: These status codes indicate the upstream server's smtp response is OK, the backend is alive.
-
-#####  check_shm_size
-syntax: `check_shm_size size`
-default: (number_of_checked_upstream_blocks + 1)  * pagesize
-context: tcp
-description: If you store hundreds of servers in one upstream block, the shared memory for health check may be not enough, you can enlarged it by this directive.
-
-#####  tcp_check_status
-syntax: `tcp_check_status`
-default: none
-context: location
-description: Display the health checking servers' status by HTTP. This directive is set in the http block.
-
-The table field meanings are:
-* `Index`: The server index in the check table
-* `Name` : The upstream server name
-* `Status`: The marked status of the server.
-* `Busyness`: The number of connections which are connecting to the server.
-* `Rise counts`: Count the successful checking
-* `Fall counts`: Count the unsuccessful checking
-* `Access counts`: Count the times accessing to this server
-* `Check type`: The type of the check packet
+The table field meanings are:  
+* `Index`: The server index in the check table  
+* `Name` : The upstream server name  
+* `Status`: The marked status of the server.  
+* `Busyness`: The number of connections which are connecting to the server.  
+* `Rise counts`: Count the successful checking  
+* `Fall counts`: Count the unsuccessful checking  
+* `Access counts`: Count the times accessing to this server  
+* `Check type`: The type of the check packet  
 
 ###  ngx_tcp_upstream_busyness_module
-#####  busyness
-syntax: `busyness`
-default: none
-context: upstream
-description: the upstream server will be dispatched by backend servers'
-busyness.
+####  busyness
+syntax: `busyness`  
+default: none  
+context: upstream  
+description: the upstream server will be dispatched by backend servers busyness.  
 
 ###  ngx_tcp_upstream_ip_hash_module
 
-#####  ip_hash
-syntax: `ip_hash`
-default: none
-context: upstream
-description: the upstream server will be dispatched by ip_hash.
+####  ip_hash
+syntax: `ip_hash`  
+default: none  
+context: upstream  
+description: the upstream server will be dispatched by ip_hash.  
 
 ###  ngx_tcp_proxy_module
-#####  proxy_pass
-syntax: `proxy_pass host:port`
-default: `none`
-context: `server`
-description: proxy the request to the backend server. Default port is 80.
+####  proxy_pass
+syntax: `proxy_pass host:port`  
+default: `none`  
+context: `server`  
+description: proxy the request to the backend server. Default port is 80.  
 
-#####  proxy_buffer
-syntax: `proxy_buffer size`
-default: `4k`
-context: `tcp, server`
-description: set the size of proxy buffer.
+####  proxy_buffer
+syntax: `proxy_buffer size`  
+default: `4k`  
+context: `tcp, server`  
+description: set the size of proxy buffer.  
 
-#####  proxy_connect_timeout
-syntax: `proxy_connect_timeout miliseconds`
-default: `60000`
-context: `tcp, server`
-description: set the timeout value of connection to backends.
+####  proxy_connect_timeout
+syntax: `proxy_connect_timeout miliseconds`  
+default: `60000`  
+context: `tcp, server`  
+description: set the timeout value of connection to backends.  
 
-#####  proxy_read_timeout
-syntax: `proxy_read_timeout miliseconds`
-default: `60000`
-context: `tcp, server`
-description: set the timeout value of reading from backends.
+####  proxy_read_timeout
+syntax: `proxy_read_timeout miliseconds`  
+default: `60000`  
+context: `tcp, server`  
+description: set the timeout value of reading from backends.  
 
-#####  proxy_send_timeout
-syntax: `proxy_send_timeout miliseconds`
-default: `60000`
-context: `tcp, server`
-description: set the timeout value of sending to backends.
+####  proxy_send_timeout
+syntax: `proxy_send_timeout miliseconds`  
+default: `60000`  
+context: `tcp, server`  
+description: set the timeout value of sending to backends.  
 
 ###  ngx_tcp_websocket_module
-#####  websocket_pass
-syntax: `websocket_pass [path] host:port`
-default: `none`
-context: `server`
-description: proxy the websocket request to the backend server. Default port is 80. You can specify several different paths in the same server block.
+####  websocket_pass
+syntax: `websocket_pass [path] host:port`  
+default: `none`  
+context: `server`  
+description: proxy the websocket request to the backend server. Default port is 80. You can specify several different paths in the same server block.  
 
-#####  websocket_buffer
-syntax: `websocket_buffer size`
-default: `4k`
-context: `tcp, server`
-description: set the size of proxy buffer.
+####  websocket_buffer
+syntax: `websocket_buffer size`  
+default: `4k`  
+context: `tcp, server`  
+description: set the size of proxy buffer.  
 
-#####  websocket_connect_timeout
-syntax: `websocket_connect_timeout miliseconds`
-default: `60000`
-context: `tcp, server`
-description: set the timeout value of connection to backends.
+####  websocket_connect_timeout
+syntax: `websocket_connect_timeout miliseconds`  
+default: `60000`  
+context: `tcp, server`  
+description: set the timeout value of connection to backends.  
 
-#####  websocket_read_timeout
-syntax: `websocket_read_timeout miliseconds`
-default: `60000`
-context: `tcp, server`
-description: set the timeout value of reading from backends. Your timeout will be the minimum of this and the `timeout` parameter, so if you want a long timeout for your websockets, make sure to set both parameters.
+####  websocket_read_timeout
+syntax: `websocket_read_timeout miliseconds`  
+default: `60000`  
+context: `tcp, server`  
+description: set the timeout value of reading from backends. Your timeout will be the minimum of this and the `timeout` parameter, so if you want a long timeout for your websockets, make sure to set both parameters.  
 
-##### websocket_send_timeout
-syntax: `websocket_send_timeout miliseconds`
-default: `60000`
-context: `tcp, server`
-description: set the timeout value of sending to backends.
+#### websocket_send_timeout
+syntax: `websocket_send_timeout miliseconds`  
+default: `60000`  
+context: `tcp, server`  
+description: set the timeout value of sending to backends.  
 
 ###  ngx_tcp_ssl_module
-The default config file includes this ngx_tcp_ssl_module. If you want to just compile nginx without ngx_tcp_ssl_module, copy the ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config, reconfigrure and compile nginx.
+The default config file includes this ngx_tcp_ssl_module. If you want to just compile nginx without ngx_tcp_ssl_module, copy the ngx_tcp_proxy_module/config_without_ssl to ngx_tcp_proxy_module/config, reconfigrure and compile nginx.  
 
-#####  ssl
-syntax: `ssl [on|off]`
-default: `ssl off`
-context: `tcp, server`
-Enables SSL for a server.
+####  ssl
+syntax: `ssl [on|off]`  
+default: `ssl off`  
+context: `tcp, server`  
+Enables SSL for a server.  
 
-#####  ssl_certificate
-syntax: `ssl_certificate file`
-default: `ssl_certificate cert.pem`
-context: `tcp, server`
-This directive specifies the file containing the certificate, in PEM format. This file can contain also other certificates and the server private key.
+####  ssl_certificate
+syntax: `ssl_certificate file`  
+default: `ssl_certificate cert.pem`  
+context: `tcp, server`  
+This directive specifies the file containing the certificate, in PEM format. This file can contain also other certificates and the server private key.  
 
-#####  ssl_certificate_key
-syntax: `ssl_certificate_key file`
-default: `ssl_certificate_key cert.pem`
-context: `tcp, server`
-This directive specifies the file containing the private key, in PEM format.
+####  ssl_certificate_key
+syntax: `ssl_certificate_key file`  
+default: `ssl_certificate_key cert.pem`  
+context: `tcp, server`  
+This directive specifies the file containing the private key, in PEM format.  
 
-#####  ssl_client_certificate
-syntax: `ssl_client_certificate file`
-default: `none`
-context: `tcp, server`
-This directive specifies the file containing the CA (root) certificate, in PEM format, that is used for validating client certificates.
+####  ssl_client_certificate
+syntax: `ssl_client_certificate file`  
+default: `none`  
+context: `tcp, server`  
+This directive specifies the file containing the CA (root) certificate, in PEM format, that is used for validating client certificates.  
 
-#####  ssl_dhparam
-syntax: `ssl_dhparam file`
-default: `none`
-context: `tcp, server`
-This directive specifies a file containing Diffie-Hellman key agreement protocol cryptographic parameters, in PEM format, utilized for exchanging session keys between server and client.
+####  ssl_dhparam
+syntax: `ssl_dhparam file`  
+default: `none`  
+context: `tcp, server`  
+This directive specifies a file containing Diffie-Hellman key agreement protocol cryptographic parameters, in PEM format, utilized for exchanging session keys between server and client.  
 
-#####  ssl_ciphers
-syntax: `ssl_ciphers openssl_cipherlist_spec`
-default: `ssl_ciphers HIGH:!aNULL:!MD5`
-context: `tcp, server`
-This directive describes the list of cipher suites the server supports for establishing a secure connection. Cipher suites are specified in the OpenSSL (<http://openssl.org/docs/apps/ciphers.html>) cipherlist format,
-for example:
-
+####  ssl_ciphers
+syntax: `ssl_ciphers openssl_cipherlist_spec`  
+default: `ssl_ciphers HIGH:!aNULL:!MD5`  
+context: `tcp, server`  
+This directive describes the list of cipher suites the server supports for establishing a secure connection. Cipher suites are specified in the OpenSSL (<http://openssl.org/docs/apps/ciphers.html>) cipherlist format,  
+for example:  
 ```bash
 ssl_ciphers ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
-```
-The complete cipherlist supported by the currently installed version of OpenSSL in your platform can be obtained by issuing the command: openssl ciphers
+```  
+The complete cipherlist supported by the currently installed version of OpenSSL in your platform can be obtained by issuing the command: openssl ciphers  
 
-#####  ssl_crl
-syntax: `ssl_crl file`
-default: `none`
-context: `tcp, server`
-This directive specifies the filename of a Certificate Revocation List, in PEM format, which is used to check the revocation status of certificates.
+####  ssl_crl
+syntax: `ssl_crl file`  
+default: `none`  
+context: `tcp, server`  
+This directive specifies the filename of a Certificate Revocation List, in PEM format, which is used to check the revocation status of certificates.  
 
-#####  ssl_prefer_server_ciphers
-syntax: `ssl_prefer_server_ciphers [on|off]`
-default: `ssl_prefer_server_ciphers off`
-The server requires that the cipher suite list for protocols SSLv3 and TLSv1 are to be preferred over the client supported cipher suite list.
+####  ssl_prefer_server_ciphers
+syntax: `ssl_prefer_server_ciphers [on|off]`  
+default: `ssl_prefer_server_ciphers off`  
+The server requires that the cipher suite list for protocols SSLv3 and TLSv1 are to be preferred over the client supported cipher suite list.  
 
-#####  ssl_protocols
-syntax: `ssl_protocols [SSLv2] [SSLv3] [TLSv1] [TLSv1.1] [TLSv1.2]`
-default: `ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2`
-context: `tcp, server`
-This directive enables the protocol versions specified.
+####  ssl_protocols
+syntax: `ssl_protocols [SSLv2] [SSLv3] [TLSv1] [TLSv1.1] [TLSv1.2]`  
+default: `ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2`  
+context: `tcp, server`  
+This directive enables the protocol versions specified.  
 
-#####  ssl_verify_client
-syntax: `ssl_verify_client on|off|optional`
-default: `ssl_verify_client off`
-context: `tcp, server`
-This directive enables the verification of the client identity.Parameter 'optional' checks the client identity using its certificate in case it was made available to the server.
+####  ssl_verify_client
+syntax: `ssl_verify_client on|off|optional`  
+default: `ssl_verify_client off`  
+context: `tcp, server`  
+This directive enables the verification of the client identity.Parameter 'optional' checks the client identity using its certificate in case it was made available to the server.  
 
-#####  ssl_verify_depth
-syntax: `ssl_verify_depth number`
-default: `ssl_verify_depth 1`
-context: `tcp, server`
-This directive sets how deep the server should go in the client provided certificate chain in order to verify the client identity.
+####  ssl_verify_depth
+syntax: `ssl_verify_depth number`  
+default: `ssl_verify_depth 1`  
+context: `tcp, server`  
+This directive sets how deep the server should go in the client provided certificate chain in order to verify the client identity.  
 
-#####  ssl_session_cache
-syntax: `ssl_session_cache off|none|builtin:size and/or shared:name:size`
-default: `ssl_session_cache off`
-context: `tcp, server`
-The directive sets the types and sizes of caches to store the SSL sessions.
-The cache types are:
-
-* `off` -- Hard off: nginx says explicitly to a client that sessions can not reused.
-* `none` -- Soft off: nginx says to a client that session can be reused,but nginx actually never reuses them. This is workaround for some mail clients as ssl_session_cache may be used in mail proxy as well as in HTTP server.
-
-* `builtin` -- the OpenSSL builtin cache, is used inside one worker process only. The cache size is assigned in the number of the sessions. Note: there appears to be a memory fragmentation issue using this method, please take that into consideration when using this. See "References" below.
-
-* `shared` -- the cache is shared between all worker processes. The sizeof the cache is assigned in bytes: 1 MB cache can contain roughly4000 sessions. Each shared cache must be given an arbitrary name. Ashared cache with a given name can be used in several virtual hosts.
-
-It's possible to use both types of cache &mdash; builtin and shared &mdash; simultaneously, for example:
-
+####  ssl_session_cache
+syntax: `ssl_session_cache off|none|builtin:size and/or shared:name:size`  
+default: `ssl_session_cache off`  
+context: `tcp, server`  
+The directive sets the types and sizes of caches to store the SSL sessions.  
+The cache types are:  
+* `off` -- Hard off: nginx says explicitly to a client that sessions can not reused.  
+* `none` -- Soft off: nginx says to a client that session can be reused,but nginx actually never reuses them. This is workaround for some mail clients as ssl_session_cache may be used in mail proxy as well as in HTTP server.  
+* `builtin` -- the OpenSSL builtin cache, is used inside one worker process only. The cache size is assigned in the number of the sessions. Note: there appears to be a memory fragmentation issue using this method, please take that into consideration when using this. See "References" below.  
+* `shared` -- the cache is shared between all worker processes. The sizeof the cache is assigned in bytes: 1 MB cache can contain roughly4000 sessions. Each shared cache must be given an arbitrary name. Ashared cache with a given name can be used in several virtual hosts.  
+It's possible to use both types of cache &mdash; builtin and shared &mdash; simultaneously, for example:  
 ```bash
 ssl_session_cache builtin:1000 shared:SSL:10m;
-```
-Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.
+```  
+Bear in mind however, that using only shared cache, i.e., without builtin, should be more effective.  
 
-#####  ssl_session_timeout
-syntax: `ssl_session_timeout time`
-default: `ssl_session_timeout 5m`
-context: `tcp, server`
-This directive defines the maximum time during which the client can re-use the previously negotiated cryptographic parameters of the secure session that is stored in the SSL cache.
+####  ssl_session_timeout
+syntax: `ssl_session_timeout time`  
+default: `ssl_session_timeout 5m`  
+context: `tcp, server`  
+This directive defines the maximum time during which the client can re-use the previously negotiated cryptographic parameters of the secure session that is stored in the SSL cache.  
 
 ##   Compatibility
-* My test bed is 0.7.65+
-
+* My test bed is 0.7.65+  
 ##  Notes
 The http_response_parse.rl and smtp_response_parse.rl are ragel
-(<http://www.complang.org/ragel/>) scripts , you can edit the script and compile it like this:
-
+(<http://www.complang.org/ragel/>) scripts , you can edit the script and compile it like this:  
 ```bash
 $ ragel -G2 http_response_parse.rl
 $ ragel -G2 smtp_response_parse.rl
-```
-
+```  
 ##  TODO
-* refact this module, make it more extendable for adding third-party modules
-* manipulate header like http module's proxy_set_header
-* built-in variable support
-* custom log format
-* syslog support
-* FTP/IRC proxying
+* refact this module, make it more extendable for adding third-party modules  
+* manipulate header like http module's proxy_set_header  
+* built-in variable support  
+* custom log format  
+* syslog support  
+* FTP/IRC proxying  
 
 ##  Known Issues
-* This module can't use the same listening port with the HTTP module.
-
+* This module can't use the same listening port with the HTTP module.  
 ##  Changelogs
 ###  v0.2.0
-* add ssl proxy module
-* add websocket proxy module
-* add upstream busyness module
-* add tcp access log module
-
+* add ssl proxy module  
+* add websocket proxy module  
+* add upstream busyness module  
+* add tcp access log module  
 ###  v0.19
-* add many check methods
-
+* add many check methods  
 ##  v0.1
-* first release
-
+* first release  
 ##  Authors
-Weibin Yao(姚伟斌) `yaoweibin at gmail dot com`
-
+Weibin Yao(姚伟斌) `yaoweibin at gmail dot com`  
 ## Copyright & License
-This README template copy from agentzh (<http://github.com/agentzh>),I borrowed a lot of code from upstream and mail module from the nginx 0.7 core. This part of code is copyrighted by Igor Sysoev. And the health check part is borrowed the design of Jack Lindamood's healthcheck module healthcheck_nginx_upstreams (<http://github.com/cep21/healthcheck_nginx_upstreams>);
-
-This module is licensed under the BSD license.
-
+This README template copy from agentzh (<http://github.com/agentzh>),I borrowed a lot of code from upstream and mail module from the nginx 0.7 core. This part of code is copyrighted by Igor Sysoev. And the health check part is borrowed the design of Jack Lindamood's healthcheck module healthcheck_nginx_upstreams (<http://github.com/cep21/healthcheck_nginx_upstreams>);  
+This module is licensed under the BSD license.  
 ```bash
     Copyright (C) 2013 by Weibin Yao <yaoweibin@gmail.com>.
     
