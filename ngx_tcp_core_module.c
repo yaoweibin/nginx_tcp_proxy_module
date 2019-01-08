@@ -5,6 +5,10 @@
 #include <ngx_tcp.h>
 #include <nginx.h>
 
+#ifndef NGX_CONF_MULTI
+#define NGX_CONF_MULTI 0
+#endif
+
 
 static void *ngx_tcp_core_create_main_conf(ngx_conf_t *cf);
 static void *ngx_tcp_core_create_srv_conf(ngx_conf_t *cf);
@@ -480,8 +484,11 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 port = sin->sin_port;
                 break;
         }
-
+#if defined(nginx_version) && nginx_version >= 1014002
+        if (ngx_memcmp(ls[i].sockaddr + off, &u.sockaddr + off, len) != 0) {
+#else
         if (ngx_memcmp(ls[i].sockaddr + off, u.sockaddr + off, len) != 0) {
+#endif
             continue;
         }
 
@@ -501,8 +508,11 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
     ngx_memzero(ls, sizeof(ngx_tcp_listen_t));
 
+#if defined(nginx_version) && nginx_version >= 1014002
+    ngx_memcpy(ls->sockaddr, &u.sockaddr, u.socklen);
+#else
     ngx_memcpy(ls->sockaddr, u.sockaddr, u.socklen);
-
+#endif
     ls->socklen = u.socklen;
     ls->wildcard = u.wildcard;
     ls->ctx = cf->ctx;
