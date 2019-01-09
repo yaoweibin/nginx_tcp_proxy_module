@@ -485,7 +485,7 @@ ngx_tcp_core_listen(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                 break;
         }
 #if defined(nginx_version) && nginx_version >= 1014002
-        if (ngx_memcmp(ls[i].sockaddr + off, &u.sockaddr + off, len) != 0) {
+        if (ngx_memcmp(ls[i].sockaddr + off, ((char*)&u.sockaddr) + off, len) != 0) {
 #else
         if (ngx_memcmp(ls[i].sockaddr + off, u.sockaddr + off, len) != 0) {
 #endif
