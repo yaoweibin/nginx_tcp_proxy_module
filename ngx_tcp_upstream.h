@@ -115,6 +115,7 @@ struct ngx_tcp_upstream_srv_conf_s {
 
     check_conf_t                    *check_type_conf;
     ngx_str_t                        send;
+    ngx_flag_t                       accept_proxy;
 
     union {
         ngx_uint_t                   return_code;

@@ -26,9 +26,6 @@ static const int smtp_parser_start = 1;
 static const int smtp_parser_first_final = 429;
 static const int smtp_parser_error = 0;
 
-static const int smtp_parser_en_main = 1;
-
-
 #line 112 "smtp_response_parser.rl"
 
 int smtp_parser_init(smtp_parser *parser)  {

@@ -27,14 +27,12 @@ static const int http_response_parser_start = 1;
 static const int http_response_parser_first_final = 20;
 static const int http_response_parser_error = 0;
 
-static const int http_response_parser_en_main = 1;
-
 
 #line 92 "http_response_parser.rl"
 
 int http_response_parser_init(http_response_parser *parser)  {
   int cs = 0;
-  
+
 #line 39 "http_response_parser.c"
 	{
 	cs = http_response_parser_start;
@@ -47,7 +45,7 @@ int http_response_parser_init(http_response_parser *parser)  {
   parser->mark = 0;
   parser->nread = 0;
   parser->field_len = 0;
-  parser->field_start = 0;    
+  parser->field_start = 0;
 
   return(1);
 }
@@ -63,7 +61,7 @@ size_t http_response_parser_execute(http_response_parser *parser, const signed c
   p = buffer + off;
   pe = buffer + len;
 
-  
+
 #line 68 "http_response_parser.c"
 	{
 	if ( p == pe )
@@ -144,7 +142,7 @@ case 9:
 	goto st0;
 tr9:
 #line 36 "http_response_parser.rl"
-	{	
+	{
     if(parser->http_version != NULL)
       parser->http_version(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -279,8 +277,8 @@ case 16:
 	goto st0;
 tr19:
 #line 51 "http_response_parser.rl"
-	{ 
-    parser->body_start = p - buffer + 1; 
+	{
+    parser->body_start = p - buffer + 1;
     if(parser->header_done != NULL)
       parser->header_done(parser->data, p + 1, pe - p - 1);
     {p++; cs = 20; goto _out;}
@@ -327,7 +325,7 @@ case 17:
 	goto st0;
 tr21:
 #line 24 "http_response_parser.rl"
-	{ 
+	{
     parser->field_len = LEN(field_start, p);
   }
 	goto st18;
@@ -358,25 +356,25 @@ case 19:
 		goto tr26;
 	goto st19;
 	}
-	_test_eof2: cs = 2; goto _test_eof; 
-	_test_eof3: cs = 3; goto _test_eof; 
-	_test_eof4: cs = 4; goto _test_eof; 
-	_test_eof5: cs = 5; goto _test_eof; 
-	_test_eof6: cs = 6; goto _test_eof; 
-	_test_eof7: cs = 7; goto _test_eof; 
-	_test_eof8: cs = 8; goto _test_eof; 
-	_test_eof9: cs = 9; goto _test_eof; 
-	_test_eof10: cs = 10; goto _test_eof; 
-	_test_eof11: cs = 11; goto _test_eof; 
-	_test_eof12: cs = 12; goto _test_eof; 
-	_test_eof13: cs = 13; goto _test_eof; 
-	_test_eof14: cs = 14; goto _test_eof; 
-	_test_eof15: cs = 15; goto _test_eof; 
-	_test_eof16: cs = 16; goto _test_eof; 
-	_test_eof20: cs = 20; goto _test_eof; 
-	_test_eof17: cs = 17; goto _test_eof; 
-	_test_eof18: cs = 18; goto _test_eof; 
-	_test_eof19: cs = 19; goto _test_eof; 
+	_test_eof2: cs = 2; goto _test_eof;
+	_test_eof3: cs = 3; goto _test_eof;
+	_test_eof4: cs = 4; goto _test_eof;
+	_test_eof5: cs = 5; goto _test_eof;
+	_test_eof6: cs = 6; goto _test_eof;
+	_test_eof7: cs = 7; goto _test_eof;
+	_test_eof8: cs = 8; goto _test_eof;
+	_test_eof9: cs = 9; goto _test_eof;
+	_test_eof10: cs = 10; goto _test_eof;
+	_test_eof11: cs = 11; goto _test_eof;
+	_test_eof12: cs = 12; goto _test_eof;
+	_test_eof13: cs = 13; goto _test_eof;
+	_test_eof14: cs = 14; goto _test_eof;
+	_test_eof15: cs = 15; goto _test_eof;
+	_test_eof16: cs = 16; goto _test_eof;
+	_test_eof20: cs = 20; goto _test_eof;
+	_test_eof17: cs = 17; goto _test_eof;
+	_test_eof18: cs = 18; goto _test_eof;
+	_test_eof19: cs = 19; goto _test_eof;
 
 	_test_eof: {}
 	_out: {}
