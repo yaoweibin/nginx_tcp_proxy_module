@@ -404,9 +404,16 @@ ngx_tcp_ssl_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->shm_zone = prev->shm_zone;
     }
 
+#if defined(nginx_version) && nginx_version >= 1018000
+    if (ngx_ssl_session_cache(&conf->ssl, &ngx_tcp_ssl_sess_id_ctx,
+                              conf->passwords,
+                              conf->builtin_session_cache,
+                              conf->shm_zone, conf->session_timeout)
+#else
     if (ngx_ssl_session_cache(&conf->ssl, &ngx_tcp_ssl_sess_id_ctx,
                               conf->builtin_session_cache,
                               conf->shm_zone, conf->session_timeout)
+#endif
         != NGX_OK)
     {
         return NGX_CONF_ERROR;
