@@ -6,12 +6,12 @@ Installation
     from github (<http://github.com/yaoweibin/nginx_tcp_proxy_module>)
 
     Grab the nginx source code from nginx.org (<http://nginx.org/>), for
-    example, the version 1.2.1 (see nginx compatibility), and then build the
-    source with this module:
+    example, the version 1.20.2 (see nginx compatibility), and then build
+    the source with this module:
 
-        $ wget 'http://nginx.org/download/nginx-1.2.1.tar.gz'
-        $ tar -xzvf nginx-1.2.1.tar.gz
-        $ cd nginx-1.2.1/
+        $ wget 'http://nginx.org/download/nginx-1.20.2.tar.gz'
+        $ tar -xzvf nginx-1.20.2.tar.gz
+        $ cd nginx-1.20.2/
         $ patch -p1 < /path/to/nginx_tcp_proxy_module/tcp.patch
 
         $ ./configure --add-module=/path/to/nginx_tcp_proxy_module
