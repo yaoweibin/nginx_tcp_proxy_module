@@ -6,7 +6,7 @@
  * You can redistribute it and/or modify it under the same terms as Ruby.
  */
 
-#include <http_request_parser.h> 
+#include <http_request_parser.h>
 
 #include <stdio.h>
 #include <assert.h>
@@ -32,14 +32,12 @@ static const int http_request_parser_start = 1;
 static const int http_request_parser_first_final = 57;
 static const int http_request_parser_error = 0;
 
-static const int http_request_parser_en_main = 1;
-
 
 #line 130 "http_request_parser.rl"
 
 int http_request_parser_init(http_request_parser *parser)  {
   int cs = 0;
-  
+
 #line 44 "http_request_parser.c"
 	{
 	cs = http_request_parser_start;
@@ -52,7 +50,7 @@ int http_request_parser_init(http_request_parser *parser)  {
   parser->mark = 0;
   parser->nread = 0;
   parser->field_len = 0;
-  parser->field_start = 0;    
+  parser->field_start = 0;
 
   return(1);
 }
@@ -68,7 +66,7 @@ size_t http_request_parser_execute(http_request_parser *parser, const signed cha
   p = buffer + off;
   pe = buffer + len;
 
-  
+
 #line 73 "http_request_parser.c"
 	{
 	if ( p == pe )
@@ -117,8 +115,8 @@ case 2:
 	goto st0;
 tr2:
 #line 40 "http_request_parser.rl"
-	{ 
-    if(parser->request_method != NULL) 
+	{
+    if(parser->request_method != NULL)
       parser->request_method(parser->data, PTR_TO(mark), LEN(mark, p));
   }
 	goto st3;
@@ -158,7 +156,7 @@ case 4:
 	goto st0;
 tr8:
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -186,7 +184,7 @@ tr42:
       parser->request_path(parser->data, PTR_TO(mark), LEN(mark,p));
   }
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -195,24 +193,24 @@ tr53:
 #line 53 "http_request_parser.rl"
 	{MARK(query_start, p); }
 #line 54 "http_request_parser.rl"
-	{ 
+	{
     if(parser->query_string != NULL)
       parser->query_string(parser->data, PTR_TO(query_start), LEN(query_start, p));
   }
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
 	goto st5;
 tr57:
 #line 54 "http_request_parser.rl"
-	{ 
+	{
     if(parser->query_string != NULL)
       parser->query_string(parser->data, PTR_TO(query_start), LEN(query_start, p));
   }
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -292,7 +290,7 @@ case 13:
 	goto st0;
 tr18:
 #line 59 "http_request_parser.rl"
-	{	
+	{
     if(parser->http_version != NULL)
       parser->http_version(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -360,8 +358,8 @@ case 16:
 	goto st0;
 tr22:
 #line 69 "http_request_parser.rl"
-	{ 
-    parser->body_start = p - buffer + 1; 
+	{
+    parser->body_start = p - buffer + 1;
     if(parser->header_done != NULL)
       parser->header_done(parser->data, p + 1, pe - p - 1);
     {p++; cs = 57; goto _out;}
@@ -408,7 +406,7 @@ case 17:
 	goto st0;
 tr24:
 #line 30 "http_request_parser.rl"
-	{ 
+	{
     parser->field_len = LEN(field_start, p);
   }
 	goto st18;
@@ -440,7 +438,7 @@ case 19:
 	goto st19;
 tr9:
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -452,7 +450,7 @@ tr43:
       parser->request_path(parser->data, PTR_TO(mark), LEN(mark,p));
   }
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -461,24 +459,24 @@ tr54:
 #line 53 "http_request_parser.rl"
 	{MARK(query_start, p); }
 #line 54 "http_request_parser.rl"
-	{ 
+	{
     if(parser->query_string != NULL)
       parser->query_string(parser->data, PTR_TO(query_start), LEN(query_start, p));
   }
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
 	goto st20;
 tr58:
 #line 54 "http_request_parser.rl"
-	{ 
+	{
     if(parser->query_string != NULL)
       parser->query_string(parser->data, PTR_TO(query_start), LEN(query_start, p));
   }
 #line 44 "http_request_parser.rl"
-	{ 
+	{
     if(parser->request_uri != NULL)
       parser->request_uri(parser->data, PTR_TO(mark), LEN(mark, p));
   }
@@ -1134,62 +1132,62 @@ case 56:
 		goto tr2;
 	goto st0;
 	}
-	_test_eof2: cs = 2; goto _test_eof; 
-	_test_eof3: cs = 3; goto _test_eof; 
-	_test_eof4: cs = 4; goto _test_eof; 
-	_test_eof5: cs = 5; goto _test_eof; 
-	_test_eof6: cs = 6; goto _test_eof; 
-	_test_eof7: cs = 7; goto _test_eof; 
-	_test_eof8: cs = 8; goto _test_eof; 
-	_test_eof9: cs = 9; goto _test_eof; 
-	_test_eof10: cs = 10; goto _test_eof; 
-	_test_eof11: cs = 11; goto _test_eof; 
-	_test_eof12: cs = 12; goto _test_eof; 
-	_test_eof13: cs = 13; goto _test_eof; 
-	_test_eof14: cs = 14; goto _test_eof; 
-	_test_eof15: cs = 15; goto _test_eof; 
-	_test_eof16: cs = 16; goto _test_eof; 
-	_test_eof57: cs = 57; goto _test_eof; 
-	_test_eof17: cs = 17; goto _test_eof; 
-	_test_eof18: cs = 18; goto _test_eof; 
-	_test_eof19: cs = 19; goto _test_eof; 
-	_test_eof20: cs = 20; goto _test_eof; 
-	_test_eof21: cs = 21; goto _test_eof; 
-	_test_eof22: cs = 22; goto _test_eof; 
-	_test_eof23: cs = 23; goto _test_eof; 
-	_test_eof24: cs = 24; goto _test_eof; 
-	_test_eof25: cs = 25; goto _test_eof; 
-	_test_eof26: cs = 26; goto _test_eof; 
-	_test_eof27: cs = 27; goto _test_eof; 
-	_test_eof28: cs = 28; goto _test_eof; 
-	_test_eof29: cs = 29; goto _test_eof; 
-	_test_eof30: cs = 30; goto _test_eof; 
-	_test_eof31: cs = 31; goto _test_eof; 
-	_test_eof32: cs = 32; goto _test_eof; 
-	_test_eof33: cs = 33; goto _test_eof; 
-	_test_eof34: cs = 34; goto _test_eof; 
-	_test_eof35: cs = 35; goto _test_eof; 
-	_test_eof36: cs = 36; goto _test_eof; 
-	_test_eof37: cs = 37; goto _test_eof; 
-	_test_eof38: cs = 38; goto _test_eof; 
-	_test_eof39: cs = 39; goto _test_eof; 
-	_test_eof40: cs = 40; goto _test_eof; 
-	_test_eof41: cs = 41; goto _test_eof; 
-	_test_eof42: cs = 42; goto _test_eof; 
-	_test_eof43: cs = 43; goto _test_eof; 
-	_test_eof44: cs = 44; goto _test_eof; 
-	_test_eof45: cs = 45; goto _test_eof; 
-	_test_eof46: cs = 46; goto _test_eof; 
-	_test_eof47: cs = 47; goto _test_eof; 
-	_test_eof48: cs = 48; goto _test_eof; 
-	_test_eof49: cs = 49; goto _test_eof; 
-	_test_eof50: cs = 50; goto _test_eof; 
-	_test_eof51: cs = 51; goto _test_eof; 
-	_test_eof52: cs = 52; goto _test_eof; 
-	_test_eof53: cs = 53; goto _test_eof; 
-	_test_eof54: cs = 54; goto _test_eof; 
-	_test_eof55: cs = 55; goto _test_eof; 
-	_test_eof56: cs = 56; goto _test_eof; 
+	_test_eof2: cs = 2; goto _test_eof;
+	_test_eof3: cs = 3; goto _test_eof;
+	_test_eof4: cs = 4; goto _test_eof;
+	_test_eof5: cs = 5; goto _test_eof;
+	_test_eof6: cs = 6; goto _test_eof;
+	_test_eof7: cs = 7; goto _test_eof;
+	_test_eof8: cs = 8; goto _test_eof;
+	_test_eof9: cs = 9; goto _test_eof;
+	_test_eof10: cs = 10; goto _test_eof;
+	_test_eof11: cs = 11; goto _test_eof;
+	_test_eof12: cs = 12; goto _test_eof;
+	_test_eof13: cs = 13; goto _test_eof;
+	_test_eof14: cs = 14; goto _test_eof;
+	_test_eof15: cs = 15; goto _test_eof;
+	_test_eof16: cs = 16; goto _test_eof;
+	_test_eof57: cs = 57; goto _test_eof;
+	_test_eof17: cs = 17; goto _test_eof;
+	_test_eof18: cs = 18; goto _test_eof;
+	_test_eof19: cs = 19; goto _test_eof;
+	_test_eof20: cs = 20; goto _test_eof;
+	_test_eof21: cs = 21; goto _test_eof;
+	_test_eof22: cs = 22; goto _test_eof;
+	_test_eof23: cs = 23; goto _test_eof;
+	_test_eof24: cs = 24; goto _test_eof;
+	_test_eof25: cs = 25; goto _test_eof;
+	_test_eof26: cs = 26; goto _test_eof;
+	_test_eof27: cs = 27; goto _test_eof;
+	_test_eof28: cs = 28; goto _test_eof;
+	_test_eof29: cs = 29; goto _test_eof;
+	_test_eof30: cs = 30; goto _test_eof;
+	_test_eof31: cs = 31; goto _test_eof;
+	_test_eof32: cs = 32; goto _test_eof;
+	_test_eof33: cs = 33; goto _test_eof;
+	_test_eof34: cs = 34; goto _test_eof;
+	_test_eof35: cs = 35; goto _test_eof;
+	_test_eof36: cs = 36; goto _test_eof;
+	_test_eof37: cs = 37; goto _test_eof;
+	_test_eof38: cs = 38; goto _test_eof;
+	_test_eof39: cs = 39; goto _test_eof;
+	_test_eof40: cs = 40; goto _test_eof;
+	_test_eof41: cs = 41; goto _test_eof;
+	_test_eof42: cs = 42; goto _test_eof;
+	_test_eof43: cs = 43; goto _test_eof;
+	_test_eof44: cs = 44; goto _test_eof;
+	_test_eof45: cs = 45; goto _test_eof;
+	_test_eof46: cs = 46; goto _test_eof;
+	_test_eof47: cs = 47; goto _test_eof;
+	_test_eof48: cs = 48; goto _test_eof;
+	_test_eof49: cs = 49; goto _test_eof;
+	_test_eof50: cs = 50; goto _test_eof;
+	_test_eof51: cs = 51; goto _test_eof;
+	_test_eof52: cs = 52; goto _test_eof;
+	_test_eof53: cs = 53; goto _test_eof;
+	_test_eof54: cs = 54; goto _test_eof;
+	_test_eof55: cs = 55; goto _test_eof;
+	_test_eof56: cs = 56; goto _test_eof;
 
 	_test_eof: {}
 	_out: {}
